@@ -1111,4 +1111,62 @@ router.post('/delete-untracked', async (req, res) => {
   }
 });
 
+// Check for open pull request for the current branch
+router.get('/check-pr', async (req, res) => {
+  const { project } = req.query;
+
+  if (!project) {
+    return res.status(400).json({ error: 'Project name is required' });
+  }
+
+  try {
+    const projectPath = await getActualProjectPath(project);
+    await validateGitRepository(projectPath);
+
+    // Get current branch
+    const { stdout: currentBranch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
+      cwd: projectPath,
+    });
+    const branch = currentBranch.trim();
+
+    // Check if gh CLI is available
+    try {
+      await execAsync('which gh');
+    } catch (error) {
+      return res.json({
+        hasPR: false,
+        prUrl: null,
+        error: 'GitHub CLI not available',
+      });
+    }
+
+    // Check for open PRs for this branch using GitHub CLI
+    try {
+      const { stdout: prOutput } = await execAsync(
+        `gh pr list --state open --head "${branch}" --json url --jq '.[0].url'`,
+        { cwd: projectPath }
+      );
+
+      const prUrl = prOutput.trim();
+      if (prUrl) {
+        return res.json({
+          hasPR: true,
+          prUrl,
+        });
+      }
+    } catch (ghError) {
+      console.log('GitHub CLI PR check failed:', ghError.message);
+    }
+
+    // No PR found
+    res.json({
+      hasPR: false,
+      prUrl: null,
+    });
+  } catch (error) {
+    console.error('Git check-pr error:', error);
+    res.json({ error: error.message });
+  }
+});
+
 export default router;
