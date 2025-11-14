@@ -1047,11 +1047,10 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
               {remoteStatus?.hasUpstream && hasPR && prUrl && (
                 <button
                   onClick={() => window.open(prUrl, '_blank')}
-                  disabled={isCheckingPR}
-                  className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
+                  className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 flex items-center gap-1"
                   title="View pull request on GitHub"
                 >
-                  <GitPullRequest className={`w-3 h-3 ${isCheckingPR ? 'animate-pulse' : ''}`} />
+                  <GitPullRequest className="w-3 h-3" />
                   <span>View PR</span>
                 </button>
               )}
