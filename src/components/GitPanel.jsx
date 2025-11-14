@@ -1,22 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   GitBranch,
   GitCommit,
   Plus,
-  Minus,
   RefreshCw,
   Check,
-  X,
   ChevronDown,
   ChevronRight,
   Info,
   History,
   FileText,
-  Mic,
-  MicOff,
   Sparkles,
   Download,
-  RotateCcw,
   Trash2,
   AlertTriangle,
   Upload,
@@ -103,7 +98,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
     if (selectedProject && currentBranch && remoteStatus?.hasRemote) {
       fetchLatestPR();
     }
-  }, [selectedProject, currentBranch, remoteStatus?.hasRemote]);
+  }, [selectedProject, currentBranch, remoteStatus?.hasRemote, fetchLatestPR]);
 
   const fetchGitStatus = async () => {
     if (!selectedProject) return;
@@ -187,7 +182,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
     }
   };
 
-  const fetchLatestPR = async () => {
+  const fetchLatestPR = useCallback(async () => {
     if (!selectedProject || !currentBranch) return;
 
     setIsLoadingPR(true);
@@ -204,7 +199,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
     } finally {
       setIsLoadingPR(false);
     }
-  };
+  }, [selectedProject, currentBranch]);
 
   const switchBranch = async branchName => {
     try {
