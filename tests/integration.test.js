@@ -5,60 +5,57 @@ import path from 'path';
 
 // Mock external dependencies
 jest.mock('child_process', () => ({
-  spawn: jest.fn()
+  spawn: () => ({
+    stdout: { on: () => {} },
+    stderr: { on: () => {} },
+    on: () => {},
+  }),
 }));
 
 jest.mock('fs', () => ({
-  ...jest.requireActual('fs'),
   promises: {
-    access: jest.fn(),
-    readFile: jest.fn(),
-    writeFile: jest.fn()
-  }
+    access: async () => {},
+    readFile: async () => 'mock config content',
+    writeFile: async () => {},
+  },
 }));
 
 describe('External Integration Testing', () => {
-  let mockSpawn;
-  let mockFs;
-
   beforeEach(() => {
-    mockSpawn = require('child_process').spawn;
-    mockFs = require('fs').promises;
-
     jest.clearAllMocks();
 
     // Setup default mock returns
-    mockFs.access.mockResolvedValue();
-    mockFs.readFile.mockResolvedValue('mock config content');
+    fs.access.mockResolvedValue();
+    fs.readFile.mockResolvedValue('mock config content');
   });
 
   describe('Claude SDK Integration', () => {
     test('should initialize Claude SDK successfully', async () => {
       // Mock successful Claude SDK initialization
-      mockSpawn.mockReturnValue({
+      spawn.mockReturnValue({
         stdout: {
           on: jest.fn().mockImplementation((event, handler) => {
             if (event === 'data') {
               handler('Claude SDK initialized successfully');
             }
-          })
+          }),
         },
         stderr: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(0); // Exit code 0
           }
-        })
+        }),
       });
 
       const mockClaudeSDK = {
         initialize: async () => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('claude', ['--version']);
+            const process = spawn('claude', ['--version']);
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code === 0) {
                 resolve(true);
               } else {
@@ -66,50 +63,50 @@ describe('External Integration Testing', () => {
               }
             });
           });
-        }
+        },
       };
 
       const result = await mockClaudeSDK.initialize();
       expect(result).toBe(true);
-      expect(mockSpawn).toHaveBeenCalledWith('claude', ['--version']);
+      expect(spawn).toHaveBeenCalledWith('claude', ['--version']);
     });
 
     test('should handle Claude SDK command execution', async () => {
       const mockProcess = {
         stdin: {
           write: jest.fn(),
-          end: jest.fn()
+          end: jest.fn(),
         },
         stdout: {
           on: jest.fn().mockImplementation((event, handler) => {
             if (event === 'data') {
               handler('Command executed successfully');
             }
-          })
+          }),
         },
         stderr: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(0);
           }
-        })
+        }),
       };
 
-      mockSpawn.mockReturnValue(mockProcess);
+      spawn.mockReturnValue(mockProcess);
 
       const mockClaudeSDK = {
         executeCommand: async (prompt, sessionId) => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('claude', ['chat', '--prompt', prompt]);
+            const process = spawn('claude', ['chat', '--prompt', prompt]);
 
             let output = '';
-            process.stdout.on('data', (data) => {
+            process.stdout.on('data', data => {
               output += data.toString();
             });
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code === 0) {
                 resolve({ output, sessionId });
               } else {
@@ -117,50 +114,51 @@ describe('External Integration Testing', () => {
               }
             });
           });
-        }
+        },
       };
 
       const result = await mockClaudeSDK.executeCommand('test prompt', 'session-123');
       expect(result.output).toBe('Command executed successfully');
       expect(result.sessionId).toBe('session-123');
-      expect(mockSpawn).toHaveBeenCalledWith('claude', ['chat', '--prompt', 'test prompt']);
+      expect(spawn).toHaveBeenCalledWith('claude', ['chat', '--prompt', 'test prompt']);
     });
 
     test('should handle Claude SDK errors gracefully', async () => {
-      mockSpawn.mockReturnValue({
+      spawn.mockReturnValue({
         stdout: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         stderr: {
           on: jest.fn().mockImplementation((event, handler) => {
             if (event === 'data') {
               handler('Command not found');
             }
-          })
+          }),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(127); // Command not found exit code
           }
-        })
+        }),
       });
 
       const mockClaudeSDK = {
-        executeCommand: async (prompt) => {
+        executeCommand: async prompt => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('claude', ['chat', '--prompt', prompt]);
+            const process = spawn('claude', ['chat', '--prompt', prompt]);
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code !== 0) {
                 reject(new Error(`Claude CLI not available (exit code: ${code})`));
               }
             });
           });
-        }
+        },
       };
 
-      await expect(mockClaudeSDK.executeCommand('test prompt'))
-        .rejects.toThrow('Claude CLI not available');
+      await expect(mockClaudeSDK.executeCommand('test prompt')).rejects.toThrow(
+        'Claude CLI not available'
+      );
     });
 
     test('should stream Claude SDK responses', async () => {
@@ -173,31 +171,31 @@ describe('External Integration Testing', () => {
               setTimeout(() => handler('response '), 10);
               setTimeout(() => handler('data'), 20);
             }
-          })
+          }),
         },
         stderr: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(0);
           }
-        })
+        }),
       };
 
-      mockSpawn.mockReturnValue(mockProcess);
+      spawn.mockReturnValue(mockProcess);
 
       const mockClaudeSDK = {
         streamCommand: async (prompt, onChunk) => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('claude', ['chat', '--prompt', prompt]);
+            const process = spawn('claude', ['chat', '--prompt', prompt]);
 
-            process.stdout.on('data', (data) => {
+            process.stdout.on('data', data => {
               streamData += data.toString();
               onChunk(data.toString());
             });
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code === 0) {
                 resolve(streamData);
               } else {
@@ -205,11 +203,11 @@ describe('External Integration Testing', () => {
               }
             });
           });
-        }
+        },
       };
 
       const chunks = [];
-      const result = await mockClaudeSDK.streamCommand('test prompt', (chunk) => {
+      const result = await mockClaudeSDK.streamCommand('test prompt', chunk => {
         chunks.push(chunk);
       });
 
@@ -220,85 +218,85 @@ describe('External Integration Testing', () => {
 
   describe('Cursor CLI Integration', () => {
     test('should initialize Cursor CLI successfully', async () => {
-      mockSpawn.mockReturnValue({
+      spawn.mockReturnValue({
         stdout: {
           on: jest.fn().mockImplementation((event, handler) => {
             if (event === 'data') {
               handler('Cursor CLI version 1.0.0');
             }
-          })
+          }),
         },
         stderr: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(0);
           }
-        })
+        }),
       });
 
       const mockCursorCLI = {
         initialize: async () => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('cursor', ['--version']);
+            const process = spawn('cursor', ['--version']);
 
-            process.stdout.on('data', (data) => {
+            process.stdout.on('data', data => {
               if (data.toString().includes('Cursor CLI')) {
                 resolve(true);
               }
             });
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code !== 0) {
                 reject(new Error('Cursor CLI not found'));
               }
             });
           });
-        }
+        },
       };
 
       const result = await mockCursorCLI.initialize();
       expect(result).toBe(true);
-      expect(mockSpawn).toHaveBeenCalledWith('cursor', ['--version']);
+      expect(spawn).toHaveBeenCalledWith('cursor', ['--version']);
     });
 
     test('should execute Cursor CLI commands', async () => {
       const mockProcess = {
         stdin: {
           write: jest.fn(),
-          end: jest.fn()
+          end: jest.fn(),
         },
         stdout: {
           on: jest.fn().mockImplementation((event, handler) => {
             if (event === 'data') {
               handler('Command result');
             }
-          })
+          }),
         },
         stderr: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(0);
           }
-        })
+        }),
       };
 
-      mockSpawn.mockReturnValue(mockProcess);
+      spawn.mockReturnValue(mockProcess);
 
       const mockCursorCLI = {
         executeCommand: async (command, sessionId) => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('cursor', ['--command', command]);
+            const process = spawn('cursor', ['--command', command]);
 
             let output = '';
-            process.stdout.on('data', (data) => {
+            process.stdout.on('data', data => {
               output += data.toString();
             });
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code === 0) {
                 resolve({ output, sessionId });
               } else {
@@ -306,29 +304,29 @@ describe('External Integration Testing', () => {
               }
             });
           });
-        }
+        },
       };
 
       const result = await mockCursorCLI.executeCommand('cursor chat "test"', 'session-456');
       expect(result.output).toBe('Command result');
       expect(result.sessionId).toBe('session-456');
-      expect(mockSpawn).toHaveBeenCalledWith('cursor', ['--command', 'cursor chat "test"']);
+      expect(spawn).toHaveBeenCalledWith('cursor', ['--command', 'cursor chat "test"']);
     });
 
     test('should handle Cursor CLI unavailability', async () => {
-      mockSpawn.mockImplementation(() => {
+      spawn.mockImplementation(() => {
         throw new Error('ENOENT: no such file or directory');
       });
 
       const mockCursorCLI = {
         checkAvailability: async () => {
           try {
-            const process = mockSpawn('cursor', ['--version']);
+            const process = spawn('cursor', ['--version']);
             return true;
           } catch (error) {
             return false;
           }
-        }
+        },
       };
 
       const isAvailable = await mockCursorCLI.checkAvailability();
@@ -336,58 +334,61 @@ describe('External Integration Testing', () => {
     });
 
     test('should capture Cursor CLI errors', async () => {
-      mockSpawn.mockReturnValue({
+      spawn.mockReturnValue({
         stdout: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         stderr: {
           on: jest.fn().mockImplementation((event, handler) => {
             if (event === 'data') {
               handler('Error: Invalid command');
             }
-          })
+          }),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(1);
           }
-        })
+        }),
       });
 
       const mockCursorCLI = {
-        executeCommand: async (command) => {
+        executeCommand: async command => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('cursor', ['--command', command]);
+            const process = spawn('cursor', ['--command', command]);
 
             let errorOutput = '';
-            process.stderr.on('data', (data) => {
+            process.stderr.on('data', data => {
               errorOutput += data.toString();
             });
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code !== 0) {
                 reject(new Error(`Cursor CLI error: ${errorOutput}`));
               }
             });
           });
-        }
+        },
       };
 
-      await expect(mockCursorCLI.executeCommand('invalid-command'))
-        .rejects.toThrow('Cursor CLI error: Error: Invalid command');
+      await expect(mockCursorCLI.executeCommand('invalid-command')).rejects.toThrow(
+        'Cursor CLI error: Error: Invalid command'
+      );
     });
   });
 
   describe('MCP Integration', () => {
     test('should detect MCP servers', async () => {
-      mockFs.access.mockImplementation((filePath) => {
+      fs.access.mockImplementation(filePath => {
         const mcpServers = [
           '.mcp.json',
           '.claude/mcp_servers.json',
-          '~/.config/claude/mcp_servers.json'
+          '~/.config/claude/mcp_servers.json',
         ];
 
-        return Promise.resolve(mcpServers.includes(filePath) ? undefined : new Error('File not found'));
+        return Promise.resolve(
+          mcpServers.includes(filePath) ? undefined : new Error('File not found')
+        );
       });
 
       const mockMCPDetector = {
@@ -395,17 +396,17 @@ describe('External Integration Testing', () => {
           const mcpConfigPaths = [
             '.mcp.json',
             '.claude/mcp_servers.json',
-            path.join(process.env.HOME || '~/.config/claude/mcp_servers.json')
+            path.join(process.env.HOME || '~/.config/claude/mcp_servers.json'),
           ];
 
           const availableServers = [];
           for (const configPath of mcpConfigPaths) {
             try {
-              await mockFs.access(configPath);
-              const config = await mockFs.readFile(configPath);
+              await fs.access(configPath);
+              const config = await fs.readFile(configPath);
               availableServers.push({
                 configPath,
-                config: JSON.parse(config)
+                config: JSON.parse(config),
               });
             } catch (error) {
               // File doesn't exist, skip
@@ -413,7 +414,7 @@ describe('External Integration Testing', () => {
           }
 
           return availableServers;
-        }
+        },
       };
 
       const servers = await mockMCPDetector.detectServers();
@@ -423,24 +424,24 @@ describe('External Integration Testing', () => {
     test('should parse MCP configuration', async () => {
       const mockMCPConfig = {
         mcpServers: {
-          "filesystem": {
-            command: "npx",
-            args: ["-y", "@modelcontextprotocol/server-filesystem", "/path/to/allowed/files"]
+          filesystem: {
+            command: 'npx',
+            args: ['-y', '@modelcontextprotocol/server-filesystem', '/path/to/allowed/files'],
           },
-          "github": {
-            command: "npx",
-            args: ["-y", "@modelcontextprotocol/server-github"]
-          }
-        }
+          github: {
+            command: 'npx',
+            args: ['-y', '@modelcontextprotocol/server-github'],
+          },
+        },
       };
 
-      mockFs.readFile.mockResolvedValue(JSON.stringify(mockMCPConfig));
+      fs.readFile.mockResolvedValue(JSON.stringify(mockMCPConfig));
 
       const mockMCPParser = {
-        parseConfig: async (configPath) => {
-          const configContent = await mockFs.readFile(configPath, 'utf8');
+        parseConfig: async configPath => {
+          const configContent = await fs.readFile(configPath, 'utf8');
           return JSON.parse(configContent);
-        }
+        },
       };
 
       const config = await mockMCPParser.parseConfig('test-mcp.json');
@@ -451,30 +452,30 @@ describe('External Integration Testing', () => {
     });
 
     test('should validate MCP server availability', async () => {
-      mockSpawn.mockReturnValue({
+      spawn.mockReturnValue({
         stdout: {
           on: jest.fn().mockImplementation((event, handler) => {
             if (event === 'data') {
               handler('MCP server started successfully');
             }
-          })
+          }),
         },
         stderr: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(0);
           }
-        })
+        }),
       });
 
       const mockMCPServer = {
-        validateServer: async (serverConfig) => {
+        validateServer: async serverConfig => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn(serverConfig.command, serverConfig.args);
+            const process = spawn(serverConfig.command, serverConfig.args);
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code === 0) {
                 resolve(true);
               } else {
@@ -488,44 +489,48 @@ describe('External Integration Testing', () => {
               resolve(false);
             }, 5000);
           });
-        }
+        },
       };
 
       const serverConfig = {
         command: 'npx',
-        args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp']
+        args: ['-y', '@modelcontextprotocol/server-filesystem', '/tmp'],
       };
 
       const isValid = await mockMCPServer.validateServer(serverConfig);
       expect(isValid).toBe(true);
-      expect(mockSpawn).toHaveBeenCalledWith('npx', ['-y', '@modelcontextprotocol/server-filesystem', '/tmp']);
+      expect(spawn).toHaveBeenCalledWith('npx', [
+        '-y',
+        '@modelcontextprotocol/server-filesystem',
+        '/tmp',
+      ]);
     });
   });
 
   describe('Tool Integration', () => {
     test('should integrate Task Master tools', async () => {
-      mockSpawn.mockReturnValue({
+      spawn.mockReturnValue({
         stdout: {
           on: jest.fn().mockImplementation((event, handler) => {
             handler('Task Master initialized');
-          })
+          }),
         },
         stderr: {
-          on: jest.fn()
+          on: jest.fn(),
         },
         on: jest.fn().mockImplementation((event, handler) => {
           if (event === 'close') {
             handler(0);
           }
-        })
+        }),
       });
 
       const mockTaskMaster = {
         initialize: async () => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('task-master', ['init']);
+            const process = spawn('task-master', ['init']);
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code === 0) {
                 resolve(true);
               } else {
@@ -537,14 +542,14 @@ describe('External Integration Testing', () => {
 
         listTasks: async () => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn('task-master', ['list']);
+            const process = spawn('task-master', ['list']);
 
             let output = '';
-            process.stdout.on('data', (data) => {
+            process.stdout.on('data', data => {
               output += data.toString();
             });
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               if (code === 0) {
                 resolve(output);
               } else {
@@ -552,7 +557,7 @@ describe('External Integration Testing', () => {
               }
             });
           });
-        }
+        },
       };
 
       const initialized = await mockTaskMaster.initialize();
@@ -560,31 +565,31 @@ describe('External Integration Testing', () => {
 
       const tasks = await mockTaskMaster.listTasks();
       expect(tasks).toBe('Task Master initialized');
-      expect(mockSpawn).toHaveBeenCalledWith('task-master', ['init']);
-      expect(mockSpawn).toHaveBeenCalledWith('task-master', ['list']);
+      expect(spawn).toHaveBeenCalledWith('task-master', ['init']);
+      expect(spawn).toHaveBeenCalledWith('task-master', ['list']);
     });
 
     test('should handle tool unavailability gracefully', async () => {
-      mockSpawn.mockImplementation((command) => {
+      spawn.mockImplementation(command => {
         if (command === 'task-master') {
           throw new Error('Command not found');
         }
-        return mockSpawn(command);
+        return spawn(command);
       });
 
       const mockToolChecker = {
-        checkToolAvailability: async (toolName) => {
+        checkToolAvailability: async toolName => {
           try {
-            const process = mockSpawn(toolName, ['--help']);
-            return new Promise((resolve) => {
-              process.on('close', (code) => {
+            const process = spawn(toolName, ['--help']);
+            return new Promise(resolve => {
+              process.on('close', code => {
                 resolve(code === 0);
               });
             });
           } catch (error) {
             return false;
           }
-        }
+        },
       };
 
       const isAvailable = await mockToolChecker.checkToolAvailability('task-master');
@@ -595,7 +600,7 @@ describe('External Integration Testing', () => {
   describe('Error Handling and Resilience', () => {
     test('should retry failed commands', async () => {
       let attemptCount = 0;
-      mockSpawn.mockImplementation(() => {
+      spawn.mockImplementation(() => {
         attemptCount++;
 
         if (attemptCount <= 2) {
@@ -607,7 +612,7 @@ describe('External Integration Testing', () => {
               if (event === 'close') {
                 handler(1); // Non-zero exit code
               }
-            })
+            }),
           };
         } else {
           // Third attempt succeeds
@@ -618,7 +623,7 @@ describe('External Integration Testing', () => {
               if (event === 'close') {
                 handler(0);
               }
-            })
+            }),
           };
         }
       });
@@ -628,9 +633,9 @@ describe('External Integration Testing', () => {
           for (let i = 0; i < maxRetries; i++) {
             try {
               const result = await new Promise((resolve, reject) => {
-                const process = mockSpawn(command, ['--test']);
+                const process = spawn(command, ['--test']);
 
-                process.on('close', (code) => {
+                process.on('close', code => {
                   if (code === 0) {
                     resolve(true);
                   } else {
@@ -648,7 +653,7 @@ describe('External Integration Testing', () => {
               await new Promise(resolve => setTimeout(resolve, 100));
             }
           }
-        }
+        },
       };
 
       const result = await mockRetryExecutor.executeWithRetry('test-command');
@@ -657,34 +662,35 @@ describe('External Integration Testing', () => {
     });
 
     test('should timeout long-running commands', async () => {
-      mockSpawn.mockReturnValue({
+      spawn.mockReturnValue({
         stdout: { on: jest.fn() },
         stderr: { on: jest.fn() },
         on: jest.fn().mockImplementation((event, handler) => {
           // Never call close to simulate hanging command
-        })
+        }),
       });
 
       const mockTimeoutExecutor = {
         executeWithTimeout: async (command, timeoutMs = 1000) => {
           return new Promise((resolve, reject) => {
-            const process = mockSpawn(command, ['--long-running']);
+            const process = spawn(command, ['--long-running']);
 
             const timeout = setTimeout(() => {
               process.kill('SIGTERM');
               reject(new Error(`Command timed out after ${timeoutMs}ms`));
             }, timeoutMs);
 
-            process.on('close', (code) => {
+            process.on('close', code => {
               clearTimeout(timeout);
               resolve(code === 0);
             });
           });
-        }
+        },
       };
 
-      await expect(mockTimeoutExecutor.executeWithTimeout('test-command', 100))
-        .rejects.toThrow('Command timed out after 100ms');
+      await expect(mockTimeoutExecutor.executeWithTimeout('test-command', 100)).rejects.toThrow(
+        'Command timed out after 100ms'
+      );
     });
   });
 });

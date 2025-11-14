@@ -2,34 +2,31 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  # TODO: Enable when lint/format scripts are added
-  # lint:
-  #   name: Lint and Format Check
-  #   runs-on: ubuntu-latest
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Setup Node.js
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: '20'
-  #         cache: 'npm'
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Run ESLint
-  #       run: npm run lint
-  #
-  #     - name: Check formatting
-  #       run: npm run format -- --check
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+        continue-on-error: true
 
   security:
     name: Security Audit
@@ -78,37 +75,36 @@ jobs:
         with:
           name: build-files
           path: dist/
+          retention-days: 7
 
-  # TODO: Enable when test scripts are added
-  # test-backend:
-  #   name: Backend Tests
-  #   runs-on: ubuntu-latest
-  #   needs: [security]
-  #   strategy:
-  #     matrix:
-  #       node-version: [18.x, 20.x, 22.x]
-  #
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v4
-  #
-  #     - name: Setup Node.js ${{ matrix.node-version }}
-  #       uses: actions/setup-node@v4
-  #       with:
-  #         node-version: ${{ matrix.node-version }}
-  #         cache: 'npm'
-  #
-  #     - name: Install dependencies
-  #       run: npm ci
-  #
-  #     - name: Run backend tests
-  #       run: npm run test:backend
-  #
-  #     - name: Upload coverage reports
-  #       uses: codecov/codecov-action@v3
-  #       with:
-  #         file: ./coverage/lcov.info
-  #         flags: backend
+  test-backend:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    needs: [security]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run backend tests
+        run: npm run test:backend
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: coverage/
+          retention-days: 7
 
   # TODO: Enable when test scripts are added
   # test-frontend:
@@ -213,21 +209,9 @@ jobs:
   performance:
     name: Performance Tests
     runs-on: ubuntu-latest
-    needs: [security, build]
+    needs: [build]
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
@@ -239,3 +223,37 @@ jobs:
           du -sh dist/*
           echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
           echo "Total bundle size: $(du -sh dist | cut -f1)" >> $GITHUB_STEP_SUMMARY
+
+          # Check bundle size limits
+          TOTAL_SIZE=$(du -sb dist | cut -f1)
+          MAX_SIZE=10485760  # 10MB
+          if [ "$TOTAL_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "⚠️ Warning: Bundle size ($TOTAL_SIZE bytes) exceeds recommended limit ($MAX_SIZE bytes)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Bundle size within recommended limits" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  status-check:
+    name: CI Status Check
+    runs-on: ubuntu-latest
+    needs: [build, test-backend, performance]
+    if: always()
+
+    steps:
+      - name: Check job statuses
+        run: |
+          echo "## CI Pipeline Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Backend Tests: ${{ needs.test-backend.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Performance: ${{ needs.performance.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.build.result }}" != "success" ] || \
+             [ "${{ needs.test-backend.result }}" != "success" ] || \
+             [ "${{ needs.performance.result }}" != "success" ]; then
+            echo "❌ CI Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ CI Pipeline Passed" >> $GITHUB_STEP_SUMMARY
+          fi

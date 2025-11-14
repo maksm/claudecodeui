@@ -4,23 +4,23 @@ import { promises as fs } from 'fs';
 
 // Mock dependencies
 jest.mock('fs', () => ({
-  ...jest.requireActual('fs'),
   promises: {
-    access: jest.fn(),
-    realpath: jest.fn(),
-    lstat: jest.fn(),
-    readlink: jest.fn(),
-    stat: jest.fn()
-  }
+    access: async () => {},
+    realpath: async p => p,
+    lstat: async () => ({
+      isSymbolicLink: () => false,
+      isDirectory: () => true,
+    }),
+    readlink: async () => '',
+    stat: async () => ({ isDirectory: () => true }),
+  },
 }));
 
 describe('File System Security and Path Validation', () => {
-  let mockFs;
   let originalEnv;
 
   beforeEach(() => {
     originalEnv = process.env;
-    mockFs = require('fs').promises;
     jest.clearAllMocks();
   });
 
@@ -46,7 +46,7 @@ describe('File System Security and Path Validation', () => {
         '/lib64',
         '/opt',
         '/tmp',
-        '/run'
+        '/run',
       ];
 
       forbiddenPaths.forEach(forbiddenPath => {
@@ -62,7 +62,7 @@ describe('File System Security and Path Validation', () => {
         '/usr/bin/evil',
         '/var/www/html',
         '/tmp/suspicious',
-        '/proc/version'
+        '/proc/version',
       ];
 
       dangerousPaths.forEach(dangerousPath => {
@@ -76,15 +76,15 @@ describe('File System Security and Path Validation', () => {
       const allowedPaths = [
         '/var/tmp/safe-workspace',
         '/var/folders/user/app',
-        '/var/tmp/user-project'
+        '/var/tmp/user-project',
       ];
 
       allowedPaths.forEach(allowedPath => {
         // Mock path resolution to return the allowed path
-        mockFs.realpath.mockResolvedValue(allowedPath);
-        mockFs.lstat.mockResolvedValue({
+        fs.realpath.mockResolvedValue(allowedPath);
+        fs.lstat.mockResolvedValue({
           isSymbolicLink: () => false,
-          isDirectory: () => true
+          isDirectory: () => true,
         });
 
         const result = validatePath(allowedPath);
@@ -97,7 +97,7 @@ describe('File System Security and Path Validation', () => {
       process.env.WORKSPACES_ROOT = workspaceRoot;
 
       // Mock workspace root resolution
-      mockFs.realpath.mockImplementation((p) => {
+      fs.realpath.mockImplementation(p => {
         if (p === workspaceRoot) {
           return Promise.resolve(workspaceRoot);
         }
@@ -106,20 +106,22 @@ describe('File System Security and Path Validation', () => {
 
       // Test valid path within workspace
       const validPath = '/home/user/workspaces/project';
-      mockFs.realpath.mockResolvedValueOnce(workspaceRoot);
-      mockFs.realpath.mockResolvedValueOnce(validPath);
+      fs.realpath.mockResolvedValueOnce(workspaceRoot);
+      fs.realpath.mockResolvedValueOnce(validPath);
 
       const validResult = validatePath(validPath);
       expect(validResult.valid).toBe(true);
 
       // Test invalid path outside workspace
       const invalidPath = '/home/unauthorized/project';
-      mockFs.realpath.mockResolvedValueOnce(workspaceRoot);
-      mockFs.realpath.mockResolvedValueOnce(invalidPath);
+      fs.realpath.mockResolvedValueOnce(workspaceRoot);
+      fs.realpath.mockResolvedValueOnce(invalidPath);
 
       const invalidResult = validatePath(invalidPath);
       expect(invalidResult.valid).toBe(false);
-      expect(invalidResult.error).toContain('Workspace path must be within the allowed workspace root');
+      expect(invalidResult.error).toContain(
+        'Workspace path must be within the allowed workspace root'
+      );
     });
 
     test('should handle path traversal attempts', () => {
@@ -128,7 +130,7 @@ describe('File System Security and Path Validation', () => {
         '/home/user/workspaces/../../../root/.ssh',
         'workspace/../../../etc/shadow',
         './../../../../etc/passwd',
-        '/home/user/workspaces/project/../../../../../bin/sh'
+        '/home/user/workspaces/project/../../../../../bin/sh',
       ];
 
       traversalAttempts.forEach(traversalPath => {
@@ -146,14 +148,14 @@ describe('File System Security and Path Validation', () => {
       const symlinkPath = '/home/user/workspaces/malicious-symlink';
       const linkTarget = '/etc/passwd';
 
-      mockFs.realpath.mockResolvedValueOnce(workspaceRoot);
-      mockFs.realpath.mockResolvedValueOnce(symlinkPath);
-      mockFs.lstat.mockResolvedValue({
+      fs.realpath.mockResolvedValueOnce(workspaceRoot);
+      fs.realpath.mockResolvedValueOnce(symlinkPath);
+      fs.lstat.mockResolvedValue({
         isSymbolicLink: () => true,
-        isDirectory: () => false
+        isDirectory: () => false,
       });
-      mockFs.readlink.mockResolvedValue(linkTarget);
-      mockFs.realpath.mockResolvedValueOnce('/etc/passwd');
+      fs.readlink.mockResolvedValue(linkTarget);
+      fs.realpath.mockResolvedValueOnce('/etc/passwd');
 
       const result = validatePath(symlinkPath);
       expect(result.valid).toBe(false);
@@ -168,8 +170,8 @@ describe('File System Security and Path Validation', () => {
       const relativePath = './myproject';
       const absolutePath = path.resolve(relativePath);
 
-      mockFs.realpath.mockResolvedValueOnce(workspaceRoot);
-      mockFs.realpath.mockResolvedValueOnce(absolutePath);
+      fs.realpath.mockResolvedValueOnce(workspaceRoot);
+      fs.realpath.mockResolvedValueOnce(absolutePath);
 
       const result = validatePath(relativePath);
       expect(result.valid).toBe(absolutePath.startsWith(workspaceRoot));
@@ -181,17 +183,15 @@ describe('File System Security and Path Validation', () => {
 
       const nonExistentPath = '/home/user/workspaces/new-project';
 
-      mockFs.realpath
-        .mockResolvedValueOnce(workspaceRoot)
-        .mockImplementationOnce((p) => {
-          if (p === nonExistentPath) {
-            throw new Error('ENOENT: no such file or directory');
-          }
-          return Promise.resolve(p);
-        });
+      fs.realpath.mockResolvedValueOnce(workspaceRoot).mockImplementationOnce(p => {
+        if (p === nonExistentPath) {
+          throw new Error('ENOENT: no such file or directory');
+        }
+        return Promise.resolve(p);
+      });
 
       // Mock parent directory access
-      mockFs.realpath.mockResolvedValueOnce(workspaceRoot);
+      fs.realpath.mockResolvedValueOnce(workspaceRoot);
 
       const result = validatePath(nonExistentPath);
       expect(result.valid).toBe(true); // Should be valid for new workspace creation
@@ -203,11 +203,11 @@ describe('File System Security and Path Validation', () => {
       const filePath = '/home/user/workspaces/project/config.txt';
       const testCases = [
         { exists: true, shouldPass: true },
-        { exists: false, shouldPass: false }
+        { exists: false, shouldPass: false },
       ];
 
       for (const testCase of testCases) {
-        mockFs.access.mockImplementation(() => {
+        fs.access.mockImplementation(() => {
           if (testCase.exists) {
             return Promise.resolve();
           } else {
@@ -232,7 +232,7 @@ describe('File System Security and Path Validation', () => {
         '/home/user/workspaces/project/.ssh/id_rsa',
         '/home/user/workspaces/project/.aws/credentials',
         '/home/user/workspaces/project/.npmrc',
-        '/home/user/workspaces/project/.docker/config.json'
+        '/home/user/workspaces/project/.docker/config.json',
       ];
 
       sensitiveFiles.forEach(sensitiveFile => {
@@ -251,7 +251,7 @@ describe('File System Security and Path Validation', () => {
         '/home/user/workspaces/project/docs/api.md',
         '/home/user/workspaces/project/config/settings.json',
         '/home/user/workspaces/project/public/index.html',
-        '/home/user/workspaces/project/styles/main.css'
+        '/home/user/workspaces/project/styles/main.css',
       ];
 
       safeFiles.forEach(safeFile => {
@@ -266,14 +266,14 @@ describe('File System Security and Path Validation', () => {
         { mode: 0o755, readable: true, writable: true, executable: true },
         { mode: 0o400, readable: true, writable: false, executable: false },
         { mode: 0o200, readable: false, writable: true, executable: false },
-        { mode: 0o100, readable: false, writable: false, executable: true }
+        { mode: 0o100, readable: false, writable: false, executable: true },
       ];
 
       for (const testCase of testCases) {
-        mockFs.stat.mockResolvedValue({
+        fs.stat.mockResolvedValue({
           mode: testCase.mode,
           isFile: () => true,
-          isDirectory: () => false
+          isDirectory: () => false,
         });
 
         const result = await validateFilePermissions('/home/user/workspaces/project/test.txt');
@@ -294,7 +294,7 @@ describe('File System Security and Path Validation', () => {
         '$(rm -rf /)',
         ';cat /etc/passwd',
         '&& cat /etc/passwd',
-        '../../etc/passwd'
+        '../../etc/passwd',
       ];
 
       dangerousInputs.forEach(dangerousInput => {
@@ -325,7 +325,7 @@ describe('File System Security and Path Validation', () => {
         'tail',
         'wc',
         'sort',
-        'uniq'
+        'uniq',
       ];
 
       const disallowedCommands = [
@@ -348,7 +348,7 @@ describe('File System Security and Path Validation', () => {
         'wget',
         'nc',
         'netcat',
-        'ssh'
+        'ssh',
       ];
 
       allowedCommands.forEach(command => {
@@ -369,7 +369,7 @@ describe('File System Security and Path Validation', () => {
         '"file.txt"; rm -rf /',
         "'file.txt'; rm -rf /",
         'file.txt`rm -rf /`',
-        'file.txt$(rm -rf /)'
+        'file.txt$(rm -rf /)',
       ];
 
       injectionAttempts.forEach(injectionAttempt => {
@@ -419,7 +419,7 @@ describe('File System Security and Path Validation', () => {
         { var: 'PORT', value: '65535', valid: true },
         { var: 'PORT', value: '0', valid: false },
         { var: 'PORT', value: '65536', valid: false },
-        { var: 'PORT', value: 'invalid', valid: false }
+        { var: 'PORT', value: 'invalid', valid: false },
       ];
 
       testCases.forEach(testCase => {
@@ -437,7 +437,7 @@ describe('File System Security and Path Validation', () => {
         'LD_PRELOAD=/malicious/library.so',
         'NODE_OPTIONS=--inspect=0.0.0.0:9229',
         'ELECTRON_RUN_AS_NODE=1',
-        'npm_config_user=root'
+        'npm_config_user=root',
       ];
 
       injectionAttempts.forEach(maliciousEnv => {
@@ -464,7 +464,7 @@ describe('File System Security and Path Validation', () => {
         'file..txt', // Double dots
         '.hidden', // Hidden file
         'LPT1', // Reserved Windows name
-        'COM1' // Reserved Windows name
+        'COM1', // Reserved Windows name
       ];
 
       dangerousFilenames.forEach(dangerousFile => {
@@ -482,20 +482,48 @@ describe('File System Security and Path Validation', () => {
 
     test('should validate allowed file extensions', () => {
       const allowedExtensions = [
-        '.js', '.jsx', '.ts', '.tsx', '.md', '.json', '.txt', '.html',
-        '.css', '.scss', '.less', '.py', '.java', '.cpp', '.c', '.h'
+        '.js',
+        '.jsx',
+        '.ts',
+        '.tsx',
+        '.md',
+        '.json',
+        '.txt',
+        '.html',
+        '.css',
+        '.scss',
+        '.less',
+        '.py',
+        '.java',
+        '.cpp',
+        '.c',
+        '.h',
       ];
 
       const disallowedExtensions = [
-        '.exe', '.bat', '.cmd', '.sh', '.ps1', '.php', '.jsp', '.asp',
-        '.dll', '.so', '.dylib', '.bin', '.deb', '.rpm', '.pkg', '.dmg'
+        '.exe',
+        '.bat',
+        '.cmd',
+        '.sh',
+        '.ps1',
+        '.php',
+        '.jsp',
+        '.asp',
+        '.dll',
+        '.so',
+        '.dylib',
+        '.bin',
+        '.deb',
+        '.rpm',
+        '.pkg',
+        '.dmg',
       ];
 
       const testFiles = [
         ...allowedExtensions.map(ext => `file${ext}`),
         ...disallowedExtensions.map(ext => `file${ext}`),
         'noextension',
-        '.hiddenfile'
+        '.hiddenfile',
       ];
 
       testFiles.forEach(file => {
@@ -516,7 +544,7 @@ describe('File System Security and Path Validation', () => {
         { size: 1024, limit: 1048576, valid: true }, // 1KB < 1MB
         { size: 1048576, limit: 1048576, valid: true }, // 1MB = 1MB
         { size: 1048577, limit: 1048576, valid: false }, // 1MB + 1 > 1MB
-        { size: 10485760, limit: 1048576, valid: false } // 10MB > 1MB
+        { size: 10485760, limit: 1048576, valid: false }, // 10MB > 1MB
       ];
 
       testCases.forEach(testCase => {
@@ -532,7 +560,7 @@ describe('File System Security and Path Validation', () => {
       const testCases = [
         { length: 255, limit: 255, valid: true },
         { length: 256, limit: 255, valid: false },
-        { length: 1000, limit: 255, valid: false }
+        { length: 1000, limit: 255, valid: false },
       ];
 
       testCases.forEach(testCase => {
@@ -550,7 +578,7 @@ describe('File System Security and Path Validation', () => {
         { depth: 5, limit: 10, valid: true },
         { depth: 10, limit: 10, valid: true },
         { depth: 11, limit: 10, valid: false },
-        { depth: 50, limit: 10, valid: false }
+        { depth: 50, limit: 10, valid: false },
       ];
 
       testCases.forEach(testCase => {
@@ -567,7 +595,24 @@ describe('File System Security and Path Validation', () => {
 
 // Helper functions for testing (would normally be in the actual source code)
 function validatePath(requestedPath) {
-  const forbiddenPaths = ['/', '/etc', '/bin', '/sbin', '/usr', '/dev', '/proc', '/sys', '/var', '/boot', '/root', '/lib', '/lib64', '/opt', '/tmp', '/run'];
+  const forbiddenPaths = [
+    '/',
+    '/etc',
+    '/bin',
+    '/sbin',
+    '/usr',
+    '/dev',
+    '/proc',
+    '/sys',
+    '/var',
+    '/boot',
+    '/root',
+    '/lib',
+    '/lib64',
+    '/opt',
+    '/tmp',
+    '/run',
+  ];
 
   if (forbiddenPaths.includes(requestedPath) || requestedPath === '/') {
     return { valid: false, error: 'Cannot create workspace in system directory' };
@@ -601,13 +646,13 @@ function validateFileSafety(filePath) {
     /shadow$/i,
     /\/\.aws\//i,
     /\/\.npmrc$/i,
-    /\/\.docker\//i
+    /\/\.docker\//i,
   ];
 
   const isSensitive = sensitivePatterns.some(pattern => pattern.test(filePath));
   return {
     safe: !isSensitive,
-    reason: isSensitive ? 'File type is considered sensitive' : 'File type is safe'
+    reason: isSensitive ? 'File type is considered sensitive' : 'File type is safe',
   };
 }
 
@@ -618,19 +663,53 @@ async function validateFilePermissions(filePath) {
   return {
     readable: (mode & 0o444) !== 0,
     writable: (mode & 0o222) !== 0,
-    executable: (mode & 0o111) !== 0
+    executable: (mode & 0o111) !== 0,
   };
 }
 
 function sanitizeCommandInput(input) {
-  return input
-    .replace(/[;&|`$<>]/g, '')
-    .trim();
+  return input.replace(/[;&|`$<>]/g, '').trim();
 }
 
 function isCommandAllowed(command) {
-  const allowedCommands = ['git', 'npm', 'node', 'python', 'python3', 'ls', 'cat', 'grep', 'find', 'head', 'tail', 'wc', 'sort', 'uniq'];
-  const disallowedCommands = ['rm', 'rmdir', 'mv', 'cp', 'chmod', 'chown', 'sudo', 'su', 'kill', 'killall', 'shutdown', 'reboot', 'passwd', 'useradd', 'userdel', 'curl', 'wget', 'nc', 'netcat', 'ssh'];
+  const allowedCommands = [
+    'git',
+    'npm',
+    'node',
+    'python',
+    'python3',
+    'ls',
+    'cat',
+    'grep',
+    'find',
+    'head',
+    'tail',
+    'wc',
+    'sort',
+    'uniq',
+  ];
+  const disallowedCommands = [
+    'rm',
+    'rmdir',
+    'mv',
+    'cp',
+    'chmod',
+    'chown',
+    'sudo',
+    'su',
+    'kill',
+    'killall',
+    'shutdown',
+    'reboot',
+    'passwd',
+    'useradd',
+    'userdel',
+    'curl',
+    'wget',
+    'nc',
+    'netcat',
+    'ssh',
+  ];
 
   return allowedCommands.includes(command) && !disallowedCommands.includes(command);
 }
@@ -640,7 +719,13 @@ function buildSafeArgs(args) {
 }
 
 function validateEnvironmentVariable(name, value) {
-  const sensitivePatterns = [/PATH/, /LD_PRELOAD/, /NODE_OPTIONS/, /ELECTRON_RUN_AS_NODE/, /npm_config_/];
+  const sensitivePatterns = [
+    /PATH/,
+    /LD_PRELOAD/,
+    /NODE_OPTIONS/,
+    /ELECTRON_RUN_AS_NODE/,
+    /npm_config_/,
+  ];
 
   if (sensitivePatterns.some(pattern => pattern.test(name))) {
     return { valid: false, error: `Environment variable ${name} is potentially dangerous` };
@@ -650,10 +735,16 @@ function validateEnvironmentVariable(name, value) {
   switch (name) {
     case 'NODE_ENV':
       const validEnvs = ['development', 'production', 'test'];
-      return { valid: validEnvs.includes(value), error: !validEnvs.includes(value) ? 'Invalid NODE_ENV value' : null };
+      return {
+        valid: validEnvs.includes(value),
+        error: !validEnvs.includes(value) ? 'Invalid NODE_ENV value' : null,
+      };
     case 'PORT':
       const port = parseInt(value);
-      return { valid: port > 0 && port <= 65535, error: (!port || port <= 0 || port > 65535) ? 'Invalid PORT value' : null };
+      return {
+        valid: port > 0 && port <= 65535,
+        error: !port || port <= 0 || port > 65535 ? 'Invalid PORT value' : null,
+      };
     default:
       return { valid: true };
   }
@@ -670,26 +761,46 @@ function sanitizeFilename(filename) {
 }
 
 function validateFileExtension(filename) {
-  const dangerousExtensions = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.php', '.jsp', '.asp', '.dll', '.so', '.dylib', '.bin', '.deb', '.rpm', '.pkg', '.dmg'];
+  const dangerousExtensions = [
+    '.exe',
+    '.bat',
+    '.cmd',
+    '.sh',
+    '.ps1',
+    '.php',
+    '.jsp',
+    '.asp',
+    '.dll',
+    '.so',
+    '.dylib',
+    '.bin',
+    '.deb',
+    '.rpm',
+    '.pkg',
+    '.dmg',
+  ];
 
   const isDangerous = dangerousExtensions.some(ext => filename.toLowerCase().endsWith(ext));
   return {
     allowed: !isDangerous,
-    reason: isDangerous ? 'File type is considered dangerous' : 'File type is safe'
+    reason: isDangerous ? 'File type is considered dangerous' : 'File type is safe',
   };
 }
 
 function validateFileSize(size, maxSize) {
   return {
     valid: size <= maxSize,
-    error: size > maxSize ? `File size ${size} exceeds maximum allowed size ${maxSize}` : null
+    error: size > maxSize ? `File size ${size} exceeds maximum allowed size ${maxSize}` : null,
   };
 }
 
 function validatePathLength(path, maxLength) {
   return {
     valid: path.length <= maxLength,
-    error: path.length > maxLength ? `Path length ${path.length} exceeds maximum allowed length ${maxLength}` : null
+    error:
+      path.length > maxLength
+        ? `Path length ${path.length} exceeds maximum allowed length ${maxLength}`
+        : null,
   };
 }
 
@@ -697,6 +808,9 @@ function validateDirectoryDepth(path, maxDepth) {
   const depth = path.split(path.sep).length;
   return {
     valid: depth <= maxDepth,
-    error: depth > maxDepth ? `Directory depth ${depth} exceeds maximum allowed depth ${maxDepth}` : null
+    error:
+      depth > maxDepth
+        ? `Directory depth ${depth} exceeds maximum allowed depth ${maxDepth}`
+        : null,
   };
 }

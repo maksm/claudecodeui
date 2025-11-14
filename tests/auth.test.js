@@ -4,24 +4,32 @@ import express from 'express';
 import { setupTestDatabase, cleanupTestDatabase } from './database.js';
 import { createMockApp } from './test-utils.js';
 import authRoutes from '../server/routes/auth.js';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-// Mock dependencies
+// Mock dependencies - use simple mocks that will be configured in beforeEach
 jest.mock('bcrypt', () => ({
-  hash: jest.fn(),
-  compare: jest.fn()
+  default: {
+    hash: async () => 'hashedpassword',
+    compare: async () => true,
+  },
+  hash: async () => 'hashedpassword',
+  compare: async () => true,
 }));
 
 jest.mock('jsonwebtoken', () => ({
-  sign: jest.fn(),
-  verify: jest.fn()
+  default: {
+    sign: () => 'mock-jwt-token',
+    verify: () => ({ userId: 1, username: 'testuser' }),
+  },
+  sign: () => 'mock-jwt-token',
+  verify: () => ({ userId: 1, username: 'testuser' }),
 }));
 
 describe('Authentication Routes', () => {
   let app;
   let mockDb;
   let mockUserDb;
-  let bcrypt = require('bcrypt');
-  let jwt = require('jsonwebtoken');
 
   beforeEach(async () => {
     // Setup test database
@@ -34,13 +42,13 @@ describe('Authentication Routes', () => {
       getUserByUsername: jest.fn(),
       getUserById: jest.fn().mockReturnValue({ id: 1, username: 'testuser' }),
       getFirstUser: jest.fn().mockReturnValue({ id: 1, username: 'testuser' }),
-      updateLastLogin: jest.fn()
+      updateLastLogin: jest.fn(),
     };
 
     // Mock the database imports
     jest.doMock('../server/database/db.js', () => ({
       userDb: mockUserDb,
-      db: mockDb
+      db: mockDb,
     }));
 
     // Reset all mocks
@@ -60,26 +68,22 @@ describe('Authentication Routes', () => {
     test('should return auth status when no users exist', async () => {
       mockUserDb.hasUsers.mockReturnValue(false);
 
-      const response = await request(app)
-        .get('/api/auth/status')
-        .expect(200);
+      const response = await request(app).get('/api/auth/status').expect(200);
 
       expect(response.body).toEqual({
         needsSetup: true,
-        isAuthenticated: false
+        isAuthenticated: false,
       });
     });
 
     test('should return auth status when users exist', async () => {
       mockUserDb.hasUsers.mockReturnValue(true);
 
-      const response = await request(app)
-        .get('/api/auth/status')
-        .expect(200);
+      const response = await request(app).get('/api/auth/status').expect(200);
 
       expect(response.body).toEqual({
         needsSetup: false,
-        isAuthenticated: false
+        isAuthenticated: false,
       });
     });
 
@@ -88,12 +92,10 @@ describe('Authentication Routes', () => {
         throw new Error('Database error');
       });
 
-      const response = await request(app)
-        .get('/api/auth/status')
-        .expect(500);
+      const response = await request(app).get('/api/auth/status').expect(500);
 
       expect(response.body).toEqual({
-        error: 'Internal server error'
+        error: 'Internal server error',
       });
     });
   });
@@ -107,13 +109,10 @@ describe('Authentication Routes', () => {
     test('should register a new user successfully', async () => {
       const userData = {
         username: 'testuser',
-        password: 'password123'
+        password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/register')
-        .send(userData)
-        .expect(200);
+      const response = await request(app).post('/api/auth/register').send(userData).expect(200);
 
       expect(mockUserDb.hasUsers).toHaveBeenCalled();
       expect(bcrypt.hash).toHaveBeenCalledWith('password123', 12);
@@ -122,7 +121,7 @@ describe('Authentication Routes', () => {
       expect(response.body).toEqual({
         success: true,
         user: { id: 1, username: 'testuser' },
-        token: 'mock-jwt-token'
+        token: 'mock-jwt-token',
       });
     });
 
@@ -133,7 +132,7 @@ describe('Authentication Routes', () => {
         .expect(400);
 
       expect(response.body).toEqual({
-        error: 'Username and password are required'
+        error: 'Username and password are required',
       });
     });
 
@@ -144,7 +143,7 @@ describe('Authentication Routes', () => {
         .expect(400);
 
       expect(response.body).toEqual({
-        error: 'Username and password are required'
+        error: 'Username and password are required',
       });
     });
 
@@ -155,7 +154,7 @@ describe('Authentication Routes', () => {
         .expect(400);
 
       expect(response.body).toEqual({
-        error: 'Username must be at least 3 characters, password at least 6 characters'
+        error: 'Username must be at least 3 characters, password at least 6 characters',
       });
     });
 
@@ -166,7 +165,7 @@ describe('Authentication Routes', () => {
         .expect(400);
 
       expect(response.body).toEqual({
-        error: 'Username must be at least 3 characters, password at least 6 characters'
+        error: 'Username must be at least 3 characters, password at least 6 characters',
       });
     });
 
@@ -179,7 +178,7 @@ describe('Authentication Routes', () => {
         .expect(403);
 
       expect(response.body).toEqual({
-        error: 'User already exists. This is a single-user system.'
+        error: 'User already exists. This is a single-user system.',
       });
     });
 
@@ -197,7 +196,7 @@ describe('Authentication Routes', () => {
         .expect(409);
 
       expect(response.body).toEqual({
-        error: 'Username already exists'
+        error: 'Username already exists',
       });
     });
 
@@ -210,7 +209,7 @@ describe('Authentication Routes', () => {
         .expect(500);
 
       expect(response.body).toEqual({
-        error: 'Internal server error'
+        error: 'Internal server error',
       });
     });
   });
@@ -222,20 +221,17 @@ describe('Authentication Routes', () => {
       mockUserDb.getUserByUsername.mockReturnValue({
         id: 1,
         username: 'testuser',
-        password_hash: 'hashedpassword'
+        password_hash: 'hashedpassword',
       });
     });
 
     test('should login user successfully', async () => {
       const loginData = {
         username: 'testuser',
-        password: 'password123'
+        password: 'password123',
       };
 
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send(loginData)
-        .expect(200);
+      const response = await request(app).post('/api/auth/login').send(loginData).expect(200);
 
       expect(mockUserDb.getUserByUsername).toHaveBeenCalledWith('testuser');
       expect(bcrypt.compare).toHaveBeenCalledWith('password123', 'hashedpassword');
@@ -244,7 +240,7 @@ describe('Authentication Routes', () => {
       expect(response.body).toEqual({
         success: true,
         user: { id: 1, username: 'testuser' },
-        token: 'mock-jwt-token'
+        token: 'mock-jwt-token',
       });
     });
 
@@ -255,7 +251,7 @@ describe('Authentication Routes', () => {
         .expect(400);
 
       expect(response.body).toEqual({
-        error: 'Username and password are required'
+        error: 'Username and password are required',
       });
     });
 
@@ -266,7 +262,7 @@ describe('Authentication Routes', () => {
         .expect(400);
 
       expect(response.body).toEqual({
-        error: 'Username and password are required'
+        error: 'Username and password are required',
       });
     });
 
@@ -279,7 +275,7 @@ describe('Authentication Routes', () => {
         .expect(401);
 
       expect(response.body).toEqual({
-        error: 'Invalid username or password'
+        error: 'Invalid username or password',
       });
     });
 
@@ -292,7 +288,7 @@ describe('Authentication Routes', () => {
         .expect(401);
 
       expect(response.body).toEqual({
-        error: 'Invalid username or password'
+        error: 'Invalid username or password',
       });
     });
 
@@ -305,7 +301,7 @@ describe('Authentication Routes', () => {
         .expect(500);
 
       expect(response.body).toEqual({
-        error: 'Internal server error'
+        error: 'Internal server error',
       });
     });
   });
@@ -322,20 +318,21 @@ describe('Authentication Routes', () => {
         .set('Authorization', 'Bearer valid-token')
         .expect(200);
 
-      expect(jwt.verify).toHaveBeenCalledWith('valid-token', process.env.JWT_SECRET || 'test-jwt-secret');
+      expect(jwt.verify).toHaveBeenCalledWith(
+        'valid-token',
+        process.env.JWT_SECRET || 'test-jwt-secret'
+      );
       expect(mockUserDb.getUserById).toHaveBeenCalledWith(1);
       expect(response.body).toEqual({
-        user: { id: 1, username: 'testuser' }
+        user: { id: 1, username: 'testuser' },
       });
     });
 
     test('should reject request without token', async () => {
-      const response = await request(app)
-        .get('/api/auth/user')
-        .expect(401);
+      const response = await request(app).get('/api/auth/user').expect(401);
 
       expect(response.body).toEqual({
-        error: 'Access denied. No token provided.'
+        error: 'Access denied. No token provided.',
       });
     });
 
@@ -350,7 +347,7 @@ describe('Authentication Routes', () => {
         .expect(403);
 
       expect(response.body).toEqual({
-        error: 'Invalid token'
+        error: 'Invalid token',
       });
     });
 
@@ -364,7 +361,7 @@ describe('Authentication Routes', () => {
         .expect(401);
 
       expect(response.body).toEqual({
-        error: 'Invalid token. User not found.'
+        error: 'Invalid token. User not found.',
       });
     });
   });
@@ -382,17 +379,15 @@ describe('Authentication Routes', () => {
 
       expect(response.body).toEqual({
         success: true,
-        message: 'Logged out successfully'
+        message: 'Logged out successfully',
       });
     });
 
     test('should reject logout without token', async () => {
-      const response = await request(app)
-        .post('/api/auth/logout')
-        .expect(401);
+      const response = await request(app).post('/api/auth/logout').expect(401);
 
       expect(response.body).toEqual({
-        error: 'Access denied. No token provided.'
+        error: 'Access denied. No token provided.',
       });
     });
   });
