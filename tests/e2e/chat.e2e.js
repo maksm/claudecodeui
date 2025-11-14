@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { test, expect, describe } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import ChatInterfacePage from './pages/ChatInterfacePage.js';
 import LoginPage from './pages/LoginPage.js';
 import { testData } from './fixtures/test-data.js';
@@ -8,10 +8,10 @@ import {
   navigateToChat,
   sendMessage,
   sendMultipleMessages,
-  cleanupTestData
+  cleanupTestData,
 } from './helpers/test-helpers.js';
 
-describe('Chat Interface E2E Tests', () => {
+test.describe('Chat Interface E2E Tests', () => {
   let chatPage;
   let loginPage;
 
@@ -26,7 +26,7 @@ describe('Chat Interface E2E Tests', () => {
     await cleanupTestData(page);
   });
 
-  describe('Chat Interface Loading', () => {
+  test.describe('Chat Interface Loading', () => {
     test('should load chat interface correctly', async ({ page }) => {
       await navigateToChat(page);
       await chatPage.expectChatInterfaceLoaded();
@@ -57,7 +57,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Message Sending and Receiving', () => {
+  test.describe('Message Sending and Receiving', () => {
     test('should send a message successfully', async ({ page }) => {
       await navigateToChat(page);
 
@@ -92,11 +92,7 @@ describe('Chat Interface E2E Tests', () => {
     test('should send multiple messages in sequence', async ({ page }) => {
       await navigateToChat(page);
 
-      const messages = [
-        'First message',
-        'Second message',
-        'Third message'
-      ];
+      const messages = ['First message', 'Second message', 'Third message'];
 
       await sendMultipleMessages(page, messages);
 
@@ -150,7 +146,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Message Display and Formatting', () => {
+  test.describe('Message Display and Formatting', () => {
     test('should display messages with proper timestamps', async ({ page }) => {
       await navigateToChat(page);
 
@@ -215,7 +211,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Chat Controls and Features', () => {
+  test.describe('Chat Controls and Features', () => {
     test('should clear chat history', async ({ page }) => {
       await navigateToChat(page);
 
@@ -294,7 +290,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Voice and Input Features', () => {
+  test.describe('Voice and Input Features', () => {
     test('should show voice input button', async ({ page }) => {
       await navigateToChat(page);
 
@@ -347,7 +343,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Chat History and Context', () => {
+  test.describe('Chat History and Context', () => {
     test('should load chat history', async ({ page }) => {
       await navigateToChat(page);
 
@@ -403,7 +399,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Error Handling', () => {
+  test.describe('Error Handling', () => {
     test('should handle network errors gracefully', async ({ page }) => {
       await navigateToChat(page);
 
@@ -461,7 +457,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Performance', () => {
+  test.describe('Performance', () => {
     test('should load chat interface quickly', async ({ page }) => {
       const startTime = Date.now();
 
@@ -493,11 +489,7 @@ describe('Chat Interface E2E Tests', () => {
     test('should handle rapid message sending', async ({ page }) => {
       await navigateToChat(page);
 
-      const messages = [
-        'Rapid message 1',
-        'Rapid message 2',
-        'Rapid message 3'
-      ];
+      const messages = ['Rapid message 1', 'Rapid message 2', 'Rapid message 3'];
 
       const startTime = Date.now();
 
@@ -510,7 +502,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Accessibility', () => {
+  test.describe('Accessibility', () => {
     test('should have proper accessibility labels', async ({ page }) => {
       await navigateToChat(page);
 
@@ -565,7 +557,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Mobile Responsiveness', () => {
+  test.describe('Mobile Responsiveness', () => {
     test('should adapt to mobile viewport', async ({ page }) => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 667 });
@@ -604,13 +596,15 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Real-time Features', () => {
+  test.describe('Real-time Features', () => {
     test('should show live typing indicators in collaborative mode', async ({ page }) => {
       // Mock collaborative session
       await page.evaluate(() => {
-        window.dispatchEvent(new CustomEvent('user-typing', {
-          detail: { username: 'Other User' }
-        }));
+        window.dispatchEvent(
+          new CustomEvent('user-typing', {
+            detail: { username: 'Other User' },
+          })
+        );
       });
 
       const typingIndicator = page.locator('[data-testid="other-user-typing"]');
@@ -631,7 +625,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Search and Filtering', () => {
+  test.describe('Search and Filtering', () => {
     test('should search chat history', async ({ page }) => {
       await navigateToChat(page);
 
@@ -655,7 +649,7 @@ describe('Chat Interface E2E Tests', () => {
     });
   });
 
-  describe('Export and Sharing', () => {
+  test.describe('Export and Sharing', () => {
     test('should export chat conversation', async ({ page }) => {
       await navigateToChat(page);
 

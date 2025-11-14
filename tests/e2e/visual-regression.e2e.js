@@ -1,4 +1,4 @@
-import { expect, describe } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { test as baseTest } from '@playwright/test';
 import { VisualRegressionHelper, AccessibilityHelper } from '../helpers/accessibility-helpers.js';
 import { loginAsUser, cleanupTestData } from './helpers/test-helpers.js';
@@ -19,7 +19,7 @@ export const testWithVisual = baseTest.extend({
 
 const test = testWithVisual;
 
-describe('Visual Regression Tests', () => {
+test.describe('Visual Regression Tests', () => {
   test.beforeEach(async ({ page }) => {
     await cleanupTestData(page);
   });
@@ -28,7 +28,7 @@ describe('Visual Regression Tests', () => {
     await cleanupTestData(page);
   });
 
-  describe('Login Page Visual Tests', () => {
+  test.describe('Login Page Visual Tests', () => {
     test('should match baseline login page on desktop', async ({ page, visualHelper }) => {
       await page.goto('/login');
       await page.waitForLoadState('networkidle');
@@ -83,7 +83,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Dashboard Visual Tests', () => {
+  test.describe('Dashboard Visual Tests', () => {
     test('should match baseline dashboard on desktop', async ({ page, visualHelper }) => {
       await loginAsUser(page);
       await page.waitForLoadState('networkidle');
@@ -128,7 +128,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Projects Page Visual Tests', () => {
+  test.describe('Projects Page Visual Tests', () => {
     test('should match baseline projects list', async ({ page, visualHelper }) => {
       await loginAsUser(page);
       await page.click('[data-testid="projects-nav"]');
@@ -165,7 +165,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Chat Interface Visual Tests', () => {
+  test.describe('Chat Interface Visual Tests', () => {
     test('should match baseline chat interface', async ({ page, visualHelper }) => {
       await loginAsUser(page);
       await page.click('[data-testid="chat-nav"]');
@@ -202,7 +202,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Settings Visual Tests', () => {
+  test.describe('Settings Visual Tests', () => {
     test('should match baseline settings page', async ({ page, visualHelper }) => {
       await loginAsUser(page);
       await page.click('[data-testid="settings-nav"], [data-testid="settings-button"]');
@@ -226,7 +226,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Dark Mode Visual Tests', () => {
+  test.describe('Dark Mode Visual Tests', () => {
     test('should match baseline login page in dark mode', async ({ page, visualHelper }) => {
       // Enable dark mode
       await page.addStyleTag({
@@ -276,7 +276,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Responsive Design Visual Tests', () => {
+  test.describe('Responsive Design Visual Tests', () => {
     const viewports = [
       { name: 'mobile-small', width: 320, height: 568 },
       { name: 'mobile', width: 375, height: 667 },
@@ -302,7 +302,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Component State Visual Tests', () => {
+  test.describe('Component State Visual Tests', () => {
     test('should match baseline button states', async ({ page, visualHelper }) => {
       await loginAsUser(page);
 
@@ -345,7 +345,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Loading States Visual Tests', () => {
+  test.describe('Loading States Visual Tests', () => {
     test('should match baseline loading states', async ({ page, visualHelper }) => {
       // Mock slow network to create loading states
       await page.route('**/api/**', route => {
@@ -373,7 +373,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Error States Visual Tests', () => {
+  test.describe('Error States Visual Tests', () => {
     test('should match baseline error states', async ({ page, visualHelper }) => {
       // Mock network error
       await page.route('**/api/**', route => {
@@ -395,7 +395,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Visual Accessibility Tests', () => {
+  test.describe('Visual Accessibility Tests', () => {
     test('should maintain visual accessibility across themes', async ({
       page,
       accessibilityHelper,
@@ -434,7 +434,7 @@ describe('Visual Regression Tests', () => {
     });
   });
 
-  describe('Performance Visual Tests', () => {
+  test.describe('Performance Visual Tests', () => {
     test('should maintain visual consistency during performance constraints', async ({
       page,
       visualHelper,
@@ -457,7 +457,7 @@ describe('Visual Regression Tests', () => {
   });
 });
 
-describe('Visual Regression Report Generation', () => {
+test.describe('Visual Regression Report Generation', () => {
   test('should generate comprehensive visual comparison report', async ({ page, visualHelper }) => {
     const results = [];
 

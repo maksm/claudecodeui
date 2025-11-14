@@ -5,18 +5,18 @@ export const testData = {
     valid: {
       username: 'testuser',
       password: 'testpass',
-      email: 'test@example.com'
+      email: 'test@example.com',
     },
     platform: {
       username: 'platform-user',
       password: 'platform-pass',
       email: 'platform@example.com',
-      role: 'admin'
+      role: 'admin',
     },
     invalid: {
       username: 'wronguser',
-      password: 'wrongpass'
-    }
+      password: 'wrongpass',
+    },
   },
 
   // Project data
@@ -24,13 +24,13 @@ export const testData = {
     {
       name: 'Test Project 1',
       path: '/home/maks/test-project-1',
-      description: 'A test project for development'
+      description: 'A test project for development',
     },
     {
       name: 'Test Project 2',
       path: '/home/maks/test-project-2',
-      description: 'Another test project'
-    }
+      description: 'Another test project',
+    },
   ],
 
   // Tasks data
@@ -38,18 +38,18 @@ export const testData = {
     {
       title: 'Setup development environment',
       description: 'Configure development tools and environment',
-      priority: 'high'
+      priority: 'high',
     },
     {
       title: 'Implement user authentication',
       description: 'Add login and registration functionality',
-      priority: 'high'
+      priority: 'high',
     },
     {
       title: 'Create dashboard UI',
       description: 'Design and implement the main dashboard',
-      priority: 'medium'
-    }
+      priority: 'medium',
+    },
   ],
 
   // Messages for chat interface
@@ -57,7 +57,7 @@ export const testData = {
     'Hello, how can you help me?',
     'Explain React testing with Playwright',
     'Create a simple component example',
-    'What are React best practices?'
+    'What are React best practices?',
   ],
 
   // File tree data
@@ -69,37 +69,37 @@ export const testData = {
         {
           name: 'App.jsx',
           type: 'file',
-          size: '2.5 KB'
+          size: '2.5 KB',
         },
         {
           name: 'components',
           type: 'directory',
           children: [
             { name: 'Header.jsx', type: 'file', size: '1.2 KB' },
-            { name: 'Footer.jsx', type: 'file', size: '0.8 KB' }
-          ]
-        }
-      ]
-    }
+            { name: 'Footer.jsx', type: 'file', size: '0.8 KB' },
+          ],
+        },
+      ],
+    },
   ],
 
   // Settings configurations
   settings: {
     theme: {
       light: { mode: 'light', primaryColor: '#3b82f6' },
-      dark: { mode: 'dark', primaryColor: '#8b5cf6' }
+      dark: { mode: 'dark', primaryColor: '#8b5cf6' },
     },
     notifications: {
       enabled: true,
       sound: true,
-      desktop: false
+      desktop: false,
     },
     api: {
       endpoint: 'http://localhost:3001/api',
       timeout: 5000,
-      retries: 3
-    }
-  }
+      retries: 3,
+    },
+  },
 };
 
 export default testData;
@@ -117,4 +117,10 @@ export function createTestProject(overrides = {}) {
     ...testData.projects[0],
     ...overrides,
   };
+}
+
+export function generateRandomEmail() {
+  const timestamp = Date.now();
+  const random = Math.random().toString(36).substring(7);
+  return `test-${timestamp}-${random}@example.com`;
 }

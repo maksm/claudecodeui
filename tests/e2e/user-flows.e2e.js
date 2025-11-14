@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { test, expect, describe } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import LoginPage from './pages/LoginPage.js';
 import DashboardPage from './pages/DashboardPage.js';
 import ChatInterfacePage from './pages/ChatInterfacePage.js';
@@ -7,10 +7,10 @@ import { testData, createTestUser, generateRandomEmail } from './fixtures/test-d
 import {
   cleanupTestData,
   generateRandomProjectName,
-  createTestProject
+  createTestProject,
 } from './helpers/test-helpers.js';
 
-describe('Critical User Flow E2E Tests', () => {
+test.describe('Critical User Flow E2E Tests', () => {
   let loginPage, dashboardPage, chatPage;
 
   test.beforeEach(async ({ page }) => {
@@ -24,7 +24,7 @@ describe('Critical User Flow E2E Tests', () => {
     await cleanupTestData(page);
   });
 
-  describe('Complete User Registration and First Login Flow', () => {
+  test.describe('Complete User Registration and First Login Flow', () => {
     test('should complete full user registration and first-time setup', async ({ page }) => {
       // Step 1: Navigate to application
       await page.goto('/');
@@ -40,14 +40,10 @@ describe('Critical User Flow E2E Tests', () => {
 
       // Step 3: Fill registration form
       const newUser = createTestUser({
-        email: generateRandomEmail()
+        email: generateRandomEmail(),
       });
 
-      await loginPage.fillSetupForm(
-        newUser.username,
-        newUser.email,
-        newUser.password
-      );
+      await loginPage.fillSetupForm(newUser.username, newUser.email, newUser.password);
 
       // Step 4: Submit registration
       await loginPage.submitSetupForm();
@@ -80,7 +76,7 @@ describe('Critical User Flow E2E Tests', () => {
         await chatPage.expectChatInterfaceLoaded();
 
         // Step 9: Send first message as new user
-        await chatPage.sendMessage('Hello, I\'m a new user setting up my account');
+        await chatPage.sendMessage("Hello, I'm a new user setting up my account");
         await chatPage.expectTypingIndicator();
         await chatPage.waitForResponse();
 
@@ -121,7 +117,7 @@ describe('Critical User Flow E2E Tests', () => {
     test('should handle existing user login after registration', async ({ page }) => {
       // Complete registration first
       const newUser = createTestUser({
-        email: generateRandomEmail()
+        email: generateRandomEmail(),
       });
 
       await page.evaluate(() => {
@@ -129,11 +125,7 @@ describe('Critical User Flow E2E Tests', () => {
       });
       await page.goto('/login');
 
-      await loginPage.completeSetup(
-        newUser.username,
-        newUser.email,
-        newUser.password
-      );
+      await loginPage.completeSetup(newUser.username, newUser.email, newUser.password);
 
       // Logout
       await dashboardPage.openUserMenu();
@@ -150,20 +142,17 @@ describe('Critical User Flow E2E Tests', () => {
     });
   });
 
-  describe('Project Management Complete Workflow', () => {
+  test.describe('Project Management Complete Workflow', () => {
     test('should create project, add sessions, and manage lifecycle', async ({ page }) => {
       // Step 1: Login as existing user
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await dashboardPage.expectDashboardLoaded();
 
       // Step 2: Create first project
       const project1 = createTestProject({
-        name: generateRandomProjectName()
+        name: generateRandomProjectName(),
       });
 
       await dashboardPage.clickNewProject();
@@ -224,7 +213,7 @@ describe('Critical User Flow E2E Tests', () => {
 
       // Step 10: Create second project
       const project2 = createTestProject({
-        name: generateRandomProjectName()
+        name: generateRandomProjectName(),
       });
 
       await dashboardPage.clickNewProject();
@@ -259,14 +248,11 @@ describe('Critical User Flow E2E Tests', () => {
     test('should handle project deletion and associated data cleanup', async ({ page }) => {
       // Create a project first
       const testProject = createTestProject({
-        name: generateRandomProjectName()
+        name: generateRandomProjectName(),
       });
 
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await dashboardPage.clickNewProject();
 
@@ -298,9 +284,12 @@ describe('Critical User Flow E2E Tests', () => {
       await dashboardLink.click();
 
       // Delete the project
-      const firstProjectCard = page.locator(dashboardPage.projectCard).filter({
-        has: page.locator(`text=${testProject.name}`)
-      }).first();
+      const firstProjectCard = page
+        .locator(dashboardPage.projectCard)
+        .filter({
+          has: page.locator(`text=${testProject.name}`),
+        })
+        .first();
 
       const contextMenuButton = firstProjectCard.locator('[data-testid="project-context-menu"]');
       await contextMenuButton.click();
@@ -335,10 +324,7 @@ describe('Critical User Flow E2E Tests', () => {
 
     test('should handle project import from existing directory', async ({ page }) => {
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await dashboardPage.expectDashboardLoaded();
 
@@ -365,20 +351,17 @@ describe('Critical User Flow E2E Tests', () => {
     });
   });
 
-  describe('Chat Interface Complete Workflow', () => {
+  test.describe('Chat Interface Complete Workflow', () => {
     test('should support complete conversation flow with context', async ({ page }) => {
       // Step 1: Login and navigate to chat
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await chatPage.navigate();
       await chatPage.expectChatInterfaceLoaded();
 
       // Step 2: Start conversation with context setting
-      await chatPage.sendMessage('I\'m working on a React application and need help with testing');
+      await chatPage.sendMessage("I'm working on a React application and need help with testing");
       await chatPage.expectTypingIndicator();
       await chatPage.waitForResponse();
 
@@ -405,7 +388,7 @@ describe('Critical User Flow E2E Tests', () => {
       // Check for formatting in response
       const boldText = page.locator('strong');
       const italicText = page.locator('em');
-      expect(await boldText.count() + await italicText.count()).toBeGreaterThan(0);
+      expect((await boldText.count()) + (await italicText.count())).toBeGreaterThan(0);
 
       // Step 8: Test code block functionality
       await chatPage.sendMessage('Show me a React component with TypeScript');
@@ -434,7 +417,7 @@ describe('Critical User Flow E2E Tests', () => {
         await modelSelector.click();
 
         const modelOptions = page.locator('[data-testid^="model-option-"]');
-        if (await modelOptions.count() > 1) {
+        if ((await modelOptions.count()) > 1) {
           const differentModel = modelOptions.nth(1);
           await differentModel.click();
 
@@ -459,10 +442,7 @@ describe('Critical User Flow E2E Tests', () => {
 
     test('should handle file attachment and collaborative features', async ({ page }) => {
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await chatPage.navigate();
       await chatPage.expectChatInterfaceLoaded();
@@ -500,7 +480,7 @@ export default TestComponent;
       }
 
       // Step 2: Send message about the file
-      await chatPage.sendMessage('I\'ve attached a React component file. Can you review it?');
+      await chatPage.sendMessage("I've attached a React component file. Can you review it?");
       await chatPage.waitForResponse();
 
       // Step 3: Test voice input if available
@@ -569,10 +549,7 @@ export default TestComponent;
 
     test('should handle error recovery and network issues', async ({ page }) => {
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await chatPage.navigate();
       await chatPage.expectChatInterfaceLoaded();
@@ -646,14 +623,11 @@ export default TestComponent;
     });
   });
 
-  describe('Settings and Configuration Workflow', () => {
+  test.describe('Settings and Configuration Workflow', () => {
     test('should navigate and configure all settings', async ({ page }) => {
       // Step 1: Login and navigate to settings
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await dashboardPage.expectDashboardLoaded();
 
@@ -674,7 +648,7 @@ export default TestComponent;
         const lightTheme = page.locator('[data-testid="theme-light"]');
         const darkTheme = page.locator('[data-testid="theme-dark"]');
 
-        if (await lightTheme.isVisible() && await darkTheme.isVisible()) {
+        if ((await lightTheme.isVisible()) && (await darkTheme.isVisible())) {
           // Test theme switching
           const body = page.locator('body');
 
@@ -800,7 +774,7 @@ export default TestComponent;
     });
   });
 
-  describe('Mobile Responsive Workflow', () => {
+  test.describe('Mobile Responsive Workflow', () => {
     test('should support complete workflow on mobile devices', async ({ page }) => {
       // Set mobile viewport
       await page.setViewportSize({ width: 375, height: 812 }); // iPhone XR
@@ -810,10 +784,7 @@ export default TestComponent;
       await loginPage.expectElementToBeVisible(loginPage.usernameInput);
       await loginPage.expectElementToBeVisible(loginPage.passwordInput);
 
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await loginPage.expectLoginSuccessful();
 
@@ -827,7 +798,8 @@ export default TestComponent;
 
       // Step 3: Test mobile navigation
       const sidebar = page.locator('[data-testid="sidebar"]');
-      const isMobileLayout = !await sidebar.isVisible() || (await sidebar.getAttribute('class')).includes('mobile');
+      const isMobileLayout =
+        !(await sidebar.isVisible()) || (await sidebar.getAttribute('class')).includes('mobile');
 
       expect(isMobileLayout).toBe(true);
 
@@ -888,7 +860,7 @@ export default TestComponent;
         // Test swipe gestures if implemented
         await chatPage.page.locator(chatPage.messagesList).swipe({
           deltaX: -100,
-          deltaY: 0
+          deltaY: 0,
         });
       }
     });
@@ -898,10 +870,7 @@ export default TestComponent;
       await page.setViewportSize({ width: 375, height: 812 });
 
       await page.goto('/login');
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       // Test portrait layout
       await chatPage.navigate();
@@ -926,15 +895,12 @@ export default TestComponent;
     });
   });
 
-  describe('Performance and Accessibility Workflow', () => {
+  test.describe('Performance and Accessibility Workflow', () => {
     test('should meet performance standards across all workflows', async ({ page }) => {
       // Login performance
       const loginStartTime = Date.now();
       await page.goto('/login');
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
       const loginTime = Date.now() - loginStartTime;
       expect(loginTime).toBeLessThan(5000); // Login within 5 seconds
 
@@ -964,7 +930,7 @@ export default TestComponent;
         if (performance.memory) {
           return {
             used: Math.round(performance.memory.usedJSHeapSize / 1024 / 1024),
-            total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024)
+            total: Math.round(performance.memory.totalJSHeapSize / 1024 / 1024),
           };
         }
         return null;
@@ -980,7 +946,7 @@ export default TestComponent;
       const initialMetrics = await page.evaluate(() => {
         return {
           width: document.documentElement.clientWidth,
-          height: document.documentElement.clientHeight
+          height: document.documentElement.clientHeight,
         };
       });
 
@@ -990,7 +956,7 @@ export default TestComponent;
       const newMetrics = await page.evaluate(() => {
         return {
           width: document.documentElement.clientWidth,
-          height: document.documentElement.clientHeight
+          height: document.documentElement.clientHeight,
         };
       });
 
@@ -1013,10 +979,7 @@ export default TestComponent;
       await loginPage.checkLoginAccessibility();
 
       // Navigate through workflows checking accessibility at each step
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await dashboardPage.expectDashboardLoaded();
 

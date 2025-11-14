@@ -1,4 +1,4 @@
-import { expect, describe } from '@playwright/test';
+import { expect } from '@playwright/test';
 import { test as baseTest } from '@playwright/test';
 import {
   AccessibilityHelper,
@@ -28,7 +28,7 @@ export const testWithAccessibility = baseTest.extend({
 
 const test = testWithAccessibility;
 
-describe('Comprehensive Accessibility Tests', () => {
+test.describe('Comprehensive Accessibility Tests', () => {
   test.beforeEach(async ({ page }) => {
     await cleanupTestData(page);
   });
@@ -37,7 +37,7 @@ describe('Comprehensive Accessibility Tests', () => {
     await cleanupTestData(page);
   });
 
-  describe('Login Page Accessibility', () => {
+  test.describe('Login Page Accessibility', () => {
     test('should meet WCAG 2.1 Level A compliance', async ({ page, wcagChecker }) => {
       await page.goto('/login');
 
@@ -108,7 +108,7 @@ describe('Comprehensive Accessibility Tests', () => {
     });
   });
 
-  describe('Dashboard Accessibility', () => {
+  test.describe('Dashboard Accessibility', () => {
     test('should meet WCAG 2.1 Level A compliance', async ({ page, wcagChecker }) => {
       await loginAsUser(page);
 
@@ -156,7 +156,7 @@ describe('Comprehensive Accessibility Tests', () => {
     });
   });
 
-  describe('Chat Interface Accessibility', () => {
+  test.describe('Chat Interface Accessibility', () => {
     test('should meet WCAG 2.1 Level A compliance', async ({ page, wcagChecker }) => {
       await loginAsUser(page);
 
@@ -196,7 +196,7 @@ describe('Comprehensive Accessibility Tests', () => {
     });
   });
 
-  describe('Mobile Accessibility', () => {
+  test.describe('Mobile Accessibility', () => {
     test('should be accessible on mobile devices', async ({ page, wcagChecker }) => {
       await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE
       await loginAsUser(page);
@@ -240,7 +240,7 @@ describe('Comprehensive Accessibility Tests', () => {
     });
   });
 
-  describe('Focus Management', () => {
+  test.describe('Focus Management', () => {
     test('should maintain focus after navigation', async ({ page, accessibilityHelper }) => {
       await loginAsUser(page);
 
@@ -289,7 +289,7 @@ describe('Comprehensive Accessibility Tests', () => {
     });
   });
 
-  describe('Error Handling Accessibility', () => {
+  test.describe('Error Handling Accessibility', () => {
     test('should announce errors to screen readers', async ({ page }) => {
       await page.goto('/login');
 
@@ -327,7 +327,7 @@ describe('Comprehensive Accessibility Tests', () => {
     });
   });
 
-  describe('Performance Impact on Accessibility', () => {
+  test.describe('Performance Impact on Accessibility', () => {
     test('should maintain accessibility during loading', async ({ page, accessibilityHelper }) => {
       // Simulate slow network
       await page.route('**/*', route => {
@@ -369,7 +369,7 @@ describe('Comprehensive Accessibility Tests', () => {
   });
 });
 
-describe('Accessibility Reporting', () => {
+test.describe('Accessibility Reporting', () => {
   test('should generate comprehensive accessibility report', async ({
     page,
     accessibilityHelper,

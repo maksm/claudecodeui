@@ -1,4 +1,4 @@
-import { test, expect, describe } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import DashboardPage from './pages/DashboardPage.js';
 import LoginPage from './pages/LoginPage.js';
 import { testData, createTestProject } from './fixtures/test-data.js';
@@ -7,10 +7,10 @@ import {
   createProject,
   selectProject,
   cleanupTestData,
-  generateRandomProjectName
+  generateRandomProjectName,
 } from './helpers/test-helpers.js';
 
-describe('Project Management E2E Tests', () => {
+test.describe('Project Management E2E Tests', () => {
   let dashboardPage;
   let loginPage;
 
@@ -26,7 +26,7 @@ describe('Project Management E2E Tests', () => {
     await cleanupTestData(page);
   });
 
-  describe('Project Display', () => {
+  test.describe('Project Display', () => {
     test('should display projects correctly', async ({ page }) => {
       await dashboardPage.expectDashboardLoaded();
 
@@ -76,7 +76,7 @@ describe('Project Management E2E Tests', () => {
     });
   });
 
-  describe('Project Creation', () => {
+  test.describe('Project Creation', () => {
     test('should open new project modal', async ({ page }) => {
       await dashboardPage.expectDashboardLoaded();
       await dashboardPage.clickNewProject();
@@ -97,7 +97,7 @@ describe('Project Management E2E Tests', () => {
 
     test('should create new project successfully', async ({ page }) => {
       const newProject = createTestProject({
-        name: generateRandomProjectName()
+        name: generateRandomProjectName(),
       });
 
       await dashboardPage.clickNewProject();
@@ -178,12 +178,14 @@ describe('Project Management E2E Tests', () => {
     });
   });
 
-  describe('Project Navigation', () => {
+  test.describe('Project Navigation', () => {
     test('should navigate to project when clicked', async ({ page }) => {
       await dashboardPage.expectDashboardLoaded();
 
       const firstProjectCard = page.locator(dashboardPage.projectCard).first();
-      const projectName = await firstProjectCard.locator('[data-testid="project-name"]').textContent();
+      const projectName = await firstProjectCard
+        .locator('[data-testid="project-name"]')
+        .textContent();
 
       await firstProjectCard.click();
 
@@ -226,7 +228,7 @@ describe('Project Management E2E Tests', () => {
     });
   });
 
-  describe('Project Search and Filtering', () => {
+  test.describe('Project Search and Filtering', () => {
     test('should search projects by name', async ({ page }) => {
       await dashboardPage.expectDashboardLoaded();
 
@@ -288,7 +290,7 @@ describe('Project Management E2E Tests', () => {
     });
   });
 
-  describe('Project Actions', () => {
+  test.describe('Project Actions', () => {
     test('should show project context menu', async ({ page }) => {
       await dashboardPage.expectDashboardLoaded();
 
@@ -356,7 +358,9 @@ describe('Project Management E2E Tests', () => {
       const initialCount = await dashboardPage.getProjectsCount();
 
       const firstProjectCard = page.locator(dashboardPage.projectCard).first();
-      const projectName = await firstProjectCard.locator('[data-testid="project-name"]').textContent();
+      const projectName = await firstProjectCard
+        .locator('[data-testid="project-name"]')
+        .textContent();
 
       const contextMenuButton = firstProjectCard.locator('[data-testid="project-context-menu"]');
       await contextMenuButton.click();
@@ -388,7 +392,9 @@ describe('Project Management E2E Tests', () => {
       await dashboardPage.expectDashboardLoaded();
 
       const firstProjectCard = page.locator(dashboardPage.projectCard).first();
-      const projectName = await firstProjectCard.locator('[data-testid="project-name"]').textContent();
+      const projectName = await firstProjectCard
+        .locator('[data-testid="project-name"]')
+        .textContent();
 
       const contextMenuButton = firstProjectCard.locator('[data-testid="project-context-menu"]');
       await contextMenuButton.click();
@@ -411,7 +417,7 @@ describe('Project Management E2E Tests', () => {
     });
   });
 
-  describe('Project Sorting', () => {
+  test.describe('Project Sorting', () => {
     test('should sort projects by name', async ({ page }) => {
       await dashboardPage.expectDashboardLoaded();
 
@@ -453,7 +459,7 @@ describe('Project Management E2E Tests', () => {
     });
   });
 
-  describe('Project Sessions', () => {
+  test.describe('Project Sessions', () => {
     test('should create new session', async ({ page }) => {
       await dashboardPage.expectDashboardLoaded();
 
@@ -525,14 +531,14 @@ describe('Project Management E2E Tests', () => {
     });
   });
 
-  describe('Error Handling', () => {
+  test.describe('Error Handling', () => {
     test('should handle project creation errors', async ({ page }) => {
       // Mock server error
       await page.route('**/api/projects', route => {
         route.fulfill({
           status: 500,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'Failed to create project' })
+          body: JSON.stringify({ error: 'Failed to create project' }),
         });
       });
 
@@ -558,7 +564,7 @@ describe('Project Management E2E Tests', () => {
         route.fulfill({
           status: 500,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'Failed to load projects' })
+          body: JSON.stringify({ error: 'Failed to load projects' }),
         });
       });
 
@@ -570,7 +576,7 @@ describe('Project Management E2E Tests', () => {
     });
   });
 
-  describe('Performance', () => {
+  test.describe('Performance', () => {
     test('should load projects within reasonable time', async ({ page }) => {
       const startTime = Date.now();
 
@@ -588,13 +594,13 @@ describe('Project Management E2E Tests', () => {
           id: i + 1,
           name: `Project ${i + 1}`,
           path: `/home/maks/project-${i + 1}`,
-          description: `Description for project ${i + 1}`
+          description: `Description for project ${i + 1}`,
         }));
 
         route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify(manyProjects)
+          body: JSON.stringify(manyProjects),
         });
       });
 

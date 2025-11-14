@@ -1,4 +1,4 @@
-import { test, expect, describe } from '@playwright/test';
+import { test, expect } from '@playwright/test';
 import LoginPage from './pages/LoginPage.js';
 import DashboardPage from './pages/DashboardPage.js';
 import { testData, createTestUser } from './fixtures/test-data.js';
@@ -7,10 +7,10 @@ import {
   loginAsAdmin,
   completeSetup,
   cleanupTestData,
-  generateRandomEmail
+  generateRandomEmail,
 } from './helpers/test-helpers.js';
 
-describe('Authentication E2E Tests', () => {
+test.describe('Authentication E2E Tests', () => {
   let loginPage;
   let dashboardPage;
 
@@ -24,7 +24,7 @@ describe('Authentication E2E Tests', () => {
     await cleanupTestData(page);
   });
 
-  describe('Login Functionality', () => {
+  test.describe('Login Functionality', () => {
     test('should display login form correctly', async ({ page }) => {
       await loginPage.navigate();
 
@@ -40,10 +40,7 @@ describe('Authentication E2E Tests', () => {
 
     test('should login successfully with valid credentials', async ({ page }) => {
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await loginPage.expectLoginSuccessful();
       await dashboardPage.expectDashboardLoaded();
@@ -55,10 +52,7 @@ describe('Authentication E2E Tests', () => {
 
     test('should login successfully with admin credentials', async ({ page }) => {
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.platform.username,
-        testData.users.platform.password
-      );
+      await loginPage.login(testData.users.platform.username, testData.users.platform.password);
 
       await loginPage.expectLoginSuccessful();
       await dashboardPage.expectDashboardLoaded();
@@ -70,10 +64,7 @@ describe('Authentication E2E Tests', () => {
 
     test('should show error message with invalid credentials', async ({ page }) => {
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.invalid.username,
-        testData.users.invalid.password
-      );
+      await loginPage.login(testData.users.invalid.username, testData.users.invalid.password);
 
       await loginPage.expectLoginFailed('Invalid credentials');
     });
@@ -94,11 +85,7 @@ describe('Authentication E2E Tests', () => {
 
     test('should handle remember me functionality', async ({ page }) => {
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password,
-        true
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password, true);
 
       await loginPage.expectLoginSuccessful();
 
@@ -128,7 +115,7 @@ describe('Authentication E2E Tests', () => {
     });
   });
 
-  describe('Setup/Registration Flow', () => {
+  test.describe('Setup/Registration Flow', () => {
     test('should display setup form for first-time users', async ({ page }) => {
       await loginPage.navigate();
 
@@ -143,7 +130,7 @@ describe('Authentication E2E Tests', () => {
 
     test('should complete setup successfully', async ({ page }) => {
       const setupUser = createTestUser({
-        email: generateRandomEmail()
+        email: generateRandomEmail(),
       });
 
       await completeSetup(page);
@@ -204,7 +191,7 @@ describe('Authentication E2E Tests', () => {
     });
   });
 
-  describe('Logout Functionality', () => {
+  test.describe('Logout Functionality', () => {
     test('should logout successfully', async ({ page }) => {
       await loginAsUser(page);
       await dashboardPage.openUserMenu();
@@ -238,7 +225,7 @@ describe('Authentication E2E Tests', () => {
     });
   });
 
-  describe('Session Persistence', () => {
+  test.describe('Session Persistence', () => {
     test('should maintain login session across page reloads', async ({ page }) => {
       await loginAsUser(page);
       await dashboardPage.expectDashboardLoaded();
@@ -267,7 +254,7 @@ describe('Authentication E2E Tests', () => {
     });
   });
 
-  describe('Password Reset', () => {
+  test.describe('Password Reset', () => {
     test('should navigate to password reset page', async ({ page }) => {
       await loginPage.navigate();
 
@@ -291,10 +278,10 @@ describe('Authentication E2E Tests', () => {
     });
   });
 
-  describe('Security Features', () => {
+  test.describe('Security Features', () => {
     test('should enforce password complexity', async ({ page }) => {
       const setupUser = createTestUser({
-        password: '123' // Weak password
+        password: '123', // Weak password
       });
 
       await page.evaluate(() => {
@@ -304,11 +291,7 @@ describe('Authentication E2E Tests', () => {
       await loginPage.navigate();
       await loginPage.expectSetupFormVisible();
 
-      await loginPage.fillSetupForm(
-        setupUser.username,
-        setupUser.email,
-        setupUser.password
-      );
+      await loginPage.fillSetupForm(setupUser.username, setupUser.email, setupUser.password);
       await loginPage.submitSetupForm();
 
       await loginPage.expectValidationError(
@@ -341,7 +324,7 @@ describe('Authentication E2E Tests', () => {
     });
   });
 
-  describe('Accessibility', () => {
+  test.describe('Accessibility', () => {
     test('should have proper accessibility labels', async ({ page }) => {
       await loginPage.navigate();
       await loginPage.checkLoginAccessibility();
@@ -378,7 +361,7 @@ describe('Authentication E2E Tests', () => {
     });
   });
 
-  describe('Error Handling', () => {
+  test.describe('Error Handling', () => {
     test('should handle network errors gracefully', async ({ page }) => {
       // Mock network failure
       await page.route('**/api/auth/login', route => {
@@ -386,10 +369,7 @@ describe('Authentication E2E Tests', () => {
       });
 
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await loginPage.expectNetworkError();
     });
@@ -400,15 +380,12 @@ describe('Authentication E2E Tests', () => {
         route.fulfill({
           status: 500,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'Internal Server Error' })
+          body: JSON.stringify({ error: 'Internal Server Error' }),
         });
       });
 
       await loginPage.navigate();
-      await loginPage.login(
-        testData.users.valid.username,
-        testData.users.valid.password
-      );
+      await loginPage.login(testData.users.valid.username, testData.users.valid.password);
 
       await loginPage.expectLoginFailed('Internal Server Error');
     });
