@@ -50,11 +50,35 @@ FROM node:20-alpine AS testing
 WORKDIR /app
 
 # Install all dependencies including Playwright browsers
-RUN apk add --no-cache python3 make g++ nmap chromium
+RUN apk add --no-cache python3 make g++ nmap chromium \
+    # Install browser dependencies for Playwright on Alpine
+    && apk add --no-cache \
+        bash \
+        ca-certificates \
+        freetype \
+        freetype-dev \
+        harfbuzz \
+        ca-certificates \
+        libgcc \
+        libstdc++ \
+        libpng \
+        libpng-dev \
+        libxcomposite \
+        libxcursor \
+        libxdamage \
+        libxext \
+        libxfixes \
+        libxi \
+        libxrandr \
+        libxrender \
+        libxscrnsaver \
+        libxtst \
+        nss \
+        xdg-utils
 
 # Install all dependencies (including dev deps for testing)
 COPY package*.json ./
-RUN npm ci && npx playwright install chromium firefox webkit && npx playwright install-deps
+RUN npm ci && npx playwright install chromium firefox webkit --with-deps
 
 # Copy built assets and server code
 COPY --from=builder /app/dist ./dist
