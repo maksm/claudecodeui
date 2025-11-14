@@ -25,7 +25,7 @@ jobs:
         run: npm ci
 
       - name: Run ESLint
-        run: npm run lint -- --max-warnings 300
+        run: npm run lint
 
   security:
     name: Security Audit

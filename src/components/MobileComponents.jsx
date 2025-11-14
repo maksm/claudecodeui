@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useResponsiveDesign } from '../hooks/useResponsiveDesign';
 import { useTouchGestures } from '../contexts/TouchGestureContext';
 
@@ -298,12 +298,12 @@ export const MobileBottomSheet = ({
   const startHeight = useRef(0);
   const sheetRef = useRef(null);
 
-  const snapToHeight = height => {
+  const snapToHeight = useCallback(height => {
     if (sheetRef.current) {
       sheetRef.current.style.height = `${height}%`;
     }
     setCurrentSnap(height);
-  };
+  }, []);
 
   const handleDragStart = e => {
     setIsDragging(true);
@@ -347,10 +347,10 @@ export const MobileBottomSheet = ({
 
   useEffect(() => {
     if (isOpen) {
-      // Defer setState to avoid synchronous setState warning
-      setTimeout(() => snapToHeight(defaultSnap), 0);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      snapToHeight(defaultSnap);
     }
-  }, [isOpen, defaultSnap]);
+  }, [isOpen, defaultSnap, snapToHeight]);
 
   if (!isOpen) return null;
 

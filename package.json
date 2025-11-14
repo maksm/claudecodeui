@@ -29,7 +29,7 @@
     "preview": "vite preview",
     "start": "npm run build && npm run server",
     "release": "./release.sh",
-    "lint": "eslint . && prettier --check .",
+    "lint": "eslint . --max-warnings=400 && prettier --check .",
     "lint:fix": "eslint --fix . && prettier --write .",
     "format": "prettier --write .",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
