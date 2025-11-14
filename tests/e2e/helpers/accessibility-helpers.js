@@ -1,5 +1,4 @@
-import { AxeBuilder, AxeResults } from '@axe-core/playwright';
-import { AxeAnalyzerResult } from 'axe-core';
+import { AxeBuilder } from '@axe-core/playwright';
 
 /**
  * Accessibility testing helpers for Playwright

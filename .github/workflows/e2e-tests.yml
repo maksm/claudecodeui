@@ -1,17 +1,16 @@
 name: E2E Tests
 
-# Disabled: E2E tests need infrastructure fixes before re-enabling
-# The workflow references deleted test files and tests are currently failing
-# Re-enable after fixing test infrastructure and application issues
+# Comprehensive E2E testing including visual regression, accessibility, and performance
+# Tests run on push to main, PRs, and daily schedule
 on:
-  workflow_dispatch: # Manual trigger only
-  # push:
-  #   branches: [main, develop]
-  # pull_request:
-  #   branches: [main]
-  # schedule:
-  #   # Run tests daily at 2 AM UTC
-  #   - cron: '0 2 * * *'
+  workflow_dispatch: # Manual trigger
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
 
 env:
   NODE_VERSION: '20'
