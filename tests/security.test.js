@@ -2,6 +2,15 @@
 import path from 'path';
 import { promises as fs } from 'fs';
 
+// Import production path validation utilities
+import {
+  validatePath,
+  validatePathLength,
+  checkSensitiveFile,
+  validateFileAccess,
+  validatePathComprehensive,
+} from '../server/utils/path-validator.js';
+
 // Mock dependencies
 jest.mock('fs', () => ({
   promises: {
@@ -29,7 +38,7 @@ describe('File System Security and Path Validation', () => {
   });
 
   describe('Path Validation', () => {
-    test('should reject dangerous system paths', () => {
+    test('should reject dangerous system paths', async () => {
       const forbiddenPaths = [
         '/',
         '/etc',
@@ -49,14 +58,14 @@ describe('File System Security and Path Validation', () => {
         '/run',
       ];
 
-      forbiddenPaths.forEach(forbiddenPath => {
-        const result = validatePath(forbiddenPath);
+      for (const forbiddenPath of forbiddenPaths) {
+        const result = await validatePath(forbiddenPath);
         expect(result.valid).toBe(false);
         expect(result.error).toContain('Cannot create workspace in system directory');
-      });
+      }
     });
 
-    test('should reject paths starting with forbidden directories', () => {
+    test('should reject paths starting with forbidden directories', async () => {
       const dangerousPaths = [
         '/etc/passwd',
         '/usr/bin/evil',
@@ -65,21 +74,21 @@ describe('File System Security and Path Validation', () => {
         '/proc/version',
       ];
 
-      dangerousPaths.forEach(dangerousPath => {
-        const result = validatePath(dangerousPath);
+      for (const dangerousPath of dangerousPaths) {
+        const result = await validatePath(dangerousPath);
         expect(result.valid).toBe(false);
         expect(result.error).toContain('Cannot create workspace in system directory');
-      });
+      }
     });
 
-    test('should allow exceptions for safe system subdirectories', () => {
+    test('should allow exceptions for safe system subdirectories', async () => {
       const allowedPaths = [
         '/var/tmp/safe-workspace',
         '/var/folders/user/app',
         '/var/tmp/user-project',
       ];
 
-      allowedPaths.forEach(allowedPath => {
+      for (const allowedPath of allowedPaths) {
         // Mock path resolution to return the allowed path
         fs.realpath.mockResolvedValue(allowedPath);
         fs.lstat.mockResolvedValue({
@@ -87,9 +96,9 @@ describe('File System Security and Path Validation', () => {
           isDirectory: () => true,
         });
 
-        const result = validatePath(allowedPath);
+        const result = await validatePath(allowedPath);
         expect(result.valid).toBe(true);
-      });
+      }
     });
 
     test('should ensure paths are within allowed workspace root', () => {
@@ -593,49 +602,8 @@ describe('File System Security and Path Validation', () => {
   });
 });
 
-// Helper functions for testing (would normally be in the actual source code)
-function validatePath(requestedPath) {
-  const forbiddenPaths = [
-    '/',
-    '/etc',
-    '/bin',
-    '/sbin',
-    '/usr',
-    '/dev',
-    '/proc',
-    '/sys',
-    '/var',
-    '/boot',
-    '/root',
-    '/lib',
-    '/lib64',
-    '/opt',
-    '/tmp',
-    '/run',
-  ];
-
-  if (forbiddenPaths.includes(requestedPath) || requestedPath === '/') {
-    return { valid: false, error: 'Cannot create workspace in system directory' };
-  }
-
-  const normalizedPath = path.normalize(path.resolve(requestedPath));
-  for (const forbidden of forbiddenPaths) {
-    if (normalizedPath === forbidden || normalizedPath.startsWith(forbidden + path.sep)) {
-      return { valid: false, error: `Cannot create workspace in system directory: ${forbidden}` };
-    }
-  }
-
-  return { valid: true, resolvedPath: normalizedPath };
-}
-
-async function validateFileAccess(filePath) {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch (error) {
-    return false;
-  }
-}
+// Helper functions for testing (test-specific utilities)
+// Note: validatePath, validatePathLength, and validateFileAccess are imported from production code
 
 function validateFileSafety(filePath) {
   const sensitivePatterns = [
@@ -794,15 +762,7 @@ function validateFileSize(size, maxSize) {
   };
 }
 
-function validatePathLength(path, maxLength) {
-  return {
-    valid: path.length <= maxLength,
-    error:
-      path.length > maxLength
-        ? `Path length ${path.length} exceeds maximum allowed length ${maxLength}`
-        : null,
-  };
-}
+// validatePathLength is imported from production code
 
 function validateDirectoryDepth(path, maxDepth) {
   const depth = path.split(path.sep).length;

@@ -19,9 +19,34 @@ import os from 'os';
 // Session tracking: Map of session IDs to active sessions
 const activeSessions = new Map();
 
+/**
+ * Gets Zai API key with proper validation and warnings
+ * @returns {string} API key
+ * @throws {Error} If no API key is available
+ */
+function getZaiApiKey() {
+  if (process.env.ZAI_API_KEY) {
+    return process.env.ZAI_API_KEY;
+  }
+
+  if (process.env.ANTHROPIC_API_KEY) {
+    console.warn(
+      '⚠️  [Zai SDK] ZAI_API_KEY not found, falling back to ANTHROPIC_API_KEY. ' +
+        'This may cause unexpected behavior or billing. ' +
+        'Please set ZAI_API_KEY environment variable for Zai provider.'
+    );
+    return process.env.ANTHROPIC_API_KEY;
+  }
+
+  throw new Error(
+    'Neither ZAI_API_KEY nor ANTHROPIC_API_KEY environment variable is set. ' +
+      'Please configure API keys to use the Zai provider.'
+  );
+}
+
 // Configure Zai client with environment variables
 const zaiClient = new Anthropic({
-  apiKey: process.env.ZAI_API_KEY || process.env.ANTHROPIC_API_KEY,
+  apiKey: getZaiApiKey(),
   baseURL: process.env.ZAI_BASE_URL || 'https://api.zai.com/v1', // Default Zai endpoint
 });
 
