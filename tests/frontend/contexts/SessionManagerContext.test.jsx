@@ -101,7 +101,7 @@ describe('SessionManagerContext', () => {
   });
 
   describe('Active Sessions Management', () => {
-    it('adds active session to project', () => {
+    it('adds active session to project', async () => {
       const user = userEvent.setup();
       renderWithSessionManagerProvider();
 
@@ -110,7 +110,7 @@ describe('SessionManagerContext', () => {
       expect(screen.getByTestId('active-sessions-count')).toHaveTextContent('1');
     });
 
-    it('creates separate session sets for different projects', () => {
+    it('creates separate session sets for different projects', async () => {
       const user = userEvent.setup();
       renderWithSessionManagerProvider();
 
@@ -176,7 +176,6 @@ describe('SessionManagerContext', () => {
         </SessionManagerProvider>
       );
 
-      const user = userEvent.setup();
       await user.click(screen.getByTestId('add-session'));
 
       expect(screen.getByTestId('active-sessions-count')).toHaveTextContent('1');
@@ -280,7 +279,7 @@ describe('SessionManagerContext', () => {
   });
 
   describe('Processing Sessions Management', () => {
-    it('adds processing session to project', () => {
+    it('adds processing session to project', async () => {
       const user = userEvent.setup();
       renderWithSessionManagerProvider();
 
@@ -313,7 +312,6 @@ describe('SessionManagerContext', () => {
         </SessionManagerProvider>
       );
 
-      const user = userEvent.setup();
       await user.click(screen.getByTestId('add-processing'));
 
       expect(screen.getByTestId('processing-sessions-count')).toHaveTextContent('1');
@@ -325,7 +323,7 @@ describe('SessionManagerContext', () => {
 
     it('manages multiple processing sessions', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionProvider>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {
@@ -343,7 +341,7 @@ describe('SessionManagerContext', () => {
   describe('Session Status Checking', () => {
     it('correctly identifies active sessions', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionProvider>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {
@@ -377,7 +375,7 @@ describe('SessionManagerContext', () => {
 
     it('checks for active sessions in project', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionProvider>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       // No sessions
@@ -414,7 +412,7 @@ describe('SessionManagerContext', () => {
   describe('Project Sessions Management', () => {
     it('clears all sessions for a project', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionProvider>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {
@@ -444,7 +442,7 @@ describe('SessionManagerContext', () => {
 
     it('does not affect other projects when clearing', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionProvider>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {
@@ -473,7 +471,7 @@ describe('SessionManagerContext', () => {
   describe('Global Sessions Helpers', () => {
     it('gets global active sessions across all projects', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManager>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {
@@ -484,12 +482,12 @@ describe('SessionManagerContext', () => {
 
       const globalActive = result.current.getGlobalActiveSessions();
       expect(globalActive.size).toBe(3);
-      expect(Array.from(globalActiveSessions)).toEqual(['session1', 'session2', 'session3']);
+      expect(Array.from(globalActive)).toEqual(['session1', 'session2', 'session3']);
     });
 
     it('gets global processing sessions across all projects', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManager>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {
@@ -562,7 +560,7 @@ describe('SessionManagerContext', () => {
   describe('Edge Cases', () => {
     it('handles empty project names gracefully', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionProvider>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {
@@ -576,7 +574,7 @@ describe('SessionManagerContext', () => {
 
     it('handles empty session IDs gracefully', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionProvider>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {
@@ -590,7 +588,7 @@ describe('SessionManagerContext', () => {
 
     it('handles duplicate session IDs in same project', async () => {
       const { result } = renderHook(() => useSessionManager(), {
-        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionProvider>
+        wrapper: ({ children }) => <SessionManagerProvider>{children}</SessionManagerProvider>
       });
 
       await act(() => {

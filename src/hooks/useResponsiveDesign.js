@@ -1,3 +1,4 @@
+/* global CSS, getComputedStyle */
 import { useState, useEffect, useCallback } from 'react';
 
 // Breakpoint definitions
@@ -128,6 +129,7 @@ export const useResponsiveDesign = (config = {}) => {
 
   // Handle window resize
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     updateDimensions();
 
     let resizeTimer;

@@ -1,3 +1,4 @@
+/* global CustomEvent */
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSwipeGestures } from '../hooks/useSwipeGestures';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -236,7 +237,7 @@ const SwipeNavigation = ({ children, currentView, onViewChange }) => {
       </div>
 
       {/* CSS for swipe navigation */}
-      <style jsx>{`
+      <style>{`
         .swipe-navigation {
           transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }

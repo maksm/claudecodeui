@@ -269,7 +269,7 @@ const PullToRefresh = ({
       </div>
 
       {/* CSS for the component */}
-      <style jsx>{`
+      <style>{`
         .pull-to-refresh-container {
           user-select: none;
           -webkit-user-select: none;

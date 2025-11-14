@@ -381,7 +381,7 @@ const MobileToolbar = ({
       )}
 
       {/* CSS styles */}
-      <style jsx>{`
+      <style>{`
         .toolbar-nav {
           display: flex;
           flex: 1;

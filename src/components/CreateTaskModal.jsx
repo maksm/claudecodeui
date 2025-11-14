@@ -42,13 +42,13 @@ const CreateTaskModal = ({ currentProject, onClose, onTaskCreated }) => {
                 <div className="bg-white dark:bg-gray-800 rounded border border-blue-200 dark:border-blue-700 p-3 mb-3">
                   <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Example:</p>
                   <p className="text-sm text-gray-900 dark:text-white font-mono">
-                    "Please add a new task to implement user profile image uploads using Cloudinary, research the best approach."
+                    &quot;Please add a new task to implement user profile image uploads using Cloudinary, research the best approach.&quot;
                   </p>
                 </div>
                 
                 <p className="text-xs text-blue-700 dark:text-blue-300">
                   <strong>This runs:</strong> <code className="bg-blue-100 dark:bg-blue-900/50 px-1 rounded text-xs">
-                    task-master add-task --prompt="Implement user profile image uploads using Cloudinary" --research
+                    task-master add-task --prompt=&quot;Implement user profile image uploads using Cloudinary&quot; --research
                   </code>
                 </p>
               </div>
@@ -76,7 +76,7 @@ const CreateTaskModal = ({ currentProject, onClose, onTaskCreated }) => {
               onClick={onClose}
               className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
             >
-              Got it, I'll ask Claude Code directly
+              Got it, I&apos;ll ask Claude Code directly
             </button>
           </div>
         </div>

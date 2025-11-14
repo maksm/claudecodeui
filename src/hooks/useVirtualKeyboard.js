@@ -1,3 +1,4 @@
+/* global screen, CSS, ResizeObserver */
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const useVirtualKeyboard = (options = {}) => {

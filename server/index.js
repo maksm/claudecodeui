@@ -1115,14 +1115,20 @@ function handleShellConnection(ws) {
                             // Check for various URL opening patterns
                             const patterns = [
                 // Direct browser opening commands
+                // eslint-disable-next-line no-control-regex
                 /(?:xdg-open|open|start)\s+(https?:\/\/[^\s\x1b\x07]+)/g,
                 // BROWSER environment variable override
+                // eslint-disable-next-line no-control-regex
                 /OPEN_URL:\s*(https?:\/\/[^\s\x1b\x07]+)/g,
                 // Git and other tools opening URLs
+                // eslint-disable-next-line no-control-regex
                 /Opening\s+(https?:\/\/[^\s\x1b\x07]+)/gi,
                 // General URL patterns that might be opened
+                // eslint-disable-next-line no-control-regex
                 /Visit:\s*(https?:\/\/[^\s\x1b\x07]+)/gi,
+                // eslint-disable-next-line no-control-regex
                 /View at:\s*(https?:\/\/[^\s\x1b\x07]+)/gi,
+                // eslint-disable-next-line no-control-regex
                 /Browse to:\s*(https?:\/\/[^\s\x1b\x07]+)/gi
                             ];
 

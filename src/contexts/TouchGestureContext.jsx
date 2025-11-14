@@ -89,12 +89,12 @@ export const TouchGestureProvider = ({ children }) => {
   const disableGestures = useCallback(() => {
     setGesturesEnabled(false);
     triggerHaptic(30); // Medium feedback for disabling
-  }, [triggerHesture]);
+  }, [triggerHaptic]);
 
   // Reset gestures
   const resetGestures = useCallback(() => {
     reset();
-    setSwipeDirection(null);
+    // swipeDirection is managed by useSwipeGestures hook
   }, [reset]);
 
   // Set navigation callbacks

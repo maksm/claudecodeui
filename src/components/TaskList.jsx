@@ -86,33 +86,35 @@ const TaskList = ({
           aVal = a.title.toLowerCase();
           bVal = b.title.toLowerCase();
           break;
-        case 'status':
+        case 'status': {
           // Custom status ordering: pending, in-progress, done, blocked, deferred, cancelled
           const statusOrder = { pending: 1, 'in-progress': 2, done: 3, blocked: 4, deferred: 5, cancelled: 6 };
           aVal = statusOrder[a.status] || 99;
           bVal = statusOrder[b.status] || 99;
           break;
-        case 'priority':
+        }
+        case 'priority': {
           // Custom priority ordering: high should be sorted first in descending
           const priorityOrder = { high: 3, medium: 2, low: 1 };
           aVal = priorityOrder[a.priority] || 0;
           bVal = priorityOrder[b.priority] || 0;
           break;
+        }
         case 'updated':
           aVal = new Date(a.updatedAt || a.createdAt || 0);
           bVal = new Date(b.updatedAt || b.createdAt || 0);
           break;
         case 'id':
-        default:
+        default: {
           // Handle numeric and dotted IDs (1, 1.1, 1.2, 2, 2.1, etc.)
           const parseId = (id) => {
             const parts = id.toString().split('.');
             return parts.map(part => parseInt(part, 10));
           };
-          
+
           const aIds = parseId(a.id);
           const bIds = parseId(b.id);
-          
+
           // Compare each part
           for (let i = 0; i < Math.max(aIds.length, bIds.length); i++) {
             const aId = aIds[i] || 0;
@@ -124,6 +126,7 @@ const TaskList = ({
             }
           }
           break;
+        }
       }
 
       if (sortBy === 'updated') {
@@ -277,7 +280,7 @@ const TaskList = ({
                 </div>
                 <div>
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Getting Started with TaskMaster</h2>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">TaskMaster is initialized! Here's what to do next:</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">TaskMaster is initialized! Here&apos;s what to do next:</p>
                 </div>
               </div>
               
@@ -384,7 +387,7 @@ const TaskList = ({
 
             <div className="text-center">
               <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                💡 <strong>Tip:</strong> Start with a PRD to get the most out of TaskMaster's AI-powered task generation
+                💡 <strong>Tip:</strong> Start with a PRD to get the most out of TaskMaster&apos;s AI-powered task generation
               </div>
             </div>
           </div>
@@ -954,7 +957,7 @@ const TaskList = ({
                     <div className="bg-white dark:bg-gray-800/50 rounded border border-green-200 dark:border-green-700/50 p-3 mb-2">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">💬 Example:</p>
                       <p className="text-xs text-gray-900 dark:text-white font-mono">
-                        "I've just initialized a new project with Claude Task Master. I have a PRD at .taskmaster/docs/prd.txt. Can you help me parse it and set up the initial tasks?"
+                        &quot;I&apos;ve just initialized a new project with Claude Task Master. I have a PRD at .taskmaster/docs/prd.txt. Can you help me parse it and set up the initial tasks?&quot;
                       </p>
                     </div>
                   </div>
@@ -969,7 +972,7 @@ const TaskList = ({
                     <div className="bg-white dark:bg-gray-800/50 rounded border border-amber-200 dark:border-amber-700/50 p-3 mb-2">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">💬 Example:</p>
                       <p className="text-xs text-gray-900 dark:text-white font-mono">
-                        "Task 5 seems complex. Can you break it down into subtasks?"
+                        &quot;Task 5 seems complex. Can you break it down into subtasks?&quot;
                       </p>
                     </div>
                   </div>
@@ -984,7 +987,7 @@ const TaskList = ({
                     <div className="bg-white dark:bg-gray-800/50 rounded border border-purple-200 dark:border-purple-700/50 p-3 mb-3">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">💬 Example:</p>
                       <p className="text-xs text-gray-900 dark:text-white font-mono">
-                        "Please add a new task to implement user profile image uploads using Cloudinary, research the best approach."
+                        &quot;Please add a new task to implement user profile image uploads using Cloudinary, research the best approach.&quot;
                       </p>
                     </div>
                     <a

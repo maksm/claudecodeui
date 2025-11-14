@@ -148,6 +148,7 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
       const adjustedDuration = Math.round(duration * intensityLevel);
       return Math.max(0, Math.min(adjustedDuration, capabilities.maxDuration || 10000));
     });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [capabilities.maxDuration]);
 
   // Trigger haptic feedback

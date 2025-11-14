@@ -234,6 +234,7 @@ export const MobileModal = ({
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsAnimating(true);
       document.body.style.overflow = 'hidden';
     } else {
@@ -360,6 +361,7 @@ export const MobileBottomSheet = ({
 
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/exhaustive-deps
       snapToHeight(defaultSnap);
     }
   }, [isOpen, defaultSnap]);

@@ -102,7 +102,7 @@ const MessageRow = ({ index, style, data }) => {
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         .message-row:hover {
           cursor: pointer;
           background: ${isActive
@@ -193,7 +193,6 @@ const VirtualizedMessageList = ({
   ...props
 }) => {
   const { theme } = useTheme();
-  const listRef = useRef(null);
 
   // Ref for the List component
   const listRef = useRef(null);

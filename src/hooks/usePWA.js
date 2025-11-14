@@ -1,3 +1,4 @@
+/* global MessageChannel */
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const usePWA = (options = {}) => {
@@ -281,6 +282,7 @@ export const usePWA = (options = {}) => {
     window.addEventListener('offline', handleOffline);
 
     // Initialize on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     initialize();
 
     return () => {
@@ -335,8 +337,8 @@ export const usePWA = (options = {}) => {
     supportsWakeLock: 'wakeLock' in navigator,
 
     // Browser compatibility
-    isStandalone: checkInstalled(),
-    isPWA: checkInstalled()
+    isStandalone: isInstalled,
+    isPWA: isInstalled
   };
 };
 

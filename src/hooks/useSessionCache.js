@@ -386,6 +386,18 @@ export const useSessionPreloader = (sessionIds, currentSessionId, loader) => {
   const sessionCache = useSessionCache();
   const [preloadStatus, setPreloadStatus] = useState({});
 
+  // Get adjacent session IDs
+  const getAdjacentSessionIds = useCallback((allIds, currentId) => {
+    const currentIndex = allIds.indexOf(currentId);
+    const adjacentIds = [];
+
+    // Previous and next sessions
+    if (currentIndex > 0) adjacentIds.push(allIds[currentIndex - 1]);
+    if (currentIndex < allIds.length - 1) adjacentIds.push(allIds[currentIndex + 1]);
+
+    return adjacentIds;
+  }, []);
+
   // Preload adjacent sessions
   const preloadAdjacent = useCallback(() => {
     if (!sessionIds || !currentSessionId || !loader) return;
@@ -399,7 +411,7 @@ export const useSessionPreloader = (sessionIds, currentSessionId, loader) => {
       status[id] = 'preloading';
     });
     setPreloadStatus(status);
-  }, [sessionIds, currentSessionId, loader, sessionCache]);
+  }, [sessionIds, currentSessionId, loader, sessionCache, getAdjacentSessionIds]);
 
   // Warm cache with prioritized sessions
   const warmCache = useCallback(async (prioritySessions = []) => {
@@ -407,18 +419,6 @@ export const useSessionPreloader = (sessionIds, currentSessionId, loader) => {
 
     await sessionCache.warmCache(sessionIds, loader, prioritySessions);
   }, [sessionIds, loader, sessionCache]);
-
-  // Get adjacent session IDs
-  const getAdjacentSessionIds = useCallback((allIds, currentId) => {
-    const currentIndex = allIds.indexOf(currentId);
-    const adjacentIds = [];
-
-    // Previous and next sessions
-    if (currentIndex > 0) adjacentIds.push(allIds[currentIndex - 1]);
-    if (currentIndex < allIds.length - 1) adjacentIds.push(allIds[currentIndex + 1]);
-
-    return adjacentIds;
-  }, []);
 
   // Check preload status for a session
   const getPreloadStatus = useCallback((sessionId) => {

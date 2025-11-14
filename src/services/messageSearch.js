@@ -282,11 +282,11 @@ class MessageSearchService {
       // Sort results
       processedResults.sort((a, b) => {
         switch (sortBy) {
-          case 'date':
+          case 'date': {
             const dateA = new Date(a.message.timestamp);
             const dateB = new Date(b.message.timestamp);
             return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-
+          }
           case 'score':
             return sortOrder === 'desc' ? b.score - a.score : a.score - b.score;
 

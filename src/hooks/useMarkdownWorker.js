@@ -1,3 +1,4 @@
+/* global Worker */
 import { useState, useCallback, useRef, useEffect } from 'react';
 
 /**
@@ -20,74 +21,6 @@ const useMarkdownWorker = (options = {}) => {
   const workerRef = useRef(null);
   const messageIdRef = useRef(0);
   const pendingRequests = useRef(new Map());
-
-  // Initialize worker
-  useEffect(() => {
-    const worker = new Worker(workerUrl);
-    workerRef.current = worker;
-
-    worker.onmessage = handleWorkerMessage;
-    worker.onerror = handleWorkerError;
-
-    // Configure worker
-    worker.postMessage({
-      type: 'configure',
-      data: {
-        enableCache,
-        cacheSize: 1000,
-        markedOptions: {
-          highlight: true,
-          breaks: true,
-          gfm: true,
-          sanitize: false,
-          smartLists: true,
-          smartypants: true
-        }
-      }
-    });
-
-    setIsReady(true);
-
-    return () => {
-      if (worker) {
-        worker.terminate();
-      }
-    };
-  }, [workerUrl, enableCache]);
-
-  // Handle worker messages
-  const handleWorkerMessage = useCallback((event) => {
-    const { id, type, data } = event.data;
-
-    switch (type) {
-      case 'result':
-        handleProcessingResult(id, data);
-        break;
-      case 'error':
-        handleProcessingError(id, data);
-        break;
-      case 'configured':
-        setCacheStats(data);
-        break;
-      case 'cacheCleared':
-        setCacheStats(data);
-        break;
-      default:
-        console.log('Unknown worker message:', type, data);
-    }
-  }, []);
-
-  // Handle worker errors
-  const handleWorkerError = useCallback((error) => {
-    console.error('Markdown worker error:', error);
-
-    // Reject all pending requests
-    pendingRequests.current.forEach(({ reject }) => {
-      reject(new Error(`Worker error: ${error.message}`));
-    });
-    pendingRequests.current.clear();
-    setProcessing(new Set());
-  }, []);
 
   // Handle successful processing
   const handleProcessingResult = useCallback((id, data) => {
@@ -116,6 +49,75 @@ const useMarkdownWorker = (options = {}) => {
       });
     }
   }, []);
+
+  // Handle worker messages
+  const handleWorkerMessage = useCallback((event) => {
+    const { id, type, data } = event.data;
+
+    switch (type) {
+      case 'result':
+        handleProcessingResult(id, data);
+        break;
+      case 'error':
+        handleProcessingError(id, data);
+        break;
+      case 'configured':
+        setCacheStats(data);
+        break;
+      case 'cacheCleared':
+        setCacheStats(data);
+        break;
+      default:
+        console.log('Unknown worker message:', type, data);
+    }
+  }, [handleProcessingResult, handleProcessingError]);
+
+  // Handle worker errors
+  const handleWorkerError = useCallback((error) => {
+    console.error('Markdown worker error:', error);
+
+    // Reject all pending requests
+    pendingRequests.current.forEach(({ reject }) => {
+      reject(new Error(`Worker error: ${error.message}`));
+    });
+    pendingRequests.current.clear();
+    setProcessing(new Set());
+  }, []);
+
+  // Initialize worker
+  useEffect(() => {
+    const worker = new Worker(workerUrl);
+    workerRef.current = worker;
+
+    worker.onmessage = handleWorkerMessage;
+    worker.onerror = handleWorkerError;
+
+    // Configure worker
+    worker.postMessage({
+      type: 'configure',
+      data: {
+        enableCache,
+        cacheSize: 1000,
+        markedOptions: {
+          highlight: true,
+          breaks: true,
+          gfm: true,
+          sanitize: false,
+          smartLists: true,
+          smartypants: true
+        }
+      }
+    });
+
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsReady(true);
+
+    return () => {
+      if (worker) {
+        worker.terminate();
+      }
+    };
+  }, [workerUrl, enableCache, handleWorkerMessage, handleWorkerError]);
 
   // Process markdown content
   const processMarkdown = useCallback(async (content, options = {}) => {
@@ -164,6 +166,13 @@ const useMarkdownWorker = (options = {}) => {
     });
   }, [isReady, processing.size, maxConcurrent, timeout]);
 
+  // Utility function to escape HTML
+  const escapeHtml = useCallback((text) => {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }, []);
+
   // Batch process multiple markdown content
   const processBatch = useCallback(async (contents, options = {}) => {
     if (!isReady) {
@@ -205,7 +214,7 @@ const useMarkdownWorker = (options = {}) => {
         }
       });
     }
-  }, [isReady, processMarkdown]);
+  }, [isReady, processMarkdown, escapeHtml]);
 
   // Clear worker cache
   const clearCache = useCallback(() => {
@@ -223,14 +232,7 @@ const useMarkdownWorker = (options = {}) => {
     pendingRequestsCount: pendingRequests.current.length,
     cacheStats,
     workerUrl
-  }), [isReady, processing.size, cacheStats]);
-
-  // Utility functions
-  const escapeHtml = useCallback((text) => {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }, []);
+  }), [isReady, processing.size, cacheStats, workerUrl]);
 
   return {
     // State

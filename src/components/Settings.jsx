@@ -1321,11 +1321,11 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
                 Tool Pattern Examples:
               </h4>
               <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
-                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">"Bash(git log:*)"</code> - Allow all git log commands</li>
-                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">"Bash(git diff:*)"</code> - Allow all git diff commands</li>
-                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">"Write"</code> - Allow all Write tool usage</li>
-                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">"Read"</code> - Allow all Read tool usage</li>
-                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">"Bash(rm:*)"</code> - Block all rm commands (dangerous)</li>
+                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">&quot;Bash(git log:*)&quot;</code> - Allow all git log commands</li>
+                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">&quot;Bash(git diff:*)&quot;</code> - Allow all git diff commands</li>
+                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">&quot;Write&quot;</code> - Allow all Write tool usage</li>
+                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">&quot;Read&quot;</code> - Allow all Read tool usage</li>
+                <li><code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">&quot;Bash(rm:*)&quot;</code> - Block all rm commands (dangerous)</li>
               </ul>
             </div>
 
@@ -2101,10 +2101,10 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
                     Cursor Shell Command Examples:
                   </h4>
                   <ul className="text-sm text-purple-800 dark:text-purple-200 space-y-1">
-                    <li><code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">"Shell(ls)"</code> - Allow ls command</li>
-                    <li><code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">"Shell(git status)"</code> - Allow git status command</li>
-                    <li><code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">"Shell(mkdir)"</code> - Allow mkdir command</li>
-                    <li><code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">"-f"</code> flag - Skip all permission prompts (dangerous)</li>
+                    <li><code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">&quot;Shell(ls)&quot;</code> - Allow ls command</li>
+                    <li><code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">&quot;Shell(git status)&quot;</code> - Allow git status command</li>
+                    <li><code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">&quot;Shell(mkdir)&quot;</code> - Allow mkdir command</li>
+                    <li><code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">&quot;-f&quot;</code> flag - Skip all permission prompts (dangerous)</li>
                   </ul>
                 </div>
               </div>

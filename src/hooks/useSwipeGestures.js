@@ -229,7 +229,7 @@ export const useSwipeGestures = (onSwipeLeft, onSwipeRight, onSwipeUp, onSwipeDo
       style={{
         transform: animationProps.x.to(x => `translateX(${x}px)`)
           .concat(animationProps.y.to(y => `, translateY(${y}px)`))
-          .concat(animationProps.scale.to(s => ` scale(${s})`),
+          .concat(animationProps.scale.to(s => ` scale(${s})`)),
         opacity: animationProps.opacity,
         cursor: isDragging ? 'grabbing' : 'grab',
         userSelect: 'none',

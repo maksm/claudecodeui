@@ -783,9 +783,11 @@ async function parseJsonlSessions(filePath) {
     const filteredSessions = allSessions.filter(session => {
       const shouldFilter = session.summary.startsWith('{ "');
       if (shouldFilter) {
+        // Filtered out Task Master error responses
       }
       // Log a sample of summaries to debug
       if (Math.random() < 0.01) { // Log 1% of sessions
+        // Reserved for debugging
       }
       return !shouldFilter;
     });
@@ -1187,7 +1189,9 @@ async function getCursorSessions(projectPath) {
         try {
           const stat = await fs.stat(storeDbPath);
           dbStatMtimeMs = stat.mtimeMs;
-        } catch (_) {}
+        } catch (_) {
+          // File might not exist or be accessible
+        }
 
         // Open SQLite database
         const db = await open({

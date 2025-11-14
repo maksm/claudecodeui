@@ -18,7 +18,7 @@ const MessageSearch = ({
   ...props
 }) => {
   const { theme } = useTheme();
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     sender: '',
     messageType: '',
@@ -209,12 +209,12 @@ const MessageSearch = ({
           <div className="flex items-center gap-2">
             {showAdvanced && (
               <button
-                onClick={() => setShowAdvanced(!showAdvanced)}
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
               >
                 <Filter className="w-4 h-4" />
                 <span className="text-sm">Advanced</span>
-                <ChevronDown className={`w-3 h-3 transform transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                <ChevronDown className={`w-3 h-3 transform transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`} />
               </button>
             )}
             {results.length > 0 && (
@@ -263,7 +263,7 @@ const MessageSearch = ({
       </div>
 
       {/* Advanced Search Filters */}
-      {showAdvanced && (
+      {showAdvancedFilters && (
         <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
           <h3 className="text-lg font-medium mb-3 text-gray-900 dark:text-white">Advanced Search</h3>
 
@@ -410,7 +410,7 @@ const MessageSearch = ({
       {query && !isSearching && results.length === 0 && !error && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>No messages found matching "{query}"</p>
+          <p>No messages found matching &quot;{query}&quot;</p>
         </div>
       )}
     </div>

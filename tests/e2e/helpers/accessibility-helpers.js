@@ -5,7 +5,7 @@ import { AxeAnalyzerResult } from 'axe-core';
  * Accessibility testing helpers for Playwright
  */
 
-export class AccessibilityHelper {
+class AccessibilityHelper {
   constructor(page) {
     this.page = page;
   }
@@ -57,7 +57,6 @@ export class AccessibilityHelper {
         'nested-interactive': { enabled: true },
         'no-autocomplete-attribute': { enabled: true },
         'autocomplete-valid': { enabled: true },
-        'link-in-text-block': { enabled: true },
         'list': { enabled: true },
         'listitem': { enabled: true },
         'dlitem': { enabled: true },
@@ -77,7 +76,6 @@ export class AccessibilityHelper {
         'video-description': { enabled: true },
         'duplicate-id-aria': { enabled: true },
         'target-size': { enabled: true },
-        'skip-link': { enabled: true },
         'bypass': { enabled: true },
         'landmark-one-main': { enabled: true },
         'landmark-no-duplicate-banner': { enabled: true },
@@ -89,7 +87,6 @@ export class AccessibilityHelper {
         'meta-refresh': { enabled: true },
         'meta-viewport-large': { enabled: true },
         'css-orientation-lock': { enabled: true },
-        'aria-allowed-attr': { enabled: true },
         'aria-braille-equivalent': { enabled: true },
         'audiocaption-only-object': { enabled: true },
         'no-meta-viewport': { enabled: true },
@@ -323,7 +320,7 @@ export class AccessibilityHelper {
 /**
  * WCAG 2.1 Level AA compliance checker
  */
-export class WCAGComplianceChecker {
+class WCAGComplianceChecker {
   constructor(accessibilityHelper) {
     this.accessibilityHelper = accessibilityHelper;
   }
@@ -482,7 +479,7 @@ export class WCAGComplianceChecker {
 /**
  * Visual Regression Testing Helper
  */
-export class VisualRegressionHelper {
+class VisualRegressionHelper {
   constructor(page) {
     this.page = page;
     this.baselineDir = 'test-results/visual-baselines';

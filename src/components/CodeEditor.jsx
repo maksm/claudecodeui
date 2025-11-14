@@ -363,7 +363,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
 
     } catch (error) {
       console.error('Error saving file:', error);
-      alert(`Error saving file: ${error.message}`);
+      window.alert(`Error saving file: ${error.message}`);
     } finally {
       setSaving(false);
     }

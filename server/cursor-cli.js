@@ -10,7 +10,7 @@ const spawnFunction = process.platform === 'win32' ? crossSpawn : spawn;
 let activeCursorProcesses = new Map(); // Track active processes by session ID
 
 async function spawnCursor(command, options = {}, ws) {
-  return new Promise(async (resolve, reject) => {
+  return new Promise((resolve, reject) => {
     const { sessionId, projectPath, cwd, resume, toolsSettings, skipPermissions, model, images } = options;
     let capturedSessionId = sessionId; // Track session ID throughout the process
     let sessionCreatedSent = false; // Track if we've already sent session-created event

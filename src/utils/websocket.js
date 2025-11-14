@@ -8,7 +8,7 @@ export function useWebSocket() {
 
   useEffect(() => {
     connect();
-    
+
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -17,6 +17,7 @@ export function useWebSocket() {
         ws.close();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Keep dependency array but add proper cleanup
 
   const connect = async () => {

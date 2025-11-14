@@ -278,7 +278,7 @@ export const useMessageSearch = (sessionId, messages = [], options = {}) => {
           exported: new Date().toISOString()
         }, null, 2);
 
-      case 'csv':
+      case 'csv': {
         const headers = ['ID', 'Content', 'Sender', 'Timestamp', 'Score', 'Relevance'];
         const rows = searchResults.map(result => [
           result.message.id,
@@ -289,6 +289,7 @@ export const useMessageSearch = (sessionId, messages = [], options = {}) => {
           result.relevance
         ]);
         return [headers, ...rows].map(row => row.join(',')).join('\n');
+      }
 
       case 'txt':
         return searchResults.map(result =>

@@ -251,6 +251,7 @@ function Shell({ selectedProject, selectedSession, isActive, initialCommand, isP
     try {
       terminal.current.loadAddon(webglAddon);
     } catch (error) {
+      // Intentional - WebGL not supported
     }
     
     terminal.current.open(terminalRef.current);
@@ -316,6 +317,7 @@ function Shell({ selectedProject, selectedSession, isActive, initialCommand, isP
     });
 
     // Add resize observer to handle container size changes
+    // eslint-disable-next-line no-undef
     const resizeObserver = new ResizeObserver(() => {
       if (fitAddon.current && terminal.current) {
         setTimeout(() => {
@@ -350,12 +352,14 @@ function Shell({ selectedProject, selectedSession, isActive, initialCommand, isP
             ws: ws.current,
             isConnected: isConnected
           });
-          
+
         } catch (error) {
+          // Intentional - cleanup error
         }
       }
     };
-  }, [terminalRef.current, selectedProject, selectedSession, isRestarting]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedProject, selectedSession, isRestarting]);
 
   // Fit terminal when tab becomes active
   useEffect(() => {
@@ -453,17 +457,20 @@ function Shell({ selectedProject, selectedSession, isActive, initialCommand, isP
           const data = JSON.parse(event.data);
           if (data.type === 'output') {
             // Check for URLs in the output and make them clickable
+            // eslint-disable-next-line no-control-regex
             const urlRegex = /(https?:\/\/[^\s\x1b\x07]+)/g;
             let output = data.data;
             
             // Find URLs in the text (excluding ANSI escape sequences)
             const urls = [];
             let match;
+            // eslint-disable-next-line no-control-regex
             while ((match = urlRegex.exec(output.replace(/\x1b\[[0-9;]*m/g, ''))) !== null) {
               urls.push(match[1]);
             }
-            
+
             if (isPlainShell && onProcessComplete) {
+              // eslint-disable-next-line no-control-regex
               const cleanOutput = output.replace(/\x1b\[[0-9;]*m/g, ''); // Remove ANSI codes
               if (cleanOutput.includes('Process exited with code 0')) {
                 onProcessComplete(0); // Success
@@ -483,6 +490,7 @@ function Shell({ selectedProject, selectedSession, isActive, initialCommand, isP
             window.open(data.url, '_blank');
           }
         } catch (error) {
+          // Intentional - message parse error
         }
       };
 

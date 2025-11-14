@@ -104,7 +104,7 @@ class SessionCacheService {
   /**
    * Set session in cache
    */
-  set(sessionId, data, options = {}) => {
+  set(sessionId, data, options = {}) {
     const {
       ttl = this.defaultTTL,
       priority = 'normal',

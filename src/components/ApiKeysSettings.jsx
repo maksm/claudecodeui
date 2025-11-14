@@ -72,7 +72,7 @@ function ApiKeysSettings() {
   };
 
   const deleteApiKey = async (keyId) => {
-    if (!confirm('Are you sure you want to delete this API key?')) return;
+    if (!window.confirm('Are you sure you want to delete this API key?')) return;
 
     try {
       const token = localStorage.getItem('auth-token');
@@ -134,7 +134,7 @@ function ApiKeysSettings() {
   };
 
   const deleteGithubToken = async (tokenId) => {
-    if (!confirm('Are you sure you want to delete this GitHub token?')) return;
+    if (!window.confirm('Are you sure you want to delete this GitHub token?')) return;
 
     try {
       const token = localStorage.getItem('auth-token');
@@ -182,7 +182,7 @@ function ApiKeysSettings() {
         <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
           <h4 className="font-semibold text-yellow-500 mb-2">⚠️ Save Your API Key</h4>
           <p className="text-sm text-muted-foreground mb-3">
-            This is the only time you'll see this key. Store it securely.
+            This is the only time you&apos;ll see this key. Store it securely.
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 px-3 py-2 bg-background/50 rounded font-mono text-sm break-all">
@@ -202,7 +202,7 @@ function ApiKeysSettings() {
             className="mt-3"
             onClick={() => setNewlyCreatedKey(null)}
           >
-            I've saved it
+            I&apos;ve saved it
           </Button>
         </div>
       )}

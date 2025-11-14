@@ -382,7 +382,9 @@ router.get('/sessions', async (req, res) => {
         try {
           const stat = await fs.stat(storeDbPath);
           dbStatMtimeMs = stat.mtimeMs;
-        } catch (_) {}
+        } catch (_) {
+          // Ignore error if store.db stat fails
+        }
 
         // Open SQLite database
         const db = await open({
@@ -487,9 +489,12 @@ router.get('/sessions', async (req, res) => {
                     preview = parsed.content;
                   }
                 }
-              } catch (_) {}
+              } catch (_) {
+                // JSON parse failed, will try cleaning the raw data instead
+              }
               if (!preview) {
                 // Strip non-printable and try to find JSON chunk
+                // eslint-disable-next-line no-control-regex
                 const cleaned = raw.replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '');
                 const s = cleaned;
                 const start = s.indexOf('{');

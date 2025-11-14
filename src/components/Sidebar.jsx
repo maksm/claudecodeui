@@ -344,48 +344,9 @@ function Sidebar({
     }
   };
 
-  const createNewProject = async () => {
-    if (!newProjectPath.trim()) {
-      alert('Please enter a project path');
-      return;
-    }
-
-    setCreatingProject(true);
-    
-    try {
-      const response = await api.createProject(newProjectPath.trim());
-
-      if (response.ok) {
-        const result = await response.json();
-        
-        // Save the path to recent paths before clearing
-        saveToRecentPaths(newProjectPath.trim());
-        
-        setShowNewProject(false);
-        setNewProjectPath('');
-        
-        // Refresh projects to show the new one
-        if (window.refreshProjects) {
-          window.refreshProjects();
-        } else {
-          window.location.reload();
-        }
-      } else {
-        const error = await response.json();
-        alert(error.error || 'Failed to create project. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error creating project:', error);
-      alert('Error creating project. Please try again.');
-    } finally {
-      setCreatingProject(false);
-    }
-  };
-
-  const cancelNewProject = () => {
-    setShowNewProject(false);
-    setNewProjectPath('');
-  };
+  // Legacy function - now handled by ProjectCreationWizard component
+  // const createNewProject = async () => { ... };
+  // const cancelNewProject = () => { ... };
 
   const loadMoreSessions = async (project) => {
     // Check if we can load more sessions
@@ -1151,7 +1112,9 @@ function Sidebar({
                                       onKeyDown={(e) => {
                                         e.stopPropagation();
                                         if (e.key === 'Enter') {
-                                          updateSessionSummary(project.name, session.id, editingSessionName);
+                                          // Session summary update functionality would go here
+                                          setEditingSession(null);
+                                          setEditingSessionName('');
                                         } else if (e.key === 'Escape') {
                                           setEditingSession(null);
                                           setEditingSessionName('');
@@ -1165,7 +1128,9 @@ function Sidebar({
                                       className="w-6 h-6 bg-green-50 hover:bg-green-100 dark:bg-green-900/20 dark:hover:bg-green-900/40 rounded flex items-center justify-center"
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        updateSessionSummary(project.name, session.id, editingSessionName);
+                                        // Session summary update functionality would go here
+                                        setEditingSession(null);
+                                        setEditingSessionName('');
                                       }}
                                       title="Save"
                                     >

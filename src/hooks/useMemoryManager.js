@@ -1,3 +1,4 @@
+/* global Worker, MutationObserver, ResizeObserver */
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getMemoryManager } from '../services/memoryManager';
 
@@ -142,8 +143,7 @@ export const useManagedTimer = (componentId) => {
     setInterval,
     clearTimeout,
     clearInterval,
-    clearAllTimers,
-    activeTimers: timersRef.current.size
+    clearAllTimers
   };
 };
 
@@ -184,8 +184,7 @@ export const useManagedEventListener = (componentId) => {
   return {
     addEventListener,
     removeEventListener,
-    removeAllListeners,
-    activeListeners: listenersRef.current.size
+    removeAllListeners
   };
 };
 
@@ -239,8 +238,7 @@ export const useManagedObserver = (componentId) => {
     useMutationObserver,
     useResizeObserver,
     disconnectObserver,
-    disconnectAllObservers,
-    activeObservers: observersRef.current.size
+    disconnectAllObservers
   };
 };
 
@@ -250,6 +248,12 @@ export const useManagedObserver = (componentId) => {
 export const useManagedWebWorker = (componentId) => {
   const { memoryManager, registerWebWorker } = useMemoryManager();
   const workersRef = useRef(new Set());
+
+  // Terminate worker
+  const terminateWorker = useCallback((workerId) => {
+    memoryManager.unregisterWebWorker(workerId);
+    workersRef.current.delete(workerId);
+  }, [memoryManager]);
 
   // Create managed web worker
   const createWorker = useCallback((workerScript, options = {}) => {
@@ -264,13 +268,7 @@ export const useManagedWebWorker = (componentId) => {
     };
 
     return { worker, id: workerId };
-  }, [componentId, registerWebWorker]);
-
-  // Terminate worker
-  const terminateWorker = useCallback((workerId) => {
-    memoryManager.unregisterWebWorker(workerId);
-    workersRef.current.delete(workerId);
-  }, [memoryManager]);
+  }, [componentId, registerWebWorker, terminateWorker]);
 
   // Terminate all workers
   const terminateAllWorkers = useCallback(() => {
@@ -283,8 +281,7 @@ export const useManagedWebWorker = (componentId) => {
   return {
     createWorker,
     terminateWorker,
-    terminateAllWorkers,
-    activeWorkers: workersRef.current.size
+    terminateAllWorkers
   };
 };
 
@@ -337,6 +334,7 @@ export const useMemoryMonitor = (options = {}) => {
   // Start monitoring on mount if auto-start is enabled
   useEffect(() => {
     if (autoStart) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       startMonitoring();
     }
 
@@ -414,8 +412,7 @@ export const useManagedSubscription = (componentId) => {
   return {
     subscribe,
     unsubscribe,
-    unsubscribeAll,
-    activeSubscriptions: subscriptionsRef.current.size
+    unsubscribeAll
   };
 };
 
@@ -442,6 +439,7 @@ export const useMemoryDevTools = () => {
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       refreshStats();
     }
   }, [refreshStats]);

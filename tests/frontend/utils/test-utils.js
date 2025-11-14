@@ -27,21 +27,23 @@ const customRender = (ui, options = {}) => {
     ...renderOptions
   } = options;
 
-  let Wrapper = ({ children }) => children;
-
-  if (withTheme && withAuth) {
-    Wrapper = ({ children }) => (
-      <MockAuthContext>
-        <MockThemeContext>
-          {children}
-        </MockThemeContext>
-      </MockAuthContext>
-    );
-  } else if (withTheme) {
-    Wrapper = MockThemeContext;
-  } else if (withAuth) {
-    Wrapper = MockAuthContext;
-  }
+  const Wrapper = ({ children }) => {
+    if (withTheme && withAuth) {
+      return (
+        <MockAuthContext>
+          <MockThemeContext>
+            {children}
+          </MockThemeContext>
+        </MockAuthContext>
+      );
+    } else if (withTheme) {
+      return <MockThemeContext>{children}</MockThemeContext>;
+    } else if (withAuth) {
+      return <MockAuthContext>{children}</MockAuthContext>;
+    }
+    return children;
+  };
+  Wrapper.displayName = 'TestWrapper';
 
   return render(ui, { wrapper: Wrapper, ...renderOptions });
 };

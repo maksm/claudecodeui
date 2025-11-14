@@ -165,7 +165,7 @@ function validateBranchName(branchName) {
     { pattern: /\.$/, message: 'Branch name cannot end with a dot' },
     { pattern: /\.\./, message: 'Branch name cannot contain consecutive dots (..)' },
     { pattern: /\s/, message: 'Branch name cannot contain spaces' },
-    { pattern: /[~^:?*\[\\]/, message: 'Branch name cannot contain special characters: ~ ^ : ? * [ \\' },
+    { pattern: /[~^:?*[\\]/, message: 'Branch name cannot contain special characters: ~ ^ : ? * [ \\' },
     { pattern: /@{/, message: 'Branch name cannot contain @{' },
     { pattern: /\/$/, message: 'Branch name cannot end with a slash' },
     { pattern: /^\//, message: 'Branch name cannot start with a slash' },
@@ -180,6 +180,7 @@ function validateBranchName(branchName) {
   }
 
   // Check for ASCII control characters
+  // eslint-disable-next-line no-control-regex
   if (/[\x00-\x1F\x7F]/.test(branchName)) {
     return { valid: false, error: 'Branch name cannot contain control characters' };
   }
@@ -301,84 +302,80 @@ async function createGitHubPR(octokit, owner, repo, branchName, title, body, bas
  * @returns {Promise<string>} - Path to the cloned repository
  */
 async function cloneGitHubRepo(githubUrl, githubToken = null, projectPath) {
-  return new Promise(async (resolve, reject) => {
+  // Validate GitHub URL
+  if (!githubUrl || !githubUrl.includes('github.com')) {
+    throw new Error('Invalid GitHub URL');
+  }
+
+  const cloneDir = path.resolve(projectPath);
+
+  // Check if directory already exists
+  try {
+    await fs.access(cloneDir);
+    // Directory exists - check if it's a git repo with the same URL
     try {
-      // Validate GitHub URL
-      if (!githubUrl || !githubUrl.includes('github.com')) {
-        throw new Error('Invalid GitHub URL');
+      const existingUrl = await getGitRemoteUrl(cloneDir);
+      const normalizedExisting = normalizeGitHubUrl(existingUrl);
+      const normalizedRequested = normalizeGitHubUrl(githubUrl);
+
+      if (normalizedExisting === normalizedRequested) {
+        console.log('✅ Repository already exists at path with correct URL');
+        return cloneDir;
+      } else {
+        throw new Error(`Directory ${cloneDir} already exists with a different repository (${existingUrl}). Expected: ${githubUrl}`);
       }
-
-      const cloneDir = path.resolve(projectPath);
-
-      // Check if directory already exists
-      try {
-        await fs.access(cloneDir);
-        // Directory exists - check if it's a git repo with the same URL
-        try {
-          const existingUrl = await getGitRemoteUrl(cloneDir);
-          const normalizedExisting = normalizeGitHubUrl(existingUrl);
-          const normalizedRequested = normalizeGitHubUrl(githubUrl);
-
-          if (normalizedExisting === normalizedRequested) {
-            console.log('✅ Repository already exists at path with correct URL');
-            return resolve(cloneDir);
-          } else {
-            throw new Error(`Directory ${cloneDir} already exists with a different repository (${existingUrl}). Expected: ${githubUrl}`);
-          }
-        } catch (gitError) {
-          throw new Error(`Directory ${cloneDir} already exists but is not a valid git repository or git command failed`);
-        }
-      } catch (accessError) {
-        // Directory doesn't exist - proceed with clone
-      }
-
-      // Ensure parent directory exists
-      await fs.mkdir(path.dirname(cloneDir), { recursive: true });
-
-      // Prepare the git clone URL with authentication if token is provided
-      let cloneUrl = githubUrl;
-      if (githubToken) {
-        // Convert HTTPS URL to authenticated URL
-        // Example: https://github.com/user/repo -> https://token@github.com/user/repo
-        cloneUrl = githubUrl.replace('https://github.com', `https://${githubToken}@github.com`);
-      }
-
-      console.log('🔄 Cloning repository:', githubUrl);
-      console.log('📁 Destination:', cloneDir);
-
-      // Execute git clone
-      const gitProcess = spawn('git', ['clone', '--depth', '1', cloneUrl, cloneDir], {
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-
-      let stdout = '';
-      let stderr = '';
-
-      gitProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
-      });
-
-      gitProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-        console.log('Git stderr:', data.toString());
-      });
-
-      gitProcess.on('close', (code) => {
-        if (code === 0) {
-          console.log('✅ Repository cloned successfully');
-          resolve(cloneDir);
-        } else {
-          console.error('❌ Git clone failed:', stderr);
-          reject(new Error(`Git clone failed: ${stderr}`));
-        }
-      });
-
-      gitProcess.on('error', (error) => {
-        reject(new Error(`Failed to execute git: ${error.message}`));
-      });
-    } catch (error) {
-      reject(error);
+    } catch (gitError) {
+      throw new Error(`Directory ${cloneDir} already exists but is not a valid git repository or git command failed`);
     }
+  } catch (accessError) {
+    // Directory doesn't exist - proceed with clone
+  }
+
+  // Ensure parent directory exists
+  await fs.mkdir(path.dirname(cloneDir), { recursive: true });
+
+  // Prepare the git clone URL with authentication if token is provided
+  let cloneUrl = githubUrl;
+  if (githubToken) {
+    // Convert HTTPS URL to authenticated URL
+    // Example: https://github.com/user/repo -> https://token@github.com/user/repo
+    cloneUrl = githubUrl.replace('https://github.com', `https://${githubToken}@github.com`);
+  }
+
+  console.log('🔄 Cloning repository:', githubUrl);
+  console.log('📁 Destination:', cloneDir);
+
+  // Execute git clone
+  const gitProcess = spawn('git', ['clone', '--depth', '1', cloneUrl, cloneDir], {
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  let stdout = '';
+  let stderr = '';
+
+  gitProcess.stdout.on('data', (data) => {
+    stdout += data.toString();
+  });
+
+  gitProcess.stderr.on('data', (data) => {
+    stderr += data.toString();
+    console.log('Git stderr:', data.toString());
+  });
+
+  return new Promise((resolve, reject) => {
+    gitProcess.on('close', (code) => {
+      if (code === 0) {
+        console.log('✅ Repository cloned successfully');
+        resolve(cloneDir);
+      } else {
+        console.error('❌ Git clone failed:', stderr);
+        reject(new Error(`Git clone failed: ${stderr}`));
+      }
+    });
+
+    gitProcess.on('error', (error) => {
+      reject(new Error(`Failed to execute git: ${error.message}`));
+    });
   });
 }
 

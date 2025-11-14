@@ -439,7 +439,7 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                         <div className="space-y-4">
                           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
                             <p className="text-sm text-blue-800 dark:text-blue-200">
-                              💡 <strong>Public repositories</strong> don't require authentication. You can skip providing a token if cloning a public repo.
+                              💡 <strong>Public repositories</strong> don&apos;t require authentication. You can skip providing a token if cloning a public repo.
                             </p>
                           </div>
 

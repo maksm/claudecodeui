@@ -55,6 +55,7 @@ function normalizeInlineCodeFences(text) {
     // ```code```  -> `code`
     return text.replace(/```\s*([^\n\r]+?)\s*```/g, '`$1`');
   } catch {
+    // Failed to normalize, return original
     return text;
   }
 }
@@ -68,6 +69,7 @@ function unescapeWithMathProtection(text) {
   const PLACEHOLDER_SUFFIX = '__';
 
   // Extract and protect math formulas
+  // eslint-disable-next-line no-useless-escape
   let processedText = text.replace(/\$\$([\s\S]*?)\$\$|\$([^\$\n]+?)\$/g, (match) => {
     const index = mathBlocks.length;
     mathBlocks.push(match);
@@ -81,6 +83,7 @@ function unescapeWithMathProtection(text) {
 
   // Restore math formulas
   processedText = processedText.replace(
+    // eslint-disable-next-line no-useless-escape
     new RegExp(`${PLACEHOLDER_PREFIX}(\\d+)${PLACEHOLDER_SUFFIX}`, 'g'),
     (match, index) => {
       return mathBlocks[parseInt(index)];
@@ -113,6 +116,7 @@ const Markdown = ({ children, className }) => {
 function formatUsageLimitText(text) {
   try {
     if (typeof text !== 'string') return text;
+    // eslint-disable-next-line no-useless-escape
     return text.replace(/Claude AI usage limit reached\|(\d{10,13})/g, (match, ts) => {
       let timestampMs = parseInt(ts, 10);
       if (!Number.isFinite(timestampMs)) return match;
@@ -148,6 +152,7 @@ function formatUsageLimitText(text) {
       return `Claude usage limit reached. Your limit will reset at **${timeStr} ${tzHuman}** - ${dateReadable}`;
     });
   } catch {
+    // Failed to format, return original
     return text;
   }
 }
@@ -234,95 +239,109 @@ const safeLocalStorage = {
   }
 };
 
-// Common markdown components to ensure consistent rendering (tables, inline code, links, etc.)
-const markdownComponents = {
-  code: ({ node, inline, className, children, ...props }) => {
-    const [copied, setCopied] = React.useState(false);
-    const raw = Array.isArray(children) ? children.join('') : String(children ?? '');
-    const looksMultiline = /[\r\n]/.test(raw);
-    const inlineDetected = inline || (node && node.type === 'inlineCode');
-    const shouldInline = inlineDetected || !looksMultiline; // fallback to inline if single-line
-    if (shouldInline) {
-      return (
-        <code
-          className={`font-mono text-[0.9em] px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-900 border border-gray-200 dark:bg-gray-800/60 dark:text-gray-100 dark:border-gray-700 whitespace-pre-wrap break-words ${
-            className || ''
-          }`}
-          {...props}
-        >
-          {children}
-        </code>
-      );
-    }
-    const textToCopy = raw;
+// Code block component with copy functionality (extracted to follow React hooks rules)
+const CodeBlock = ({ node, inline, className, children, ...props }) => {
+  const [copied, setCopied] = React.useState(false);
+  const raw = Array.isArray(children) ? children.join('') : String(children ?? '');
+  const looksMultiline = /[\r\n]/.test(raw);
+  const inlineDetected = inline || (node && node.type === 'inlineCode');
+  const shouldInline = inlineDetected || !looksMultiline; // fallback to inline if single-line
 
-    const handleCopy = () => {
-      const doSet = () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 1500);
-      };
-      try {
-        if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(textToCopy).then(doSet).catch(() => {
-            // Fallback
-            const ta = document.createElement('textarea');
-            ta.value = textToCopy;
-            ta.style.position = 'fixed';
-            ta.style.opacity = '0';
-            document.body.appendChild(ta);
-            ta.select();
-            try { document.execCommand('copy'); } catch {}
-            document.body.removeChild(ta);
-            doSet();
-          });
-        } else {
+  if (shouldInline) {
+    return (
+      <code
+        className={`font-mono text-[0.9em] px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-900 border border-gray-200 dark:bg-gray-800/60 dark:text-gray-100 dark:border-gray-700 whitespace-pre-wrap break-words ${
+          className || ''
+        }`}
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  }
+  const textToCopy = raw;
+
+  const handleCopy = () => {
+    const doSet = () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    };
+    try {
+      if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(textToCopy).then(doSet).catch(() => {
+          // Fallback to legacy copy method
           const ta = document.createElement('textarea');
           ta.value = textToCopy;
           ta.style.position = 'fixed';
           ta.style.opacity = '0';
           document.body.appendChild(ta);
           ta.select();
-          try { document.execCommand('copy'); } catch {}
+          try {
+            document.execCommand('copy');
+          } catch (e) {
+            // Ignore copy errors - just fail silently
+          }
           document.body.removeChild(ta);
           doSet();
+        });
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = textToCopy;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          document.execCommand('copy');
+        } catch (e) {
+          // Ignore copy errors - just fail silently
         }
-      } catch {}
-    };
+        document.body.removeChild(ta);
+        doSet();
+      }
+    } catch (e) {
+      // Ignore all copy errors - just fail silently
+    }
+  };
 
-    return (
-      <div className="relative group my-2">
-        <button
-          type="button"
-          onClick={handleCopy}
-          className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 focus:opacity-100 active:opacity-100 transition-opacity text-xs px-2 py-1 rounded-md bg-gray-700/80 hover:bg-gray-700 text-white border border-gray-600"
-          title={copied ? 'Copied' : 'Copy code'}
-          aria-label={copied ? 'Copied' : 'Copy code'}
-        >
-          {copied ? (
-            <span className="flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-              </svg>
-              Copied
-            </span>
-          ) : (
-            <span className="flex items-center gap-1">
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
-              </svg>
-              Copy
-            </span>
-          )}
-        </button>
-        <pre className="bg-gray-900 dark:bg-gray-900 border border-gray-700/40 rounded-lg p-3 overflow-x-auto">
-          <code className={`text-gray-100 dark:text-gray-100 text-sm font-mono ${className || ''}`} {...props}>
-            {children}
-          </code>
-        </pre>
-      </div>
-    );
-  },
+  return (
+    <div className="relative group my-2">
+      <button
+        type="button"
+        onClick={handleCopy}
+        className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 focus:opacity-100 active:opacity-100 transition-opacity text-xs px-2 py-1 rounded-md bg-gray-700/80 hover:bg-gray-700 text-white border border-gray-600"
+        title={copied ? 'Copied' : 'Copy code'}
+        aria-label={copied ? 'Copied' : 'Copy code'}
+      >
+        {copied ? (
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+            </svg>
+            Copied
+          </span>
+        ) : (
+          <span className="flex items-center gap-1">
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+            </svg>
+            Copy
+          </span>
+        )}
+      </button>
+      <pre className="bg-gray-900 dark:bg-gray-900 border border-gray-700/40 rounded-lg p-3 overflow-x-auto">
+        <code className={`text-gray-100 dark:text-gray-100 text-sm font-mono ${className || ''}`} {...props}>
+          {children}
+        </code>
+      </pre>
+    </div>
+  );
+};
+
+// Common markdown components to ensure consistent rendering (tables, inline code, links, etc.)
+const markdownComponents = {
+  code: CodeBlock,
   blockquote: ({ children }) => (
     <blockquote className="border-l-4 border-gray-300 dark:border-gray-600 pl-4 italic text-gray-600 dark:text-gray-400 my-2">
       {children}
@@ -820,11 +839,11 @@ const MessageComponent = memo(({ message, index, prevMessage, createDiff, onFile
                           </details>
                         );
                       }
-                    } catch (e) {
-                      // Fall back to regular display
+                    } catch {
+                      // Fall back to regular display if parsing fails
                     }
                   }
-                  
+
                   // Special handling for TodoWrite tool
                   if (message.toolName === 'TodoWrite') {
                     try {
@@ -1594,16 +1613,19 @@ const MessageComponent = memo(({ message, index, prevMessage, createDiff, onFile
     </div>
   );
 });
+MessageComponent.displayName = 'MessageComponent';
 
 // ImageAttachment component for displaying image previews
 const ImageAttachment = ({ file, onRemove, uploadProgress, error }) => {
-  const [preview, setPreview] = useState(null);
-  
-  useEffect(() => {
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
+  // Create preview URL directly without setState to avoid effect warning
+  const preview = useMemo(() => {
+    return URL.createObjectURL(file);
   }, [file]);
+
+  // Clean up the URL when component unmounts or file changes
+  useEffect(() => {
+    return () => URL.revokeObjectURL(preview);
+  }, [preview]);
   
   return (
     <div className="relative group">
@@ -2919,11 +2941,11 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
       }
 
       // Filter project-specific updates to only affect relevant sessions
-      if (isProjectSpecificMessage && latestMessage.targeted && currentProjectName) {
+      if (isProjectSpecificMessage && latestMessage.targeted && selectedProject?.name) {
         // This is a targeted project update - only process if it affects our current project
         // The backend ensures we only get updates for projects we're connected to
         // But we should double-check on the frontend for safety
-        console.log('📁 Processing targeted project update for:', currentProjectName);
+        console.log('📁 Processing targeted project update for:', selectedProject.name);
       }
 
       switch (latestMessage.type) {
@@ -2947,7 +2969,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
           // This case is kept for compatibility but does nothing
           break;
 
-        case 'claude-response':
+        case 'claude-response': {
           const messageData = latestMessage.data.message || latestMessage.data;
           
           // Handle Cursor streaming format (content_block_delta / content_block_stop)
@@ -3130,7 +3152,8 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
             }
           }
           break;
-          
+        }
+
         case 'claude-output':
           {
             const cleaned = String(latestMessage.data || '');
@@ -3231,7 +3254,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
           }]);
           break;
           
-        case 'cursor-result':
+        case 'cursor-result': {
           // Get session ID from message or fall back to current session
           const cursorCompletedSessionId = latestMessage.sessionId || currentSessionId;
 
@@ -3296,11 +3319,13 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
             }
           }
           break;
+        }
 
         case 'cursor-output':
           // Handle Cursor raw terminal output; strip ANSI and ignore empty control-only payloads
           try {
             const raw = String(latestMessage.data ?? '');
+            // eslint-disable-next-line no-control-regex
             const cleaned = raw.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '').trim();
             if (cleaned) {
               streamBufferRef.current += (streamBufferRef.current ? `\n${cleaned}` : cleaned);
@@ -3328,7 +3353,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
           }
           break;
           
-        case 'claude-complete':
+        case 'claude-complete': {
           // Get session ID from message or fall back to current session
           const completedSessionId = latestMessage.sessionId || currentSessionId || sessionStorage.getItem('pendingSessionId');
 
@@ -3381,7 +3406,8 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
             safeLocalStorage.removeItem(`chat_messages_${selectedProject.name}`);
           }
           break;
-          
+        }
+
         case 'session-aborted': {
           // Get session ID from message or fall back to current session
           const abortedSessionId = latestMessage.sessionId || currentSessionId;
@@ -3426,7 +3452,7 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
           break;
         }
 
-        case 'claude-status':
+        case 'claude-status': {
           // Handle Claude working status messages
           const statusData = latestMessage.data;
           if (statusData) {
@@ -3463,7 +3489,8 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
             setCanAbortSession(statusInfo.can_interrupt);
           }
           break;
-  
+        }
+
       }
     }
   }, [messages]);

@@ -75,7 +75,9 @@ const OptimizedMarkdownPreview = ({
   // Process markdown when content changes
   useEffect(() => {
     if (!content || !isReady) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHtmlContent('');
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProcessingState({ isProcessing: false, error: null });
       return;
     }

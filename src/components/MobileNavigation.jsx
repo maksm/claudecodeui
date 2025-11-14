@@ -44,6 +44,7 @@ const MobileNavigation = ({
   // Update active view when location changes
   useEffect(() => {
     const view = getCurrentViewFromPath(location.pathname);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveView(view);
   }, [location.pathname]);
 
@@ -388,7 +389,7 @@ const MobileNavigation = ({
       )}
 
       {/* CSS for mobile navigation */}
-      <style jsx>{`
+      <style>{`
         .sidebar-nav-item:hover {
           background: ${theme === 'dark' ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)'};
         }

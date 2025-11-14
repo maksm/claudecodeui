@@ -496,6 +496,7 @@ This document outlines the requirements for building an AI-powered task manageme
       .replace(/^# (.*$)/gim, '<h1>$1</h1>')
       .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
       .replace(/\*(.*)\*/gim, '<em>$1</em>')
+      // eslint-disable-next-line no-useless-escape
       .replace(/^\- (.*$)/gim, '<li>$1</li>')
       .replace(/(<li>.*<\/li>)/gims, '<ul>$1</ul>')
       .replace(/\n\n/gim, '</p><p>')
@@ -782,7 +783,7 @@ This document outlines the requirements for building an AI-powered task manageme
                     <div className="bg-white dark:bg-gray-800 rounded border border-purple-200 dark:border-purple-700 p-3 mb-3">
                       <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">💬 Example:</p>
                       <p className="text-xs text-gray-900 dark:text-white font-mono">
-                        "I've just initialized a new project with Claude Task Master. I have a PRD at .taskmaster/docs/{fileName.endsWith('.txt') || fileName.endsWith('.md') ? fileName : `${fileName}.txt`}. Can you help me parse it and set up the initial tasks?"
+                        &quot;I&apos;ve just initialized a new project with Claude Task Master. I have a PRD at .taskmaster/docs/{fileName.endsWith('.txt') || fileName.endsWith('.md') ? fileName : `${fileName}.txt`}. Can you help me parse it and set up the initial tasks?&quot;
                       </p>
                     </div>
                     
@@ -814,7 +815,7 @@ This document outlines the requirements for building an AI-powered task manageme
                   onClick={() => setShowGenerateModal(false)}
                   className="w-full px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
                 >
-                  Got it, I'll ask Claude Code directly
+                  Got it, I&apos;ll ask Claude Code directly
                 </button>
               </div>
             </div>
@@ -838,7 +839,7 @@ This document outlines the requirements for building an AI-powered task manageme
               </div>
               
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                A PRD file named "{fileName.endsWith('.txt') || fileName.endsWith('.md') ? fileName : `${fileName}.txt`}" already exists. 
+                A PRD file named &quot;{fileName.endsWith('.txt') || fileName.endsWith('.md') ? fileName : `${fileName}.txt`}&quot; already exists.
                 Do you want to overwrite it with the current content?
               </p>
               

@@ -97,7 +97,7 @@ describe('TasksSettingsContext', () => {
       localStorage.setItem('tasks-enabled', 'true');
       renderWithTasksSettingsProvider();
 
-      expect(screen-testid('tasks-enabled')).toHaveTextContent('true');
+      expect(screen.getByTestId('tasks-enabled')).toHaveTextContent('true');
     });
 
     it('does not check installation when user is not authenticated', () => {

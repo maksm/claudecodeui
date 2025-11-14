@@ -591,7 +591,7 @@ function AppContent() {
         // Remove "Full Changelog" links
         .replace(/\*\*Full Changelog\*\*:.*$/gim, '')
         // Remove compare links (e.g., https://github.com/.../compare/v1.0.0...v1.0.1)
-        .replace(/https?:\/\/github\.com\/[^\/]+\/[^\/]+\/compare\/[^\s)]+/gi, '')
+        .replace(/https?:\/\/github\.com\/[^/]+\/[^/]+\/compare\/[^\s)]+/gi, '')
         // Clean up multiple consecutive empty lines
         .replace(/\n\s*\n\s*\n/g, '\n\n')
         // Trim whitespace
@@ -679,7 +679,7 @@ function AppContent() {
           {releaseInfo?.body && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-900 dark:text-white">What's New:</h3>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">What&apos;s New:</h3>
                 {releaseInfo?.htmlUrl && (
                   <a
                     href={releaseInfo.htmlUrl}
@@ -722,7 +722,7 @@ function AppContent() {
                 </code>
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                Or click "Update Now" to run the update automatically.
+                Or click &quot;Update Now&quot; to run the update automatically.
               </p>
             </div>
           )}

@@ -30,6 +30,7 @@ const MobileGestureIndicator = () => {
   // Show/hide indicator based on gesture state
   useEffect(() => {
     if (isSwiping) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowIndicator(true);
     } else if (!isDragging) {
       // Hide after a delay when dragging stops
@@ -102,7 +103,7 @@ const MobileGestureIndicator = () => {
           {getDirectionText()}
         </div>
 
-        <style jsx>{`
+        <style>{`
           .mobile-gesture-indicator {
             background: rgba(0, 0, 0, 0.8);
             color: white;

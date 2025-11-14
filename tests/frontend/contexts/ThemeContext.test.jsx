@@ -19,14 +19,11 @@ const TestComponent = () => {
   );
 };
 
-// Test component that should throw error when used without provider
+// Test component that throws error when used without provider
 const TestComponentWithoutProvider = () => {
-  try {
-    const { isDarkMode } = useTheme();
-    return <div data-testid="theme-value">{isDarkMode ? 'dark' : 'light'}</div>;
-  } catch (error) {
-    return <div data-testid="error-message">{error.message}</div>;
-  }
+  // This will throw an error when called outside provider
+  const { isDarkMode } = useTheme();
+  return <div data-testid="theme-value">{isDarkMode ? 'dark' : 'light'}</div>;
 };
 
 describe('ThemeContext', () => {

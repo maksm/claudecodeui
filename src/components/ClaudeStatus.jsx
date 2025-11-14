@@ -9,7 +9,9 @@ function ClaudeStatus({ status, onAbort, isLoading, provider = 'claude' }) {
   // Update elapsed time every second
   useEffect(() => {
     if (!isLoading) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setElapsedTime(0);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFakeTokens(0);
       return;
     }
