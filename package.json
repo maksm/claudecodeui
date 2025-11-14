@@ -60,7 +60,8 @@
     "test:e2e:chrome": "playwright test --project=chromium",
     "test:e2e:firefox": "playwright test --project=firefox",
     "test:e2e:safari": "playwright test --project=webkit",
-    "test:complete": "npm run test:all && npm run test:e2e"
+    "test:complete": "npm run test:all && npm run test:e2e",
+    "prepare": "husky"
   },
   "keywords": [
     "claude coode",
@@ -151,10 +152,12 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "jest-environment-node": "^30.2.0",
+    "lint-staged": "^16.2.6",
     "msw": "^2.12.1",
     "node-gyp": "^10.0.0",
     "postcss": "^8.4.32",
@@ -166,6 +169,18 @@
     "task-master-ai": "^0.31.2",
     "ts-jest": "^29.4.5",
     "vite": "^7.0.4"
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,mjs,cjs}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "**/*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "**/*.{css,scss}": [
+      "prettier --write"
+    ]
   },
   "msw": {
     "workerDirectory": [
