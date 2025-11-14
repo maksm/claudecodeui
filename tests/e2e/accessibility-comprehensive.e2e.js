@@ -1,9 +1,14 @@
-import { test, expect, describe, beforeEach, afterEach } from '@playwright/test';
+import { expect, describe } from '@playwright/test';
 import { test as baseTest } from '@playwright/test';
-import { AccessibilityHelper, WCAGComplianceChecker, VisualRegressionHelper } from '../helpers/accessibility-helpers.js';
-import { loginAsUser, completeSetup, cleanupTestData } from './helpers/test-helpers.js';
+import {
+  AccessibilityHelper,
+  WCAGComplianceChecker,
+  VisualRegressionHelper,
+} from '../helpers/accessibility-helpers.js';
+import { loginAsUser, cleanupTestData } from './helpers/test-helpers.js';
 
 // Extend base test to include accessibility helpers
+/* eslint-disable react-hooks/rules-of-hooks */
 export const testWithAccessibility = baseTest.extend({
   accessibilityHelper: async ({ page }, use) => {
     const helper = new AccessibilityHelper(page);
@@ -17,17 +22,18 @@ export const testWithAccessibility = baseTest.extend({
   visualHelper: async ({ page }, use) => {
     const helper = new VisualRegressionHelper(page);
     await use(helper);
-  }
+  },
 });
+/* eslint-enable react-hooks/rules-of-hooks */
 
 const test = testWithAccessibility;
 
 describe('Comprehensive Accessibility Tests', () => {
-  beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await cleanupTestData(page);
   });
 
-  afterEach(async ({ page }) => {
+  test.afterEach(async ({ page }) => {
     await cleanupTestData(page);
   });
 
@@ -39,7 +45,10 @@ describe('Comprehensive Accessibility Tests', () => {
       expect(results.violations).toHaveLength(0);
 
       if (results.violations.length > 0) {
-        console.error('WCAG Level A violations:', results.violations.map(v => v.id));
+        console.error(
+          'WCAG Level A violations:',
+          results.violations.map(v => v.id)
+        );
       }
     });
 
@@ -50,7 +59,10 @@ describe('Comprehensive Accessibility Tests', () => {
       expect(results.violations).toHaveLength(0);
 
       if (results.violations.length > 0) {
-        console.error('WCAG Level AA violations:', results.violations.map(v => v.id));
+        console.error(
+          'WCAG Level AA violations:',
+          results.violations.map(v => v.id)
+        );
       }
     });
 
@@ -136,8 +148,8 @@ describe('Comprehensive Accessibility Tests', () => {
       await page.waitForLoadState('networkidle');
 
       const results = await accessibilityHelper.analyzeAccessibility();
-      const tableViolations = results.violations.filter(v =>
-        v.tags.includes('table') || v.tags.includes('datatable')
+      const tableViolations = results.violations.filter(
+        v => v.tags.includes('table') || v.tags.includes('datatable')
       );
 
       expect(tableViolations).toHaveLength(0);
@@ -165,7 +177,9 @@ describe('Comprehensive Accessibility Tests', () => {
       expect(formResults.violations).toHaveLength(0);
 
       // Check specific form elements
-      const messageInput = page.locator('textarea[placeholder*="message"], textarea[placeholder*="Message"]');
+      const messageInput = page.locator(
+        'textarea[placeholder*="message"], textarea[placeholder*="Message"]'
+      );
       await expect(messageInput).toHaveAttribute('aria-label');
 
       const sendButton = page.locator('button[aria-label*="send"], button[aria-label*="Send"]');
@@ -191,13 +205,14 @@ describe('Comprehensive Accessibility Tests', () => {
       expect(results.violations).toHaveLength(0);
     });
 
-    test('should have touch-friendly targets', async ({ page, accessibilityHelper }) => {
+    test('should have touch-friendly targets', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
       await loginAsUser(page);
 
       // Check button sizes
       const buttons = await page.locator('button').all();
-      for (const button of buttons.slice(0, 10)) { // Check first 10 buttons
+      for (const button of buttons.slice(0, 10)) {
+        // Check first 10 buttons
         const boundingBox = await button.boundingBox();
         if (boundingBox) {
           expect(boundingBox.width).toBeGreaterThanOrEqual(44); // Minimum touch target
@@ -216,7 +231,9 @@ describe('Comprehensive Accessibility Tests', () => {
       await expect(page.locator('[role="navigation"]')).toBeVisible();
 
       // Check for proper touch targets with labels
-      const navigationItems = await page.locator('[role="navigation"] button, [role="navigation"] a').all();
+      const navigationItems = await page
+        .locator('[role="navigation"] button, [role="navigation"] a')
+        .all();
       for (const item of navigationItems) {
         await expect(item).toHaveAttribute('aria-label');
       }
@@ -252,7 +269,7 @@ describe('Comprehensive Accessibility Tests', () => {
       let firstElement = await page.evaluate(() => ({
         tagName: document.activeElement.tagName,
         id: document.activeElement.id,
-        className: document.activeElement.className
+        className: document.activeElement.className,
       }));
       focusableElements.push(firstElement);
 
@@ -262,7 +279,7 @@ describe('Comprehensive Accessibility Tests', () => {
         const element = await page.evaluate(() => ({
           tagName: document.activeElement.tagName,
           id: document.activeElement.id,
-          className: document.activeElement.className
+          className: document.activeElement.className,
         }));
         focusableElements.push(element);
       }
@@ -280,7 +297,9 @@ describe('Comprehensive Accessibility Tests', () => {
       await page.click('button[type="submit"]');
 
       // Check for error announcements
-      const errorElements = await page.locator('[role="alert"], .error, [aria-live="polite"]').all();
+      const errorElements = await page
+        .locator('[role="alert"], .error, [aria-live="polite"]')
+        .all();
       expect(errorElements.length).toBeGreaterThan(0);
 
       for (const error of errorElements) {
@@ -300,8 +319,8 @@ describe('Comprehensive Accessibility Tests', () => {
       await page.waitForSelector('[role="alert"], .error-message');
 
       const results = await accessibilityHelper.analyzeAccessibility();
-      const errorViolations = results.violations.filter(v =>
-        v.tags.includes('error') || v.tags.includes('validation')
+      const errorViolations = results.violations.filter(
+        v => v.tags.includes('error') || v.tags.includes('validation')
       );
 
       expect(errorViolations).toHaveLength(0);
@@ -312,6 +331,7 @@ describe('Comprehensive Accessibility Tests', () => {
     test('should maintain accessibility during loading', async ({ page, accessibilityHelper }) => {
       // Simulate slow network
       await page.route('**/*', route => {
+        // eslint-disable-next-line no-undef
         setTimeout(() => route.continue(), 1000);
       });
 
@@ -319,8 +339,8 @@ describe('Comprehensive Accessibility Tests', () => {
 
       // Check accessibility while content is loading
       const loadingResults = await accessibilityHelper.analyzeAccessibility();
-      const loadingViolations = loadingResults.violations.filter(v =>
-        v.tags.includes('loading') || v.tags.includes('skeleton')
+      const loadingViolations = loadingResults.violations.filter(
+        v => v.tags.includes('loading') || v.tags.includes('skeleton')
       );
 
       // Allow some loading violations but ensure core accessibility
@@ -335,7 +355,9 @@ describe('Comprehensive Accessibility Tests', () => {
       await page.click('[data-testid="projects-nav"]');
 
       // Check for loading indicators
-      const loadingIndicators = await page.locator('[aria-busy="true"], .loading, [data-loading]').all();
+      const loadingIndicators = await page
+        .locator('[aria-busy="true"], .loading, [data-loading]')
+        .all();
 
       // Should have some form of loading indication
       if (loadingIndicators.length > 0) {
@@ -348,15 +370,23 @@ describe('Comprehensive Accessibility Tests', () => {
 });
 
 describe('Accessibility Reporting', () => {
-  test('should generate comprehensive accessibility report', async ({ page, accessibilityHelper }) => {
+  test('should generate comprehensive accessibility report', async ({
+    page,
+    accessibilityHelper,
+  }) => {
     await loginAsUser(page);
 
-    const reportPath = await accessibilityHelper.generateReport('comprehensive-accessibility-report');
+    const reportPath = await accessibilityHelper.generateReport(
+      'comprehensive-accessibility-report'
+    );
     expect(reportPath).toBeTruthy();
 
     // Verify report was created and contains expected data
     const fs = await import('fs');
-    const reportExists = await fs.promises.access(reportPath).then(() => true).catch(() => false);
+    const reportExists = await fs.promises
+      .access(reportPath)
+      .then(() => true)
+      .catch(() => false);
     expect(reportExists).toBeTruthy();
   });
 
@@ -368,7 +398,10 @@ describe('Accessibility Reporting', () => {
 
     // Verify certificate was created
     const fs = await import('fs');
-    const certificateExists = await fs.promises.access(certificatePath).then(() => true).catch(() => false);
+    const certificateExists = await fs.promises
+      .access(certificatePath)
+      .then(() => true)
+      .catch(() => false);
     expect(certificateExists).toBeTruthy();
   });
 

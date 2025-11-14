@@ -1,24 +1,30 @@
-import { test, expect, describe, beforeEach, afterEach } from '@playwright/test';
+import { expect, describe } from '@playwright/test';
 import { test as baseTest } from '@playwright/test';
 import { VisualRegressionHelper, AccessibilityHelper } from '../helpers/accessibility-helpers.js';
 import { loginAsUser, cleanupTestData } from './helpers/test-helpers.js';
 
 // Extend base test to include visual regression helpers
+/* eslint-disable react-hooks/rules-of-hooks */
 export const testWithVisual = baseTest.extend({
   visualHelper: async ({ page }, use) => {
     const helper = new VisualRegressionHelper(page);
     await use(helper);
-  }
+  },
+  accessibilityHelper: async ({ page }, use) => {
+    const helper = new AccessibilityHelper(page);
+    await use(helper);
+  },
 });
+/* eslint-enable react-hooks/rules-of-hooks */
 
 const test = testWithVisual;
 
 describe('Visual Regression Tests', () => {
-  beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await cleanupTestData(page);
   });
 
-  afterEach(async ({ page }) => {
+  test.afterEach(async ({ page }) => {
     await cleanupTestData(page);
   });
 
@@ -49,7 +55,10 @@ describe('Visual Regression Tests', () => {
       expect(result.identical).toBeTruthy();
     });
 
-    test('should match baseline login form with validation errors', async ({ page, visualHelper }) => {
+    test('should match baseline login form with validation errors', async ({
+      page,
+      visualHelper,
+    }) => {
       await page.goto('/login');
       await page.waitForLoadState('networkidle');
 
@@ -91,7 +100,7 @@ describe('Visual Regression Tests', () => {
       const clip = await sidebar.boundingBox();
 
       const result = await visualHelper.compareWithBaseline('dashboard-sidebar', {
-        clip: clip ? { x: clip.x, y: clip.y, width: clip.width, height: clip.height } : undefined
+        clip: clip ? { x: clip.x, y: clip.y, width: clip.width, height: clip.height } : undefined,
       });
       expect(result.identical).toBeTruthy();
     });
@@ -104,7 +113,7 @@ describe('Visual Regression Tests', () => {
       const clip = await mainContent.boundingBox();
 
       const result = await visualHelper.compareWithBaseline('dashboard-main-content', {
-        clip: clip ? { x: clip.x, y: clip.y, width: clip.width, height: clip.height } : undefined
+        clip: clip ? { x: clip.x, y: clip.y, width: clip.width, height: clip.height } : undefined,
       });
       expect(result.identical).toBeTruthy();
     });
@@ -172,7 +181,10 @@ describe('Visual Regression Tests', () => {
       await page.waitForLoadState('networkidle');
 
       // Type a message
-      await page.fill('textarea[placeholder*="message"], textarea[placeholder*="Message"]', 'Hello, how are you?');
+      await page.fill(
+        'textarea[placeholder*="message"], textarea[placeholder*="Message"]',
+        'Hello, how are you?'
+      );
       await page.waitForTimeout(200);
 
       const result = await visualHelper.compareWithBaseline('chat-with-message-input');
@@ -229,7 +241,7 @@ describe('Visual Regression Tests', () => {
             background: #1a1a1a !important;
             color: #ffffff !important;
           }
-        `
+        `,
       });
 
       await page.goto('/login');
@@ -253,7 +265,7 @@ describe('Visual Regression Tests', () => {
             background: #1a1a1a !important;
             color: #ffffff !important;
           }
-        `
+        `,
       });
 
       await loginAsUser(page);
@@ -272,11 +284,14 @@ describe('Visual Regression Tests', () => {
       { name: 'tablet', width: 768, height: 1024 },
       { name: 'tablet-landscape', width: 1024, height: 768 },
       { name: 'desktop', width: 1920, height: 1080 },
-      { name: 'desktop-large', width: 2560, height: 1440 }
+      { name: 'desktop-large', width: 2560, height: 1440 },
     ];
 
     viewports.forEach(({ name, width, height }) => {
-      test(`should match baseline dashboard on ${name} (${width}x${height})`, async ({ page, visualHelper }) => {
+      test(`should match baseline dashboard on ${name} (${width}x${height})`, async ({
+        page,
+        visualHelper,
+      }) => {
         await page.setViewportSize({ width, height });
         await loginAsUser(page);
         await page.waitForLoadState('networkidle');
@@ -334,11 +349,16 @@ describe('Visual Regression Tests', () => {
     test('should match baseline loading states', async ({ page, visualHelper }) => {
       // Mock slow network to create loading states
       await page.route('**/api/**', route => {
-        setTimeout(() => route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({ data: 'mocked' })
-        }), 2000);
+        // eslint-disable-next-line no-undef
+        setTimeout(
+          () =>
+            route.fulfill({
+              status: 200,
+              contentType: 'application/json',
+              body: JSON.stringify({ data: 'mocked' }),
+            }),
+          2000
+        );
       });
 
       await loginAsUser(page);
@@ -360,7 +380,7 @@ describe('Visual Regression Tests', () => {
         route.fulfill({
           status: 500,
           contentType: 'application/json',
-          body: JSON.stringify({ error: 'Internal Server Error' })
+          body: JSON.stringify({ error: 'Internal Server Error' }),
         });
       });
 
@@ -376,7 +396,11 @@ describe('Visual Regression Tests', () => {
   });
 
   describe('Visual Accessibility Tests', () => {
-    test('should maintain visual accessibility across themes', async ({ page, accessibilityHelper, visualHelper }) => {
+    test('should maintain visual accessibility across themes', async ({
+      page,
+      accessibilityHelper,
+      visualHelper,
+    }) => {
       await loginAsUser(page);
 
       // Test light theme
@@ -399,7 +423,7 @@ describe('Visual Regression Tests', () => {
             background: #1a1a1a !important;
             color: #ffffff !important;
           }
-        `
+        `,
       });
 
       const darkAccessibility = await accessibilityHelper.analyzeAccessibility();
@@ -411,7 +435,10 @@ describe('Visual Regression Tests', () => {
   });
 
   describe('Performance Visual Tests', () => {
-    test('should maintain visual consistency during performance constraints', async ({ page, visualHelper }) => {
+    test('should maintain visual consistency during performance constraints', async ({
+      page,
+      visualHelper,
+    }) => {
       // Simulate high CPU load
       await page.addInitScript(() => {
         // Simulate blocking operations
@@ -452,7 +479,10 @@ describe('Visual Regression Report Generation', () => {
 
     // Verify report was created
     const fs = await import('fs');
-    const reportExists = await fs.promises.access(reportPath).then(() => true).catch(() => false);
+    const reportExists = await fs.promises
+      .access(reportPath)
+      .then(() => true)
+      .catch(() => false);
     expect(reportExists).toBeTruthy();
   });
 });
