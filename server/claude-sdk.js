@@ -16,6 +16,7 @@ import { query } from '@anthropic-ai/claude-agent-sdk';
 import { promises as fs } from 'fs';
 import path from 'path';
 import os from 'os';
+import { queryZaiSDK, abortZaiSDKSession, isZaiSDKSessionActive } from './zai-sdk.js';
 
 // Session tracking: Map of session IDs to active query instances
 const activeSessions = new Map();
@@ -346,6 +347,11 @@ async function loadMcpConfig(cwd) {
  * @returns {Promise<void>}
  */
 async function queryClaudeSDK(command, options = {}, ws) {
+  // Check if backend is set to 'zai', delegate to Zai SDK
+  if (options.backend === 'zai') {
+    return queryZaiSDK(command, options, ws);
+  }
+
   const { sessionId } = options;
   let capturedSessionId = sessionId;
   let sessionCreatedSent = false;
@@ -469,6 +475,11 @@ async function queryClaudeSDK(command, options = {}, ws) {
  * @returns {boolean} True if session was aborted, false if not found
  */
 async function abortClaudeSDKSession(sessionId) {
+  // Check if this is a Zai session (starts with 'zai-')
+  if (sessionId && sessionId.startsWith('zai-')) {
+    return abortZaiSDKSession(sessionId);
+  }
+
   const session = getSession(sessionId);
 
   if (!session) {
@@ -504,6 +515,11 @@ async function abortClaudeSDKSession(sessionId) {
  * @returns {boolean} True if session is active
  */
 function isClaudeSDKSessionActive(sessionId) {
+  // Check if this is a Zai session (starts with 'zai-')
+  if (sessionId && sessionId.startsWith('zai-')) {
+    return isZaiSDKSessionActive(sessionId);
+  }
+
   const session = getSession(sessionId);
   return session && session.status === 'active';
 }

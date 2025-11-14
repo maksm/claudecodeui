@@ -1,7 +1,7 @@
 /**
  * Provider Router
  *
- * Central routing module for managing multiple AI providers (Claude, Cursor, Zai).
+ * Central routing module for managing multiple AI providers (Claude, Cursor).
  * Handles provider selection, session routing, and unified interface for provider operations.
  *
  * Key features:
@@ -9,17 +9,17 @@
  * - Session-to-provider mapping
  * - Unified API for all provider operations
  * - Default provider configuration
+ *
+ * Note: Zai is handled as a backend option within Claude SDK, not a separate provider.
  */
 
 import { queryClaudeSDK, abortClaudeSDKSession, isClaudeSDKSessionActive } from './claude-sdk.js';
 import { spawnCursor, abortCursorSession, isCursorSessionActive } from './cursor-cli.js';
-import { queryZaiSDK, abortZaiSDKSession, isZaiSDKSessionActive } from './zai-sdk.js';
 
 // Available providers
 export const PROVIDERS = {
   CLAUDE: 'claude',
-  CURSOR: 'cursor',
-  ZAI: 'zai'
+  CURSOR: 'cursor'
 };
 
 // Session to provider mapping
@@ -128,10 +128,6 @@ export async function routeQuery(command, options = {}, ws, provider = null) {
         await spawnCursor(command, options, ws);
         break;
 
-      case PROVIDERS.ZAI:
-        await queryZaiSDK(command, options, ws);
-        break;
-
       default:
         throw new Error(`Unknown provider: ${selectedProvider}`);
     }
@@ -176,10 +172,6 @@ export async function abortSession(sessionId) {
         aborted = await abortCursorSession(sessionId);
         break;
 
-      case PROVIDERS.ZAI:
-        aborted = await abortZaiSDKSession(sessionId);
-        break;
-
       default:
         console.error(`Unknown provider for session ${sessionId}: ${provider}`);
         return false;
@@ -213,9 +205,6 @@ export function isSessionActive(sessionId) {
 
     case PROVIDERS.CURSOR:
       return isCursorSessionActive(sessionId);
-
-    case PROVIDERS.ZAI:
-      return isZaiSDKSessionActive(sessionId);
 
     default:
       return false;
@@ -264,8 +253,7 @@ export function getProviderStats() {
     totalSessions: sessionProviderMap.size,
     byProvider: {
       [PROVIDERS.CLAUDE]: 0,
-      [PROVIDERS.CURSOR]: 0,
-      [PROVIDERS.ZAI]: 0
+      [PROVIDERS.CURSOR]: 0
     },
     defaultProvider
   };

@@ -828,9 +828,6 @@ function handleChatConnection(ws) {
             } else if (data.type === 'cursor-command') {
                 // Route through provider router with Cursor provider
                 await routeQuery(data.command, data.options, ws, PROVIDERS.CURSOR);
-            } else if (data.type === 'zai-command') {
-                // Route through provider router with Zai provider
-                await routeQuery(data.command, data.options, ws, PROVIDERS.ZAI);
             } else if (data.type === 'provider-command') {
                 // Generic provider command - uses specified provider or default
                 await routeQuery(data.command, data.options, ws, data.provider);
@@ -875,8 +872,7 @@ function handleChatConnection(ws) {
                 // Get all currently active sessions
                 const activeSessions = {
                     claude: getActiveClaudeSDKSessions(),
-                    cursor: getActiveCursorSessions(),
-                    zai: [] // Zai sessions will be tracked by provider router
+                    cursor: getActiveCursorSessions()
                 };
                 ws.send(JSON.stringify({
                     type: 'active-sessions',
