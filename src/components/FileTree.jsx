@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Folder, FolderOpen, File, FileText, FileCode, List, TableProperties, Eye, Search, X } from 'lucide-react';
+import { Folder, FolderOpen, File, FileText, FileCode, List, TableProperties, Eye, Search, X, Edit } from 'lucide-react';
 import { cn } from '../lib/utils';
 import CodeEditor from './CodeEditor';
 import ImageViewer from './ImageViewer';
@@ -17,6 +17,8 @@ function FileTree({ selectedProject }) {
   const [viewMode, setViewMode] = useState('detailed'); // 'simple', 'detailed', 'compact'
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFiles, setFilteredFiles] = useState([]);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [isMarkdownPreviewMode, setIsMarkdownPreviewMode] = useState(false);
 
   useEffect(() => {
     if (selectedProject) {
@@ -130,13 +132,56 @@ function FileTree({ selectedProject }) {
     const now = new Date();
     const past = new Date(date);
     const diffInSeconds = Math.floor((now - past) / 1000);
-    
+
     if (diffInSeconds < 60) return 'just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
     if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)} days ago`;
     return past.toLocaleDateString();
   };
+
+  // Handle file opening with markdown preview preference
+  const openFile = (item, previewMode = false) => {
+    if (isMarkdownFile(item.name) && previewMode) {
+      setIsMarkdownPreviewMode(true);
+    } else {
+      setIsMarkdownPreviewMode(false);
+    }
+
+    setSelectedFile({
+      name: item.name,
+      path: item.path,
+      projectPath: selectedProject.path,
+      projectName: selectedProject.name,
+      isMarkdownPreviewMode: isMarkdownFile(item.name) && previewMode
+    });
+  };
+
+  // Handle context menu
+  const handleContextMenu = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (item.type === 'file' && isMarkdownFile(item.name)) {
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        item
+      });
+    }
+  };
+
+  // Close context menu
+  const closeContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClick = () => closeContextMenu();
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
 
   const renderFileTree = (items, level = 0) => {
     return items.map((item) => (
@@ -160,14 +205,10 @@ function FileTree({ selectedProject }) {
               });
             } else {
               // Open file in editor
-              setSelectedFile({
-                name: item.name,
-                path: item.path,
-                projectPath: selectedProject.path,
-                projectName: selectedProject.name
-              });
+              openFile(item, false);
             }
           }}
+          onContextMenu={(e) => handleContextMenu(e, item)}
         >
           <div className="flex items-center gap-2 min-w-0 w-full">
             {item.type === 'directory' ? (
@@ -184,10 +225,10 @@ function FileTree({ selectedProject }) {
             </span>
           </div>
         </Button>
-        
-        {item.type === 'directory' && 
-         expandedDirs.has(item.path) && 
-         item.children && 
+
+        {item.type === 'directory' &&
+         expandedDirs.has(item.path) &&
+         item.children &&
          item.children.length > 0 && (
           <div>
             {renderFileTree(item.children, level + 1)}
@@ -203,16 +244,22 @@ function FileTree({ selectedProject }) {
     return imageExtensions.includes(ext);
   };
 
+  const isMarkdownFile = (filename) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    return ext === 'md' || ext === 'markdown';
+  };
+
   const getFileIcon = (filename) => {
     const ext = filename.split('.').pop()?.toLowerCase();
-    
+
     const codeExtensions = ['js', 'jsx', 'ts', 'tsx', 'py', 'java', 'cpp', 'c', 'php', 'rb', 'go', 'rs'];
-    const docExtensions = ['md', 'txt', 'doc', 'pdf'];
     const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp'];
-    
-    if (codeExtensions.includes(ext)) {
+
+    if (isMarkdownFile(filename)) {
+      return <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />;
+    } else if (codeExtensions.includes(ext)) {
       return <FileCode className="w-4 h-4 text-green-500 flex-shrink-0" />;
-    } else if (docExtensions.includes(ext)) {
+    } else if (ext === 'txt' || ext === 'doc' || ext === 'pdf') {
       return <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />;
     } else if (imageExtensions.includes(ext)) {
       return <File className="w-4 h-4 text-purple-500 flex-shrink-0" />;
@@ -241,14 +288,10 @@ function FileTree({ selectedProject }) {
                 projectName: selectedProject.name
               });
             } else {
-              setSelectedFile({
-                name: item.name,
-                path: item.path,
-                projectPath: selectedProject.path,
-                projectName: selectedProject.name
-              });
+              openFile(item, false);
             }
           }}
+          onContextMenu={(e) => handleContextMenu(e, item)}
         >
           <div className="col-span-5 flex items-center gap-2 min-w-0">
             {item.type === 'directory' ? (
@@ -303,14 +346,10 @@ function FileTree({ selectedProject }) {
                 projectName: selectedProject.name
               });
             } else {
-              setSelectedFile({
-                name: item.name,
-                path: item.path,
-                projectPath: selectedProject.path,
-                projectName: selectedProject.name
-              });
+              openFile(item, false);
             }
           }}
+          onContextMenu={(e) => handleContextMenu(e, item)}
         >
           <div className="flex items-center gap-2 min-w-0">
             {item.type === 'directory' ? (
@@ -461,8 +500,12 @@ function FileTree({ selectedProject }) {
       {selectedFile && (
         <CodeEditor
           file={selectedFile}
-          onClose={() => setSelectedFile(null)}
+          onClose={() => {
+            setSelectedFile(null);
+            setIsMarkdownPreviewMode(false);
+          }}
           projectPath={selectedFile.projectPath}
+          initialPreviewMode={selectedFile.isMarkdownPreviewMode}
         />
       )}
       
@@ -472,6 +515,39 @@ function FileTree({ selectedProject }) {
           file={selectedImage}
           onClose={() => setSelectedImage(null)}
         />
+      )}
+
+      {/* Context Menu for Markdown Files */}
+      {contextMenu && (
+        <div
+          className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-50 min-w-48"
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            onClick={() => {
+              openFile(contextMenu.item, false);
+              closeContextMenu();
+            }}
+          >
+            <Edit className="w-4 h-4" />
+            Edit Markdown
+          </button>
+          <button
+            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            onClick={() => {
+              openFile(contextMenu.item, true);
+              closeContextMenu();
+            }}
+          >
+            <Eye className="w-4 h-4" />
+            Preview Markdown
+          </button>
+        </div>
       )}
     </div>
   );

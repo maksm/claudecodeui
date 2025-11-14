@@ -2,7 +2,32 @@
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
-// Mock WebSocket
+// Import MSW for testing
+import { server } from './mocks/server';
+
+// Mock BroadcastChannel (needed by MSW v2)
+class MockBroadcastChannel {
+  constructor(name) {
+    this.name = name;
+    this.onmessage = null;
+    this.onmessageerror = null;
+  }
+  postMessage(message) {
+    // No-op in tests
+  }
+  close() {
+    // No-op in tests
+  }
+  addEventListener(type, listener) {
+    // No-op in tests
+  }
+  removeEventListener(type, listener) {
+    // No-op in tests
+  }
+}
+global.BroadcastChannel = MockBroadcastChannel;
+
+// Mock WebSocket - this will be overridden by the MSW server setup
 global.WebSocket = jest.fn(() => ({
   addEventListener: jest.fn(),
   removeEventListener: jest.fn(),
@@ -29,19 +54,28 @@ global.IntersectionObserver = jest.fn(() => ({
   disconnect: jest.fn()
 }));
 
-// Mock matchMedia
+// Mock matchMedia with proper event listener support
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
-  value: jest.fn().mockImplementation(query => ({
-    matches: false,
-    media: query,
-    onchange: null,
-    addListener: jest.fn(), // deprecated
-    removeListener: jest.fn(), // deprecated
-    addEventListener: jest.fn(),
-    removeEventListener: jest.fn(),
-    dispatchEvent: jest.fn(),
-  })),
+  value: jest.fn().mockImplementation(query => {
+    const mediaQuery = {
+      matches: query === '(prefers-color-scheme: dark)' ? false : false,
+      media: query,
+      onchange: null,
+      addListener: jest.fn(), // deprecated
+      removeListener: jest.fn(), // deprecated
+      addEventListener: jest.fn(),
+      removeEventListener: jest.fn(),
+      dispatchEvent: jest.fn(),
+    };
+
+    // Mock the media query list object to be more realistic
+    Object.defineProperty(mediaQuery, 'matches', {
+      get: jest.fn(() => query === '(prefers-color-scheme: dark)' ? false : false)
+    });
+
+    return mediaQuery;
+  }),
 });
 
 // Mock localStorage
@@ -110,22 +144,43 @@ Object.defineProperty(HTMLVideoElement.prototype, 'load', {
   value: jest.fn(),
 });
 
-// Mock fetch
-global.fetch = jest.fn();
+// DON'T mock fetch here - let MSW handle it
 
 // Mock window.location using a different approach
-delete window.location;
-window.location = {
-  href: 'http://localhost:3001',
-  origin: 'http://localhost:3001',
-  protocol: 'http:',
-  host: 'localhost:3001',
-  hostname: 'localhost',
-  port: '3001',
-  pathname: '/',
-  search: '',
-  hash: '',
-  assign: jest.fn(),
-  replace: jest.fn(),
-  reload: jest.fn()
-};
+if (!window.location || window.location.href === 'about:blank') {
+  Object.defineProperty(window, 'location', {
+    value: {
+      href: 'http://localhost:3001',
+      origin: 'http://localhost:3001',
+      protocol: 'http:',
+      host: 'localhost:3001',
+      hostname: 'localhost',
+      port: '3001',
+      pathname: '/',
+      search: '',
+      hash: '',
+      assign: jest.fn(),
+      replace: jest.fn(),
+      reload: jest.fn()
+    },
+    writable: true,
+    configurable: true
+  });
+}
+
+// Setup MSW server before all tests
+beforeAll(() => {
+  server.listen({
+    onUnhandledRequest: 'warn'
+  });
+});
+
+// Reset handlers after each test to ensure test isolation
+afterEach(() => {
+  server.resetHandlers();
+});
+
+// Close server after all tests
+afterAll(() => {
+  server.close();
+});

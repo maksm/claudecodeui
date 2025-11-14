@@ -1,0 +1,469 @@
+/* Mobile-First Touch Target Optimizations */
+
+/* Base touch target sizes - WCAG 2.1 AA compliance */
+:root {
+  /* Touch target sizes */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+  --touch-target-large: 56px;
+
+  /* Spacing for touch targets */
+  --touch-spacing: 8px;
+  --touch-spacing-tight: 4px;
+  --touch-spacing-loose: 12px;
+
+  /* Safe areas for mobile devices */
+  --safe-area-top: env(safe-area-inset-top, 0);
+  --safe-area-right: env(safe-area-inset-right, 0);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0);
+  --safe-area-left: env(safe-area-inset-left, 0);
+}
+
+/* Ensure all interactive elements meet minimum touch targets */
+button,
+a,
+input,
+textarea,
+select,
+[role="button"],
+[role="link"],
+[tabindex]:not([tabindex="-1"]) {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  position: relative;
+}
+
+/* Specific button touch optimizations */
+.btn,
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  min-height: var(--touch-target-comfortable);
+  padding: 12px 20px;
+  margin: var(--touch-spacing-tight);
+  font-size: 16px; /* Prevents zoom on iOS */
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-small {
+  min-height: var(--touch-target-min);
+  padding: 8px 16px;
+  font-size: 14px;
+}
+
+.btn-large {
+  min-height: var(--touch-target-large);
+  padding: 16px 24px;
+  font-size: 18px;
+}
+
+/* Icon buttons need special attention */
+.icon-btn,
+[aria-label][class*="icon"],
+button[class*="icon"] {
+  width: var(--touch-target-comfortable);
+  height: var(--touch-target-comfortable);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: var(--touch-spacing-tight);
+}
+
+/* Form controls touch optimization */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+input[type="number"],
+textarea,
+select {
+  min-height: var(--touch-target-comfortable);
+  padding: 12px 16px;
+  font-size: 16px; /* Prevents zoom on iOS */
+  border-radius: 8px;
+  margin: var(--touch-spacing-tight) 0;
+  border: 2px solid #e5e7eb;
+  background: white;
+  transition: all 0.2s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-color: #3b82f6;
+}
+
+/* Checkbox and radio button touch targets */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 20px;
+  height: 20px;
+  margin: 12px;
+  cursor: pointer;
+}
+
+/* Custom checkbox/radio with larger touch area */
+.custom-checkbox,
+.custom-radio {
+  position: relative;
+  min-height: var(--touch-target-min);
+  padding-left: 44px;
+  display: flex;
+  align-items: center;
+  margin: var(--touch-spacing-tight) 0;
+}
+
+.custom-checkbox input,
+.custom-radio input {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+/* Navigation touch targets */
+nav a,
+nav button,
+.sidebar-link,
+.nav-item {
+  min-height: var(--touch-target-comfortable);
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  margin: 2px 0;
+  transition: background-color 0.2s ease;
+}
+
+nav a:hover,
+nav button:hover,
+.sidebar-link:hover,
+.nav-item:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+nav a:active,
+nav button:active,
+.sidebar-link:active,
+.nav-item:active {
+  background-color: rgba(59, 130, 246, 0.2);
+  transform: scale(0.98);
+}
+
+/* Tab navigation */
+.tabs,
+.tab-list {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabs::-webkit-scrollbar,
+.tab-list::-webkit-scrollbar {
+  display: none;
+}
+
+.tab,
+.tab-item {
+  min-height: var(--touch-target-comfortable);
+  min-width: var(--touch-target-large);
+  padding: 12px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  white-space: nowrap;
+  font-size: 16px;
+}
+
+.tab.active,
+.tab-item.active {
+  border-bottom: 3px solid #3b82f6;
+  color: #3b82f6;
+}
+
+/* Mobile grid layouts */
+.mobile-grid {
+  display: grid;
+  gap: var(--touch-spacing);
+  padding: var(--touch-spacing);
+}
+
+.mobile-grid-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.mobile-grid-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.mobile-flex {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--touch-spacing);
+  padding: var(--touch-spacing);
+}
+
+/* Safe area padding for mobile devices */
+.safe-area-top {
+  padding-top: var(--safe-area-top);
+}
+
+.safe-area-right {
+  padding-right: var(--safe-area-right);
+}
+
+.safe-area-bottom {
+  padding-bottom: var(--safe-area-bottom);
+}
+
+.safe-area-left {
+  padding-left: var(--safe-area-left);
+}
+
+.safe-area-all {
+  padding: var(--safe-area-top) var(--safe-area-right) var(--safe-area-bottom) var(--safe-area-left);
+}
+
+/* Responsive touch targets */
+@media (max-width: 640px) {
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    min-height: var(--touch-target-comfortable);
+  }
+
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    min-height: var(--touch-target-large);
+    padding: 16px 24px;
+    font-size: 16px;
+    border-radius: 12px;
+  }
+
+  /* Larger spacing on small screens */
+  .mobile-grid,
+  .mobile-flex {
+    gap: var(--touch-spacing-loose);
+    padding: var(--touch-spacing-loose);
+  }
+}
+
+@media (max-width: 480px) {
+  /* Extra touch optimization for very small screens */
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    width: 100%;
+    margin: var(--touch-spacing) 0;
+  }
+
+  .btn-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--touch-spacing);
+  }
+
+  .btn-group .btn {
+    margin: 0;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .mobile-grid-2 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .mobile-grid-3 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Desktop overrides */
+@media (min-width: 1024px) {
+  :root {
+    --touch-target-min: 32px;
+    --touch-spacing: 4px;
+  }
+
+  /* Remove mobile-specific touch optimizations on desktop */
+  .btn,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    min-height: auto;
+    padding: 8px 16px;
+    font-size: 14px;
+  }
+
+  .icon-btn,
+  [aria-label][class*="icon"],
+  button[class*="icon"] {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="number"],
+  textarea,
+  select {
+    background: #1f2937;
+    border-color: #374151;
+    color: #f9fafb;
+  }
+
+  input:focus,
+  textarea:focus,
+  select:focus {
+    background: #111827;
+    border-color: #3b82f6;
+  }
+
+  nav a:hover,
+  nav button:hover,
+  .sidebar-link:hover,
+  .nav-item:hover {
+    background-color: rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    border: 2px solid;
+  }
+
+  button:focus,
+  a:focus,
+  input:focus,
+  textarea:focus,
+  select:focus {
+    outline: 3px solid;
+    outline-offset: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  button,
+  a,
+  input,
+  textarea,
+  select,
+  nav a,
+  nav button,
+  .sidebar-link,
+  .nav-item {
+    transition: none;
+  }
+}
+
+/* Touch feedback utilities */
+.touch-feedback {
+  position: relative;
+  overflow: hidden;
+}
+
+.touch-feedback::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s, opacity 0.6s;
+  pointer-events: none;
+}
+
+.touch-feedback:active::after {
+  width: 300px;
+  height: 300px;
+  opacity: 0;
+}
+
+/* Accessibility improvements */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Focus indicators that work with touch */
+.focus-visible:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Prevent text selection on touch interactions */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Custom scrollbar for touch */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.5);
+  border-radius: 2px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.7);
+}

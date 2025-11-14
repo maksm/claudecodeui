@@ -10,10 +10,11 @@ import { oneDark } from '@codemirror/theme-one-dark';
 import { EditorView, showPanel, ViewPlugin } from '@codemirror/view';
 import { unifiedMergeView, getChunks } from '@codemirror/merge';
 import { showMinimap } from '@replit/codemirror-minimap';
-import { X, Save, Download, Maximize2, Minimize2 } from 'lucide-react';
+import { X, Save, Download, Maximize2, Minimize2, Eye } from 'lucide-react';
 import { api } from '../utils/api';
+import MarkdownPreview from './MarkdownPreview';
 
-function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded = false, onToggleExpand = null }) {
+function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded = false, onToggleExpand = null, initialPreviewMode = false }) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,6 +37,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
   const [fontSize, setFontSize] = useState(() => {
     return localStorage.getItem('codeEditorFontSize') || '14';
   });
+  const [isPreviewMode, setIsPreviewMode] = useState(initialPreviewMode && isMarkdownFile(file?.name));
   const editorRef = useRef(null);
 
   // Create minimap extension with chunk-based gutters
@@ -254,6 +256,12 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
     return [showPanel.of(createPanel)];
   }, [file.diffInfo, showDiff, isSidebar, isExpanded, onToggleExpand]);
 
+  // Check if file is markdown
+  const isMarkdownFile = (filename) => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    return ext === 'md' || ext === 'markdown';
+  };
+
   // Get language extension based on file extension
   const getLanguageExtension = (filename) => {
     const ext = filename.split('.').pop()?.toLowerCase();
@@ -438,13 +446,16 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
         } else if (e.key === 'Escape') {
           e.preventDefault();
           onClose();
+        } else if (e.key === 'p' && isMarkdownFile(file.name)) {
+          e.preventDefault();
+          setIsPreviewMode(!isPreviewMode);
         }
       }
     };
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [content]);
+  }, [content, isPreviewMode, file.name]);
 
   if (loading) {
     return (
@@ -583,6 +594,20 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
           </div>
 
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+            {isMarkdownFile(file.name) && (
+              <button
+                onClick={() => setIsPreviewMode(!isPreviewMode)}
+                className={`p-2 md:p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center transition-colors ${
+                  isPreviewMode
+                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+                title={isPreviewMode ? 'Switch to edit mode' : 'Preview markdown'}
+              >
+                <Eye className="w-5 h-5 md:w-4 md:h-4" />
+              </button>
+            )}
+
             <button
               onClick={handleDownload}
               className="p-2 md:p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center"
@@ -635,52 +660,61 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
           </div>
         </div>
 
-        {/* Editor */}
+        {/* Editor/Preview */}
         <div className="flex-1 overflow-hidden">
-          <CodeMirror
-            ref={editorRef}
-            value={content}
-            onChange={setContent}
-            extensions={[
-              ...getLanguageExtension(file.name),
-              // Always show the toolbar
-              ...editorToolbarPanel,
-              // Only show diff-related extensions when diff is enabled
-              ...(file.diffInfo && showDiff && file.diffInfo.old_string !== undefined
-                ? [
-                    unifiedMergeView({
-                      original: file.diffInfo.old_string,
-                      mergeControls: false,
-                      highlightChanges: true,
-                      syntaxHighlightDeletions: false,
-                      gutter: true
-                      // NOTE: NO collapseUnchanged - this shows the full file!
-                    }),
-                    ...minimapExtension,
-                    ...scrollToFirstChunkExtension
-                  ]
-                : []),
-              ...(wordWrap ? [EditorView.lineWrapping] : [])
-            ]}
-            theme={isDarkMode ? oneDark : undefined}
-            height="100%"
-            style={{
-              fontSize: `${fontSize}px`,
-              height: '100%',
-            }}
-            basicSetup={{
-              lineNumbers: showLineNumbers,
-              foldGutter: true,
-              dropCursor: false,
-              allowMultipleSelections: false,
-              indentOnInput: true,
-              bracketMatching: true,
-              closeBrackets: true,
-              autocompletion: true,
-              highlightSelectionMatches: true,
-              searchKeymap: true,
-            }}
-          />
+          {isMarkdownFile(file.name) && isPreviewMode ? (
+            <MarkdownPreview
+              content={content}
+              filename={file.name}
+              isDarkMode={isDarkMode}
+              onTogglePreview={() => setIsPreviewMode(false)}
+            />
+          ) : (
+            <CodeMirror
+              ref={editorRef}
+              value={content}
+              onChange={setContent}
+              extensions={[
+                ...getLanguageExtension(file.name),
+                // Always show the toolbar
+                ...editorToolbarPanel,
+                // Only show diff-related extensions when diff is enabled
+                ...(file.diffInfo && showDiff && file.diffInfo.old_string !== undefined
+                  ? [
+                      unifiedMergeView({
+                        original: file.diffInfo.old_string,
+                        mergeControls: false,
+                        highlightChanges: true,
+                        syntaxHighlightDeletions: false,
+                        gutter: true
+                        // NOTE: NO collapseUnchanged - this shows the full file!
+                      }),
+                      ...minimapExtension,
+                      ...scrollToFirstChunkExtension
+                    ]
+                  : []),
+                ...(wordWrap ? [EditorView.lineWrapping] : [])
+              ]}
+              theme={isDarkMode ? oneDark : undefined}
+              height="100%"
+              style={{
+                fontSize: `${fontSize}px`,
+                height: '100%',
+              }}
+              basicSetup={{
+                lineNumbers: showLineNumbers,
+                foldGutter: true,
+                dropCursor: false,
+                allowMultipleSelections: false,
+                indentOnInput: true,
+                bracketMatching: true,
+                closeBrackets: true,
+                autocompletion: true,
+                highlightSelectionMatches: true,
+                searchKeymap: true,
+              }}
+            />
+          )}
         </div>
 
         {/* Footer */}
@@ -691,7 +725,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
           </div>
 
           <div className="text-sm text-gray-500 dark:text-gray-400">
-            Press Ctrl+S to save • Esc to close
+            Press Ctrl+S to save • Esc to close{isMarkdownFile(file.name) && ' • Ctrl+P to toggle preview'}
           </div>
         </div>
       </div>

@@ -34,9 +34,6 @@ A desktop and mobile UI for [Claude Code](https://docs.anthropic.com/en/docs/cla
 </td>
 </tr>
 </table>
-
-
-
 </div>
 
 ## Features

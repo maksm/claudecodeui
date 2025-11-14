@@ -1,0 +1,415 @@
+/* Viewport Management CSS */
+
+/* CSS Custom Properties for dynamic viewport handling */
+:root {
+  /* Viewport dimensions */
+  --viewport-height: 100vh;
+  --adjusted-viewport-height: 100vh;
+  --keyboard-height: 0px;
+  --safe-area-top: 0px;
+  --safe-area-height: 100vh;
+  --viewport-width: 100vw;
+
+  /* Responsive flags */
+  --is-mobile: 0;
+  --is-tablet: 0;
+  --is-desktop: 1;
+  --is-landscape: 0;
+  --is-portrait: 1;
+
+  /* Touch target sizes */
+  --touch-target-min: 44px;
+  --touch-target-comfortable: 48px;
+
+  /* Safe areas */
+  --safe-area-inset-top: env(safe-area-inset-top, 0);
+  --safe-area-inset-right: env(safe-area-inset-right, 0);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom, 0);
+  --safe-area-inset-left: env(safe-area-inset-left, 0);
+}
+
+/* Viewport-aware container */
+.viewport-aware {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.viewport-aware.keyboard-visible {
+  /* Additional styles when keyboard is visible */
+}
+
+.viewport-aware.mobile-viewport {
+  /* Mobile-specific viewport handling */
+}
+
+.viewport-aware.keyboard-adjusted {
+  /* Adjusted for keyboard */
+  height: var(--adjusted-viewport-height);
+  max-height: var(--adjusted-viewport-height);
+  min-height: var(--adjusted-viewport-height);
+}
+
+.viewport-aware.safe-area-aware {
+  padding-top: var(--safe-area-inset-top);
+  padding-right: var(--safe-area-inset-right);
+  padding-bottom: var(--safe-area-inset-bottom);
+  padding-left: var(--safe-area-inset-left);
+}
+
+/* Full viewport container */
+.full-viewport {
+  height: 100vh;
+  height: 100dvh; /* Dynamic viewport height for mobile */
+  width: 100vw;
+  overflow: hidden;
+  position: relative;
+}
+
+.full-viewport.keyboard-adjusted {
+  height: var(--adjusted-viewport-height);
+}
+
+/* Safe area container */
+.safe-area-container {
+  padding-top: var(--safe-area-top);
+  padding-bottom: calc(var(--keyboard-height) + var(--safe-area-inset-bottom));
+  height: var(--safe-area-height);
+  box-sizing: border-box;
+}
+
+/* Keyboard-aware input container */
+.keyboard-aware-input {
+  margin-bottom: max(var(--keyboard-height), 0px);
+  transition: margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Input that should stay above keyboard */
+.above-keyboard {
+  position: sticky;
+  bottom: max(var(--keyboard-height), 0px);
+  z-index: 100;
+  background: white;
+  padding: 16px;
+  border-top: 1px solid #e5e7eb;
+  transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.above-keyboard.hidden {
+  bottom: 0;
+}
+
+/* Mobile-specific viewport handling */
+@media (max-width: 767px) {
+  .full-viewport {
+    /* Use smaller viewport on mobile to account for browser UI */
+    height: -webkit-fill-available;
+    height: 100dvh;
+  }
+
+  .mobile-optimized {
+    min-height: var(--adjusted-viewport-height);
+    min-height: stretch;
+  }
+
+  /* Ensure inputs don't get hidden */
+  input, textarea, [contenteditable] {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+
+  /* Mobile keyboard adjustments */
+  .keyboard-aware-input {
+    /* Extra padding on mobile */
+    margin-bottom: max(calc(var(--keyboard-height) + 20px), 0px);
+  }
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .full-viewport {
+    height: 100vh; /* Use static viewport on tablets */
+  }
+
+  .tablet-optimized {
+    /* Tablet-specific optimizations */
+  }
+}
+
+/* Desktop overrides */
+@media (min-width: 1024px) {
+  .full-viewport {
+    height: 100vh;
+  }
+
+  .keyboard-aware-input,
+  .above-keyboard {
+    /* Disable keyboard adjustments on desktop */
+    margin-bottom: 0;
+    bottom: 0;
+  }
+
+  .viewport-aware.keyboard-adjusted {
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 100vh;
+  }
+}
+
+/* Responsive utilities based on CSS custom properties */
+.mobile-only {
+  display: none;
+}
+
+.tablet-only {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
+/* Show/hide based on viewport flags */
+@media (max-width: 767px) {
+  .mobile-only {
+    display: block;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .tablet-only {
+    display: block;
+  }
+
+  .mobile-only,
+  .desktop-only {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .desktop-only {
+    display: block;
+  }
+
+  .mobile-only,
+  .tablet-only {
+    display: none;
+  }
+}
+
+/* Landscape orientation adjustments */
+@media (orientation: landscape) {
+  .landscape-only {
+    display: block;
+  }
+
+  .portrait-only {
+    display: none;
+  }
+
+  .full-viewport {
+    /* Ensure landscape mode works well */
+    height: 100vh;
+  }
+}
+
+/* Portrait orientation adjustments */
+@media (orientation: portrait) {
+  .landscape-only {
+    display: none;
+  }
+
+  .portrait-only {
+    display: block;
+  }
+}
+
+/* Keyboard animation classes */
+.keyboard-enter {
+  animation: keyboardSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.keyboard-exit {
+  animation: keyboardSlideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes keyboardSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes keyboardSlideDown {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(100%);
+  }
+}
+
+/* Safe area utilities */
+.safe-top {
+  padding-top: var(--safe-area-inset-top);
+}
+
+.safe-right {
+  padding-right: var(--safe-area-inset-right);
+}
+
+.safe-bottom {
+  padding-bottom: var(--safe-area-inset-bottom);
+}
+
+.safe-left {
+  padding-left: var(--safe-area-inset-left);
+}
+
+.safe-all {
+  padding: var(--safe-area-inset-top) var(--safe-area-inset-right) var(--safe-area-inset-bottom) var(--safe-area-inset-left);
+}
+
+/* Viewport height utilities */
+.vh-full {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.vh-adjusted {
+  height: var(--adjusted-viewport-height);
+}
+
+.vh-keyboard-aware {
+  height: calc(100vh - var(--keyboard-height));
+  height: calc(100dvh - var(--keyboard-height));
+}
+
+/* Touch target utilities */
+.touch-target {
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+}
+
+.touch-target-comfortable {
+  min-height: var(--touch-target-comfortable);
+  min-width: var(--touch-target-comfortable);
+}
+
+/* Focus management for mobile */
+.focus-trap {
+  outline: none;
+}
+
+.focus-trap:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .above-keyboard {
+    border-top-width: 2px;
+  }
+
+  .keyboard-aware-input {
+    border-width: 2px;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .viewport-aware,
+  .keyboard-aware-input,
+  .above-keyboard,
+  .keyboard-enter,
+  .keyboard-exit {
+    transition: none;
+    animation: none;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  .above-keyboard {
+    background: #1f2937;
+    border-top-color: #374151;
+  }
+}
+
+/* iPhone notch handling */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .has-notch {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .has-notch-above-keyboard {
+    padding-bottom: calc(env(safe-area-inset-bottom) + var(--keyboard-height));
+  }
+}
+
+/* Dynamic viewport unit support */
+@supports (height: 100dvh) {
+  .full-viewport {
+    height: 100dvh;
+  }
+
+  .vh-full {
+    height: 100dvh;
+  }
+
+  .vh-keyboard-aware {
+    height: calc(100dvh - var(--keyboard-height));
+  }
+}
+
+/* Fallback for browsers that don't support dynamic viewport */
+@supports not (height: 100dvh) {
+  .full-viewport {
+    height: 100vh;
+  }
+
+  .vh-full {
+    height: 100vh;
+  }
+
+  .vh-keyboard-aware {
+    height: calc(100vh - var(--keyboard-height));
+  }
+}
+
+/* Container queries for viewport-aware components */
+@container (max-width: 768px) {
+  .container-mobile {
+    /* Mobile-specific container styles */
+  }
+}
+
+@container (min-width: 769px) and (max-width: 1023px) {
+  .container-tablet {
+    /* Tablet-specific container styles */
+  }
+}
+
+@container (min-width: 1024px) {
+  .container-desktop {
+    /* Desktop-specific container styles */
+  }
+}
+
+/* Print styles */
+@media print {
+  .viewport-aware,
+  .full-viewport,
+  .keyboard-aware-input,
+  .above-keyboard {
+    height: auto;
+    max-height: none;
+    overflow: visible;
+  }
+}
