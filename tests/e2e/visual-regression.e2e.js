@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { VisualRegressionHelper } from './helpers/accessibility-helpers.js';
 import { loginAsUser, toggleTheme } from './helpers/test-helpers.js';
-import { testData } from '../fixtures/test-data.js';
+import { testData } from './fixtures/test-data.js';
 
 test.describe('Visual Regression Testing', () => {
   const viewports = {

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { AccessibilityHelper, WCAGComplianceChecker } from './helpers/accessibility-helpers.js';
 import { loginAsUser, navigateToDashboard, navigateToChat } from './helpers/test-helpers.js';
-import { testData } from '../fixtures/test-data.js';
+import { testData } from './fixtures/test-data.js';
 
 test.describe('Comprehensive WCAG Accessibility Testing @Accessibility', () => {
   let accessibilityHelper;
