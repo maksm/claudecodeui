@@ -93,6 +93,25 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  const fetchLatestPR = useCallback(async () => {
+    if (!selectedProject || !currentBranch) return;
+
+    setIsLoadingPR(true);
+    try {
+      const response = await authenticatedFetch(
+        `/api/git/latest-pr?project=${encodeURIComponent(selectedProject.name)}&branch=${encodeURIComponent(currentBranch)}`
+      );
+      const data = await response.json();
+
+      setLatestPR(data);
+    } catch (error) {
+      console.error('Error fetching latest PR:', error);
+      setLatestPR(null);
+    } finally {
+      setIsLoadingPR(false);
+    }
+  }, [selectedProject, currentBranch]);
+
   // Fetch latest PR when branch changes
   useEffect(() => {
     if (selectedProject && currentBranch && remoteStatus?.hasRemote) {
@@ -182,26 +201,6 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
       setRemoteStatus(null);
     }
   };
-
-  const fetchLatestPR = useCallback(async () => {
-    if (!selectedProject || !currentBranch) return;
-
-    setIsLoadingPR(true);
-    try {
-      const response = await authenticatedFetch(
-        `/api/git/latest-pr?project=${encodeURIComponent(selectedProject.name)}&branch=${encodeURIComponent(currentBranch)}`
-      );
-      const data = await response.json();
-
-      console.log('[GitPanel] Latest PR response:', data);
-      setLatestPR(data);
-    } catch (error) {
-      console.error('Error fetching latest PR:', error);
-      setLatestPR(null);
-    } finally {
-      setIsLoadingPR(false);
-    }
-  }, [selectedProject, currentBranch]);
 
   const switchBranch = async branchName => {
     try {
