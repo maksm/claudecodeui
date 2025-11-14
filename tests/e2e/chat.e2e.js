@@ -1,4 +1,5 @@
-import { test, expect, describe, beforeEach, afterEach } from '@playwright/test';
+/* eslint-disable no-undef */
+import { test, expect, describe } from '@playwright/test';
 import ChatInterfacePage from './pages/ChatInterfacePage.js';
 import LoginPage from './pages/LoginPage.js';
 import { testData } from './fixtures/test-data.js';
@@ -14,14 +15,14 @@ describe('Chat Interface E2E Tests', () => {
   let chatPage;
   let loginPage;
 
-  beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     chatPage = new ChatInterfacePage(page);
     loginPage = new LoginPage(page);
     await cleanupTestData(page);
     await loginAsUser(page);
   });
 
-  afterEach(async ({ page }) => {
+  test.afterEach(async ({ page }) => {
     await cleanupTestData(page);
   });
 

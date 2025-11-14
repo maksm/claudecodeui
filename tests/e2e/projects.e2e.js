@@ -1,4 +1,4 @@
-import { test, expect, describe, beforeEach, afterEach } from '@playwright/test';
+import { test, expect, describe } from '@playwright/test';
 import DashboardPage from './pages/DashboardPage.js';
 import LoginPage from './pages/LoginPage.js';
 import { testData, createTestProject } from './fixtures/test-data.js';
@@ -14,7 +14,7 @@ describe('Project Management E2E Tests', () => {
   let dashboardPage;
   let loginPage;
 
-  beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     dashboardPage = new DashboardPage(page);
     loginPage = new LoginPage(page);
     await cleanupTestData(page);
@@ -22,7 +22,7 @@ describe('Project Management E2E Tests', () => {
     await dashboardPage.navigate();
   });
 
-  afterEach(async ({ page }) => {
+  test.afterEach(async ({ page }) => {
     await cleanupTestData(page);
   });
 

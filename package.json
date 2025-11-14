@@ -61,6 +61,7 @@
     "test:e2e:firefox": "playwright test --project=firefox",
     "test:e2e:safari": "playwright test --project=webkit",
     "test:complete": "npm run test:all && npm run test:e2e",
+    "commit": "git-cz",
     "prepare": "husky"
   },
   "keywords": [
@@ -132,6 +133,8 @@
     "@axe-core/playwright": "^4.11.0",
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.28.5",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@eslint/js": "^9.39.1",
     "@mswjs/data": "^0.16.2",
     "@playwright/test": "^1.56.1",
@@ -147,7 +150,9 @@
     "auto-changelog": "^2.5.0",
     "autoprefixer": "^10.4.16",
     "babel-jest": "^30.2.0",
+    "commitizen": "^4.3.1",
     "concurrently": "^8.2.2",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
@@ -169,6 +174,11 @@
     "task-master-ai": "^0.31.2",
     "ts-jest": "^29.4.5",
     "vite": "^7.0.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
   },
   "lint-staged": {
     "**/*.{js,jsx,mjs,cjs}": [

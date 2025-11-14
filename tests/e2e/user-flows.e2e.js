@@ -1,4 +1,5 @@
-import { test, expect, describe, beforeEach, afterEach } from '@playwright/test';
+/* eslint-disable no-undef */
+import { test, expect, describe } from '@playwright/test';
 import LoginPage from './pages/LoginPage.js';
 import DashboardPage from './pages/DashboardPage.js';
 import ChatInterfacePage from './pages/ChatInterfacePage.js';
@@ -12,14 +13,14 @@ import {
 describe('Critical User Flow E2E Tests', () => {
   let loginPage, dashboardPage, chatPage;
 
-  beforeEach(async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     loginPage = new LoginPage(page);
     dashboardPage = new DashboardPage(page);
     chatPage = new ChatInterfacePage(page);
     await cleanupTestData(page);
   });
 
-  afterEach(async ({ page }) => {
+  test.afterEach(async ({ page }) => {
     await cleanupTestData(page);
   });
 
