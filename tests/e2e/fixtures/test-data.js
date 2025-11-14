@@ -103,3 +103,18 @@ export const testData = {
 };
 
 export default testData;
+
+// Helper functions to create test data
+export function createTestUser(overrides = {}) {
+  return {
+    ...testData.users.valid,
+    ...overrides,
+  };
+}
+
+export function createTestProject(overrides = {}) {
+  return {
+    ...testData.projects[0],
+    ...overrides,
+  };
+}
