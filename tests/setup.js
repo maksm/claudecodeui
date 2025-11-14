@@ -12,7 +12,6 @@ process.env.PORT = '3002'; // Different port for testing
 process.env.DATABASE_PATH = ':memory:'; // In-memory database for tests
 process.env.JWT_SECRET = 'test-jwt-secret';
 
-
 // Setup and teardown hooks
 beforeAll(async () => {
   // Global setup before all tests
@@ -41,7 +40,7 @@ global.testUtils = {
     path: '/tmp/test-project',
     description: 'A test project for testing',
     createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    updatedAt: new Date().toISOString(),
   }),
 
   // Mock WebSocket connections
@@ -53,7 +52,7 @@ global.testUtils = {
       readyState: 1, // OPEN
       on: () => {},
       emit: () => {},
-      removeAllListeners: () => {}
+      removeAllListeners: () => {},
     };
-  }
+  },
 };

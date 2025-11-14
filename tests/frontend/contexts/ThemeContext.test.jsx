@@ -1,7 +1,8 @@
 // ThemeContext tests
 import React from 'react';
-import { render, screen, fireEvent } from '../utils/test-utils';
-import { jest } from '@jest/globals';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { ThemeProvider, useTheme } from '../../../src/contexts/ThemeContext';
 
 // Test component to consume the context
@@ -18,14 +19,11 @@ const TestComponent = () => {
   );
 };
 
-// Test component that should throw error when used without provider
+// Test component that throws error when used without provider
 const TestComponentWithoutProvider = () => {
-  try {
-    const { isDarkMode } = useTheme();
-    return <div data-testid="theme-value">{isDarkMode ? 'dark' : 'light'}</div>;
-  } catch (error) {
-    return <div data-testid="error-message">{error.message}</div>;
-  }
+  // This will throw an error when called outside provider
+  const { isDarkMode } = useTheme();
+  return <div data-testid="theme-value">{isDarkMode ? 'dark' : 'light'}</div>;
 };
 
 describe('ThemeContext', () => {
@@ -39,27 +37,35 @@ describe('ThemeContext', () => {
       getItem: jest.fn(),
       setItem: jest.fn(),
       removeItem: jest.fn(),
-      clear: jest.fn()
+      clear: jest.fn(),
     };
     Object.defineProperty(window, 'localStorage', {
       value: localStorageMock,
-      writable: true
+      writable: true,
     });
 
     // Mock matchMedia
-    matchMediaMock = jest.fn().mockImplementation(query => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
-    }));
+    matchMediaMock = jest.fn().mockImplementation(query => {
+      const mediaQuery = {
+        matches: query === '(prefers-color-scheme: dark)' ? false : false,
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      };
+
+      // Ensure addEventListener is a function
+      mediaQuery.addEventListener = jest.fn();
+      mediaQuery.removeEventListener = jest.fn();
+
+      return mediaQuery;
+    });
     Object.defineProperty(window, 'matchMedia', {
       value: matchMediaMock,
-      writable: true
+      writable: true,
     });
 
     // Mock document.documentElement
@@ -68,18 +74,18 @@ describe('ThemeContext', () => {
         classList: {
           add: jest.fn(),
           remove: jest.fn(),
-          contains: jest.fn()
-        }
+          contains: jest.fn(),
+        },
       },
-      writable: true
+      writable: true,
     });
 
     // Mock document.querySelector
     Object.defineProperty(document, 'querySelector', {
       value: jest.fn(() => ({
-        setAttribute: jest.fn()
+        setAttribute: jest.fn(),
       })),
-      writable: true
+      writable: true,
     });
   });
 
@@ -224,7 +230,7 @@ describe('ThemeContext', () => {
           mediaQueryCallback = callback;
         }
       }),
-      removeEventListener: jest.fn()
+      removeEventListener: jest.fn(),
     };
     matchMediaMock.mockReturnValue(mockMediaQuery);
 
@@ -253,7 +259,7 @@ describe('ThemeContext', () => {
           mediaQueryCallback = callback;
         }
       }),
-      removeEventListener: jest.fn()
+      removeEventListener: jest.fn(),
     };
     matchMediaMock.mockReturnValue(mockMediaQuery);
 
@@ -276,7 +282,7 @@ describe('ThemeContext', () => {
     const mockMediaQuery = {
       matches: false,
       addEventListener: jest.fn(),
-      removeEventListener: jest.fn()
+      removeEventListener: jest.fn(),
     };
     matchMediaMock.mockReturnValue(mockMediaQuery);
 

@@ -7,8 +7,8 @@ import LoginForm from '../../../src/components/LoginForm';
 // Mock the AuthContext
 jest.mock('../../../src/contexts/AuthContext', () => ({
   useAuth: () => ({
-    login: jest.fn()
-  })
+    login: jest.fn(),
+  }),
 }));
 
 describe('LoginForm Component', () => {

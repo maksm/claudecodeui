@@ -10,7 +10,9 @@ export const useVersionCheck = (owner, repo) => {
   useEffect(() => {
     const checkVersion = async () => {
       try {
-        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
+        const response = await fetch(
+          `https://api.github.com/repos/${owner}/${repo}/releases/latest`
+        );
         const data = await response.json();
 
         // Handle the case where there might not be any releases
@@ -24,7 +26,7 @@ export const useVersionCheck = (owner, repo) => {
             title: data.name || data.tag_name,
             body: data.body || '',
             htmlUrl: data.html_url || `https://github.com/${owner}/${repo}/releases/latest`,
-            publishedAt: data.published_at
+            publishedAt: data.published_at,
           });
         } else {
           // No releases found, don't show update notification
@@ -47,4 +49,4 @@ export const useVersionCheck = (owner, repo) => {
   }, [owner, repo]);
 
   return { updateAvailable, latestVersion, currentVersion: version, releaseInfo };
-}; 
+};

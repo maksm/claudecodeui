@@ -11,7 +11,15 @@ import React, { useEffect, useRef } from 'react';
  * @param {boolean} isOpen - Whether the menu is open
  * @param {Array} frequentCommands - Array of frequently used command objects
  */
-const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, position = { top: 0, left: 0 }, isOpen = false, frequentCommands = [] }) => {
+const CommandMenu = ({
+  commands = [],
+  selectedIndex = -1,
+  onSelect,
+  onClose,
+  position = { top: 0, left: 0 },
+  isOpen = false,
+  frequentCommands = [],
+}) => {
   const menuRef = useRef(null);
   const selectedItemRef = useRef(null);
 
@@ -33,7 +41,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
         right: '16px',
         width: 'auto',
         maxWidth: 'calc(100vw - 32px)',
-        maxHeight: 'min(50vh, 300px)' // Limit to smaller of 50vh or 300px
+        maxHeight: 'min(50vh, 300px)', // Limit to smaller of 50vh or 300px
       };
     }
 
@@ -44,7 +52,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
       left: `${position.left}px`,
       width: 'min(400px, calc(100vw - 32px))',
       maxWidth: 'calc(100vw - 32px)',
-      maxHeight: '300px'
+      maxHeight: '300px',
     };
   };
 
@@ -52,7 +60,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
 
   // Close menu when clicking outside
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (menuRef.current && !menuRef.current.contains(event.target) && isOpen) {
         onClose();
       }
@@ -100,7 +108,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
           opacity: 1,
           transform: 'translateY(0)',
           transition: 'opacity 150ms ease-in-out, transform 150ms ease-in-out',
-          textAlign: 'center'
+          textAlign: 'center',
         }}
       >
         No commands available
@@ -137,7 +145,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
     builtin: 'Built-in Commands',
     project: 'Project Commands',
     user: 'User Commands',
-    other: 'Other Commands'
+    other: 'Other Commands',
   };
 
   // Calculate global index for each command
@@ -148,7 +156,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
       commandsWithIndex.push({
         ...command,
         globalIndex: globalIndex++,
-        namespace
+        namespace,
       });
     });
   });
@@ -169,10 +177,10 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
         padding: '8px',
         opacity: isOpen ? 1 : 0,
         transform: isOpen ? 'translateY(0)' : 'translateY(-10px)',
-        transition: 'opacity 150ms ease-in-out, transform 150ms ease-in-out'
+        transition: 'opacity 150ms ease-in-out, transform 150ms ease-in-out',
       }}
     >
-      {orderedNamespaces.map((namespace) => (
+      {orderedNamespaces.map(namespace => (
         <div key={namespace} className="command-group">
           {orderedNamespaces.length > 1 && (
             <div
@@ -182,14 +190,16 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
                 textTransform: 'uppercase',
                 color: '#6b7280',
                 padding: '8px 12px 4px',
-                letterSpacing: '0.05em'
+                letterSpacing: '0.05em',
               }}
             >
               {namespaceLabels[namespace] || namespace}
             </div>
           )}
-          {groupedCommands[namespace].map((command) => {
-            const cmdWithIndex = commandsWithIndex.find(c => c.name === command.name && c.namespace === namespace);
+          {groupedCommands[namespace].map(command => {
+            const cmdWithIndex = commandsWithIndex.find(
+              c => c.name === command.name && c.namespace === namespace
+            );
             const isSelected = cmdWithIndex && cmdWithIndex.globalIndex === selectedIndex;
 
             return (
@@ -209,9 +219,9 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
                   cursor: 'pointer',
                   backgroundColor: isSelected ? '#eff6ff' : 'transparent',
                   transition: 'background-color 100ms ease-in-out',
-                  marginBottom: '2px'
+                  marginBottom: '2px',
                 }}
-                onMouseDown={(e) => e.preventDefault()} // Prevent textarea blur
+                onMouseDown={e => e.preventDefault()} // Prevent textarea blur
               >
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
@@ -219,14 +229,14 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
-                      marginBottom: command.description ? '4px' : 0
+                      marginBottom: command.description ? '4px' : 0,
                     }}
                   >
                     {/* Command icon based on namespace */}
                     <span
                       style={{
                         fontSize: '16px',
-                        flexShrink: 0
+                        flexShrink: 0,
                       }}
                     >
                       {namespace === 'builtin' && '⚡'}
@@ -241,7 +251,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
                         fontWeight: 600,
                         fontSize: '14px',
                         color: '#111827',
-                        fontFamily: 'monospace'
+                        fontFamily: 'monospace',
                       }}
                     >
                       {command.name}
@@ -257,7 +267,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
                           borderRadius: '4px',
                           backgroundColor: '#f3f4f6',
                           color: '#6b7280',
-                          fontWeight: 500
+                          fontWeight: 500,
                         }}
                       >
                         {command.metadata.type}
@@ -274,7 +284,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
                         marginLeft: '24px',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
-                        textOverflow: 'ellipsis'
+                        textOverflow: 'ellipsis',
                       }}
                     >
                       {command.description}
@@ -289,7 +299,7 @@ const CommandMenu = ({ commands = [], selectedIndex = -1, onSelect, onClose, pos
                       marginLeft: '8px',
                       color: '#3b82f6',
                       fontSize: '12px',
-                      fontWeight: 600
+                      fontWeight: 600,
                     }}
                   >
                     ↵

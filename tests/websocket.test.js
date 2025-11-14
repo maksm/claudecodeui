@@ -16,7 +16,7 @@ describe('WebSocket Connection and Message Routing', () => {
       on: jest.fn(),
       close: jest.fn(),
       handleUpgrade: jest.fn(),
-      emit: jest.fn()
+      emit: jest.fn(),
     };
 
     // Mock WebSocket connection
@@ -26,7 +26,7 @@ describe('WebSocket Connection and Message Routing', () => {
       close: jest.fn(),
       on: jest.fn(),
       terminate: jest.fn(),
-      removeAllListeners: jest.fn()
+      removeAllListeners: jest.fn(),
     };
 
     jest.clearAllMocks();
@@ -50,10 +50,6 @@ describe('WebSocket Connection and Message Routing', () => {
     test('should handle connection with valid JWT token', () => {
       const validToken = global.testUtils.createTestToken('test-user-123');
 
-      // Mock JWT verification
-      const mockVerify = jest.fn().mockReturnValue({ userId: 1, username: 'testuser' });
-      require('jsonwebtoken').verify = mockVerify;
-
       expect(validToken).toBeTruthy();
       const decoded = JSON.parse(Buffer.from(validToken, 'base64').toString());
       expect(decoded.userId).toBe('test-user-123');
@@ -61,12 +57,6 @@ describe('WebSocket Connection and Message Routing', () => {
 
     test('should reject connection with invalid JWT token', () => {
       const invalidToken = 'invalid-token';
-
-      // Mock JWT verification failure
-      const mockVerify = jest.fn().mockImplementation(() => {
-        throw new Error('Invalid token');
-      });
-      require('jsonwebtoken').verify = mockVerify;
 
       expect(() => {
         JSON.parse(Buffer.from(invalidToken, 'base64').toString());
@@ -86,15 +76,15 @@ describe('WebSocket Connection and Message Routing', () => {
         type: 'claude-command',
         data: {
           prompt: 'Test prompt',
-          sessionId: 'test-session'
-        }
+          sessionId: 'test-session',
+        },
       };
 
       const routeResult = {
         type: 'claude-command',
         action: 'process-prompt',
         sessionId: message.data.sessionId,
-        prompt: message.data.prompt
+        prompt: message.data.prompt,
       };
 
       expect(routeResult.type).toBe('claude-command');
@@ -107,15 +97,15 @@ describe('WebSocket Connection and Message Routing', () => {
         type: 'cursor-command',
         data: {
           command: 'cursor test',
-          sessionId: 'test-session'
-        }
+          sessionId: 'test-session',
+        },
       };
 
       const routeResult = {
         type: 'cursor-command',
         action: 'execute-cursor',
         sessionId: message.data.sessionId,
-        command: message.data.command
+        command: message.data.command,
       };
 
       expect(routeResult.type).toBe('cursor-command');
@@ -128,15 +118,15 @@ describe('WebSocket Connection and Message Routing', () => {
         type: 'shell-command',
         data: {
           command: 'ls -la',
-          sessionId: 'test-session'
-        }
+          sessionId: 'test-session',
+        },
       };
 
       const routeResult = {
         type: 'shell-command',
         action: 'execute-shell',
         sessionId: message.data.sessionId,
-        command: message.data.command
+        command: message.data.command,
       };
 
       expect(routeResult.type).toBe('shell-command');
@@ -147,12 +137,12 @@ describe('WebSocket Connection and Message Routing', () => {
     test('should handle unknown message types', () => {
       const message = {
         type: 'unknown-command',
-        data: {}
+        data: {},
       };
 
       const routeResult = {
         type: 'error',
-        error: 'Unknown message type: unknown-command'
+        error: 'Unknown message type: unknown-command',
       };
 
       expect(routeResult.type).toBe('error');
@@ -166,8 +156,8 @@ describe('WebSocket Connection and Message Routing', () => {
         type: 'response',
         data: {
           content: 'Test response',
-          sessionId: 'test-session'
-        }
+          sessionId: 'test-session',
+        },
       };
 
       const serialized = JSON.stringify(message);
@@ -184,8 +174,8 @@ describe('WebSocket Connection and Message Routing', () => {
         type: 'response',
         data: {
           content: largeContent,
-          sessionId: 'test-session'
-        }
+          sessionId: 'test-session',
+        },
       };
 
       const serialized = JSON.stringify(message);
@@ -201,8 +191,8 @@ describe('WebSocket Connection and Message Routing', () => {
         type: 'binary-data',
         data: {
           content: binaryData.toString('base64'),
-          sessionId: 'test-session'
-        }
+          sessionId: 'test-session',
+        },
       };
 
       const serialized = JSON.stringify(message);
@@ -260,7 +250,7 @@ describe('WebSocket Connection and Message Routing', () => {
         id: sessionId,
         userId: 1,
         createdAt: new Date(),
-        messages: []
+        messages: [],
       };
 
       sessions.set(sessionId, sessionData);
@@ -276,7 +266,7 @@ describe('WebSocket Connection and Message Routing', () => {
         id: 'old-session',
         userId: 1,
         createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), // 24 hours ago
-        messages: []
+        messages: [],
       };
 
       sessions.set('old-session', oldSession);

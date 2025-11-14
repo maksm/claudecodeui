@@ -1,6 +1,6 @@
 {
   "name": "@siteboon/claude-code-ui",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "A web-based UI for Claude Code CLI",
   "type": "module",
   "main": "server/index.js",
@@ -29,7 +29,7 @@
     "preview": "vite preview",
     "start": "npm run build && npm run server",
     "release": "./release.sh",
-    "lint": "eslint . && prettier --check .",
+    "lint": "eslint . --max-warnings=400 && prettier --check .",
     "lint:fix": "eslint --fix . && prettier --write .",
     "format": "prettier --write .",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
@@ -46,7 +46,23 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:report": "playwright show-report",
-    "test:complete": "npm run test:all && npm run test:e2e"
+    "test:e2e:auth": "playwright test auth.e2e.js",
+    "test:e2e:projects": "playwright test projects.e2e.js",
+    "test:e2e:chat": "playwright test chat.e2e.js",
+    "test:e2e:mobile": "playwright test --project=\"Mobile Chrome\"",
+    "test:e2e:visual": "playwright test --grep=\"Visual|Accessibility\"",
+    "test:e2e:performance": "playwright test --grep=\"Performance|Load time\"",
+    "test:e2e:accessibility": "playwright test --grep=\"Accessibility\"",
+    "test:e2e:parallel": "playwright test --workers=4",
+    "test:e2e:record": "playwright codegen",
+    "test:e2e:update": "playwright test --update-snapshots",
+    "test:e2e:trace": "playwright test --trace on",
+    "test:e2e:chrome": "playwright test --project=chromium",
+    "test:e2e:firefox": "playwright test --project=firefox",
+    "test:e2e:safari": "playwright test --project=webkit",
+    "test:complete": "npm run test:all && npm run test:e2e",
+    "commit": "git-cz",
+    "prepare": "husky"
   },
   "keywords": [
     "claude coode",
@@ -69,9 +85,11 @@
     "@codemirror/merge": "^6.11.1",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@octokit/rest": "^22.0.0",
+    "@react-spring/web": "^10.0.3",
     "@replit/codemirror-minimap": "^0.5.2",
     "@tailwindcss/typography": "^0.5.16",
     "@uiw/react-codemirror": "^4.23.13",
+    "@use-gesture/react": "^10.3.1",
     "@xterm/addon-clipboard": "^0.1.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/addon-webgl": "^0.18.0",
@@ -84,20 +102,26 @@
     "cors": "^2.8.5",
     "cross-spawn": "^7.0.3",
     "express": "^4.18.2",
-    "fuse.js": "^7.0.0",
+    "framer-motion": "^12.23.24",
+    "fuse.js": "^7.1.0",
     "gray-matter": "^4.0.3",
     "jsonwebtoken": "^9.0.2",
+    "jszip": "^3.10.1",
     "katex": "^0.16.25",
     "lucide-react": "^0.515.0",
     "mime-types": "^3.0.1",
     "multer": "^2.0.1",
     "node-fetch": "^2.7.0",
     "node-pty": "^1.1.0-beta34",
+    "pako": "^2.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-dropzone": "^14.2.3",
+    "react-intersection-observer": "^10.0.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^6.8.1",
+    "react-window": "^2.2.3",
+    "react-window-infinite-loader": "^2.0.0",
     "rehype-katex": "^7.0.1",
     "remark-gfm": "^4.0.0",
     "remark-math": "^6.0.0",
@@ -107,8 +131,11 @@
     "ws": "^8.14.2"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
     "@babel/preset-env": "^7.28.5",
     "@babel/preset-react": "^7.28.5",
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@eslint/js": "^9.39.1",
     "@mswjs/data": "^0.16.2",
     "@playwright/test": "^1.56.1",
@@ -124,15 +151,20 @@
     "auto-changelog": "^2.5.0",
     "autoprefixer": "^10.4.16",
     "babel-jest": "^30.2.0",
+    "commitizen": "^4.3.1",
+    "commitlint": "^20.1.0",
     "concurrently": "^8.2.2",
+    "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.39.1",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "husky": "^9.1.7",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
     "jest-environment-node": "^30.2.0",
+    "lint-staged": "^16.2.6",
     "msw": "^2.12.1",
     "node-gyp": "^10.0.0",
     "postcss": "^8.4.32",
@@ -144,5 +176,27 @@
     "task-master-ai": "^0.31.2",
     "ts-jest": "^29.4.5",
     "vite": "^7.0.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "lint-staged": {
+    "**/*.{js,jsx,mjs,cjs}": [
+      "eslint --fix --quiet",
+      "prettier --write"
+    ],
+    "**/*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ],
+    "**/*.{css,scss}": [
+      "prettier --write"
+    ]
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

@@ -3,42 +3,56 @@ import { setupServer } from 'msw/node';
 import { http } from 'msw';
 import { jest } from '@jest/globals';
 
+// Re-export http for tests (MSW v2 uses http instead of rest)
+export { http };
+
 // Mock handlers for API endpoints
 export const handlers = [
   // Authentication endpoints
-  http.post('/api/auth/login', ({ request }) => {
-    const username = request.body?.username;
-    const password = request.body?.password;
+  http.post('/api/auth/login', async ({ request }) => {
+    const body = await request.json();
+    const username = body?.username;
+    const password = body?.password;
 
     if (username === 'testuser' && password === 'password123') {
       return Response.json({
         success: true,
         user: { id: 1, username: 'testuser', email: 'test@example.com' },
-        token: 'mock-jwt-token'
+        token: 'mock-jwt-token',
       });
     }
 
-    return Response.json({
-      success: false,
-      error: 'Invalid credentials'
-    }, { status: 401 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Invalid credentials',
+      },
+      { status: 401 }
+    );
   }),
 
-  http.post('/api/auth/register', ({ request }) => {
-    const { username, email, password } = request.body || {};
+  http.post('/api/auth/register', async ({ request }) => {
+    const body = await request.json();
+    const { username, email, password } = body || {};
 
     if (username && email && password) {
-      return Response.json({
-        success: true,
-        user: { id: 2, username, email },
-        token: 'mock-jwt-token-new'
-      }, { status: 201 });
+      return Response.json(
+        {
+          success: true,
+          user: { id: 2, username, email },
+          token: 'mock-jwt-token-new',
+        },
+        { status: 201 }
+      );
     }
 
-    return Response.json({
-      success: false,
-      error: 'Missing required fields'
-    }, { status: 400 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Missing required fields',
+      },
+      { status: 400 }
+    );
   }),
 
   http.get('/api/auth/me', ({ request }) => {
@@ -47,249 +61,261 @@ export const handlers = [
     if (authHeader === 'Bearer mock-jwt-token') {
       return Response.json({
         success: true,
-        user: { id: 1, username: 'testuser', email: 'test@example.com' }
+        user: { id: 1, username: 'testuser', email: 'test@example.com' },
       });
     }
 
+    return Response.json(
+      {
+        success: false,
+        error: 'Invalid token',
+      },
+      { status: 401 }
+    );
+  }),
+
+  http.get('/api/auth/user', ({ request }) => {
+    const authHeader = request.headers.get('authorization');
+
+    if (authHeader === 'Bearer mock-jwt-token') {
+      return Response.json({
+        success: true,
+        user: { id: 1, username: 'testuser', email: 'test@example.com' },
+      });
+    }
+
+    return Response.json(
+      {
+        success: false,
+        error: 'Invalid token',
+      },
+      { status: 401 }
+    );
+  }),
+
+  http.get('/api/auth/status', () => {
     return Response.json({
-      success: false,
-      error: 'Invalid token'
-    }, { status: 401 });
+      success: true,
+      needsSetup: false,
+    });
+  }),
+
+  http.post('/api/auth/logout', () => {
+    return Response.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
   }),
 
   // Projects endpoints
   http.get('/api/projects', () => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        success: true,
-        projects: [
-          {
-            id: 1,
-            name: 'Test Project',
-            path: '/home/user/test-project',
-            description: 'A test project',
-            lastModified: new Date().toISOString()
-          },
-          {
-            id: 2,
-            name: 'Another Project',
-            path: '/home/user/another-project',
-            description: 'Another test project',
-            lastModified: new Date().toISOString()
-          }
-        ]
-      })
-    );
+    return Response.json({
+      success: true,
+      projects: [
+        {
+          id: 1,
+          name: 'Test Project',
+          path: '/home/user/test-project',
+          description: 'A test project',
+          lastModified: new Date().toISOString(),
+        },
+        {
+          id: 2,
+          name: 'Another Project',
+          path: '/home/user/another-project',
+          description: 'Another test project',
+          lastModified: new Date().toISOString(),
+        },
+      ],
+    });
   }),
 
-  rest.post('/api/projects', (req, res, ctx) => {
-    const { name, path, description } = req.body;
+  http.post('/api/projects', async ({ request }) => {
+    const body = await request.json();
+    const { name, path, description } = body;
 
     if (name && path) {
-      return res(
-        ctx.status(201),
-        ctx.json({
+      return Response.json(
+        {
           success: true,
           project: {
             id: 3,
             name,
             path,
             description: description || '',
-            lastModified: new Date().toISOString()
-          }
-        })
+            lastModified: new Date().toISOString(),
+          },
+        },
+        { status: 201 }
       );
     }
 
-    return res(
-      ctx.status(400),
-      ctx.json({
+    return Response.json(
+      {
         success: false,
-        error: 'Name and path are required'
-      })
+        error: 'Name and path are required',
+      },
+      { status: 400 }
     );
   }),
 
-  rest.get('/api/projects/:id', (req, res, ctx) => {
-    const { id } = req.params;
+  http.get('/api/projects/:id', ({ params }) => {
+    const { id } = params;
 
     if (id === '1') {
-      return res(
-        ctx.status(200),
-        ctx.json({
-          success: true,
-          project: {
-            id: 1,
-            name: 'Test Project',
-            path: '/home/user/test-project',
-            description: 'A test project',
-            lastModified: new Date().toISOString()
-          }
-        })
-      );
+      return Response.json({
+        success: true,
+        project: {
+          id: 1,
+          name: 'Test Project',
+          path: '/home/user/test-project',
+          description: 'A test project',
+          lastModified: new Date().toISOString(),
+        },
+      });
     }
 
-    return res(
-      ctx.status(404),
-      ctx.json({
+    return Response.json(
+      {
         success: false,
-        error: 'Project not found'
-      })
+        error: 'Project not found',
+      },
+      { status: 404 }
     );
   }),
 
   // Git endpoints
-  rest.get('/api/git/status', (req, res, ctx) => {
-    const { project } = req.query;
+  http.get('/api/git/status', ({ request }) => {
+    const url = new URL(request.url);
+    const project = url.searchParams.get('project');
 
     if (project) {
-      return res(
-        ctx.status(200),
-        ctx.json({
-          success: true,
-          status: ' M modified.txt\n?? new.txt\n',
-          branch: 'main'
-        })
-      );
+      return Response.json({
+        success: true,
+        status: ' M modified.txt\n?? new.txt\n',
+        branch: 'main',
+      });
     }
 
-    return res(
-      ctx.status(400),
-      ctx.json({
+    return Response.json(
+      {
         success: false,
-        error: 'Project parameter is required'
-      })
+        error: 'Project parameter is required',
+      },
+      { status: 400 }
     );
   }),
 
-  rest.get('/api/git/log', (req, res, ctx) => {
-    const { project } = req.query;
+  http.get('/api/git/log', ({ request }) => {
+    const url = new URL(request.url);
+    const project = url.searchParams.get('project');
 
     if (project) {
-      return res(
-        ctx.status(200),
-        ctx.json({
-          success: true,
-          commits: [
-            {
-              hash: 'abc123',
-              message: 'Latest commit',
-              author: 'Test User',
-              date: new Date().toISOString()
-            },
-            {
-              hash: 'def456',
-              message: 'Previous commit',
-              author: 'Test User',
-              date: new Date(Date.now() - 86400000).toISOString()
-            }
-          ]
-        })
-      );
+      return Response.json({
+        success: true,
+        commits: [
+          {
+            hash: 'abc123',
+            message: 'Latest commit',
+            author: 'Test User',
+            date: new Date().toISOString(),
+          },
+          {
+            hash: 'def456',
+            message: 'Previous commit',
+            author: 'Test User',
+            date: new Date(Date.now() - 86400000).toISOString(),
+          },
+        ],
+      });
     }
 
-    return res(
-      ctx.status(400),
-      ctx.json({
+    return Response.json(
+      {
         success: false,
-        error: 'Project parameter is required'
-      })
+        error: 'Project parameter is required',
+      },
+      { status: 400 }
     );
   }),
 
   // Settings endpoints
-  rest.get('/api/settings', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        success: true,
-        settings: {
-          theme: 'light',
-          fontSize: 14,
-          autoSave: true,
-          lineNumbers: true,
-          wordWrap: true
-        }
-      })
-    );
+  http.get('/api/settings', () => {
+    return Response.json({
+      success: true,
+      settings: {
+        theme: 'light',
+        fontSize: 14,
+        autoSave: true,
+        lineNumbers: true,
+        wordWrap: true,
+      },
+    });
   }),
 
-  rest.put('/api/settings', (req, res, ctx) => {
-    const settings = req.body;
+  http.put('/api/settings', async ({ request }) => {
+    const settings = await request.json();
 
-    return res(
-      ctx.status(200),
-      ctx.json({
-        success: true,
-        settings: { ...settings }
-      })
-    );
+    return Response.json({
+      success: true,
+      settings: { ...settings },
+    });
   }),
 
   // File system endpoints
-  rest.get('/api/files/*', (req, res, ctx) => {
-    return res(
-      ctx.status(200),
-      ctx.json({
-        success: true,
-        content: 'Mock file content for testing'
-      })
-    );
+  http.get('/api/files/*', () => {
+    return Response.json({
+      success: true,
+      content: 'Mock file content for testing',
+    });
   }),
 
-  rest.post('/api/files/*', (req, res, ctx) => {
-    const { content } = req.body;
+  http.post('/api/files/*', async ({ request }) => {
+    const { content } = await request.json();
 
-    return res(
-      ctx.status(200),
-      ctx.json({
-        success: true,
-        message: 'File saved successfully'
-      })
-    );
+    return Response.json({
+      success: true,
+      message: 'File saved successfully',
+    });
   }),
 
   // Claude API endpoints
-  rest.post('/api/claude/chat', (req, res, ctx) => {
-    const { message, sessionId } = req.body;
+  http.post('/api/claude/chat', async ({ request }) => {
+    const { message, sessionId } = await request.json();
 
     // Simulate streaming response
-    return res(
-      ctx.status(200),
-      ctx.json({
-        success: true,
-        response: `Mock Claude response to: ${message}`,
-        sessionId,
-        timestamp: new Date().toISOString()
-      })
-    );
+    return Response.json({
+      success: true,
+      response: `Mock Claude response to: ${message}`,
+      sessionId,
+      timestamp: new Date().toISOString(),
+    });
   }),
 
   // Error simulation endpoints
-  rest.get('/api/error/500', (req, res, ctx) => {
-    return res(
-      ctx.status(500),
-      ctx.json({
+  http.get('/api/error/500', () => {
+    return Response.json(
+      {
         success: false,
-        error: 'Internal server error'
-      })
+        error: 'Internal server error',
+      },
+      { status: 500 }
     );
   }),
 
-  rest.get('/api/error/404', (req, res, ctx) => {
-    return res(
-      ctx.status(404),
-      ctx.json({
+  http.get('/api/error/404', () => {
+    return Response.json(
+      {
         success: false,
-        error: 'Not found'
-      })
+        error: 'Not found',
+      },
+      { status: 404 }
     );
   }),
 
-  rest.get('/api/error/network', (req, res, ctx) => {
-    return res.networkError('Network error');
-  })
+  http.get('/api/error/network', () => {
+    return Response.error();
+  }),
 ];
 
 // Create MSW server
@@ -308,10 +334,8 @@ export const mockWebSocket = {
       removeEventListener: jest.fn(),
 
       // Simulate receiving messages
-      simulateMessage: (data) => {
-        const messageHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'message'
-        );
+      simulateMessage: data => {
+        const messageHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'message');
         if (messageHandler) {
           messageHandler[1]({ data: JSON.stringify(data) });
         }
@@ -319,9 +343,7 @@ export const mockWebSocket = {
 
       // Simulate connection open
       simulateOpen: () => {
-        const openHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'open'
-        );
+        const openHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'open');
         if (openHandler) {
           openHandler[1]({ type: 'open' });
         }
@@ -329,28 +351,24 @@ export const mockWebSocket = {
 
       // Simulate connection close
       simulateClose: () => {
-        const closeHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'close'
-        );
+        const closeHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'close');
         if (closeHandler) {
           closeHandler[1]({ type: 'close' });
         }
       },
 
       // Simulate connection error
-      simulateError: (error) => {
-        const errorHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'error'
-        );
+      simulateError: error => {
+        const errorHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'error');
         if (errorHandler) {
           errorHandler[1]({ type: 'error', error });
         }
-      }
+      },
     };
 
     mockWebSocket.instances.push(ws);
     return ws;
-  })
+  }),
 };
 
 // Setup global WebSocket mock
@@ -373,7 +391,7 @@ export const createMockUser = (overrides = {}) => ({
   id: 1,
   username: 'testuser',
   email: 'test@example.com',
-  ...overrides
+  ...overrides,
 });
 
 export const createMockProject = (overrides = {}) => ({
@@ -382,7 +400,7 @@ export const createMockProject = (overrides = {}) => ({
   path: '/home/user/test-project',
   description: 'A test project',
   lastModified: new Date().toISOString(),
-  ...overrides
+  ...overrides,
 });
 
 export const createMockGitCommit = (overrides = {}) => ({
@@ -390,7 +408,7 @@ export const createMockGitCommit = (overrides = {}) => ({
   message: 'Test commit',
   author: 'Test User',
   date: new Date().toISOString(),
-  ...overrides
+  ...overrides,
 });
 
 export const createMockSettings = (overrides = {}) => ({
@@ -399,5 +417,5 @@ export const createMockSettings = (overrides = {}) => ({
   autoSave: true,
   lineNumbers: true,
   wordWrap: true,
-  ...overrides
+  ...overrides,
 });

@@ -2,6 +2,7 @@
 import request from 'supertest';
 import express from 'express';
 import { promises as fs } from 'fs';
+import { exec, spawn } from 'child_process';
 import path from 'path';
 import { setupTestDatabase, cleanupTestDatabase } from './database.js';
 import { createMockApp } from './test-utils.js';
@@ -10,28 +11,31 @@ import gitRoutes from '../server/routes/git.js';
 
 // Mock dependencies
 jest.mock('fs', () => ({
-  ...jest.requireActual('fs'),
   promises: {
-    access: jest.fn(),
-    realpath: jest.fn(),
-    lstat: jest.fn(),
-    readlink: jest.fn(),
-    mkdir: jest.fn(),
-    writeFile: jest.fn(),
-    readFile: jest.fn()
-  }
+    access: async () => {},
+    realpath: async p => p,
+    lstat: async () => ({
+      isSymbolicLink: () => false,
+      isDirectory: () => true,
+    }),
+    readlink: async () => '',
+    mkdir: async () => {},
+    writeFile: async () => {},
+    readFile: async () => '',
+  },
 }));
 
 jest.mock('child_process', () => ({
-  exec: jest.fn(),
-  spawn: jest.fn()
+  exec: (cmd, cb) => cb(null, 'mocked output', ''),
+  spawn: () => ({
+    stdout: { on: () => {} },
+    stderr: { on: () => {} },
+    on: () => {},
+  }),
 }));
 
 describe('Projects Routes', () => {
   let app;
-  let mockFs;
-  let mockExec;
-  let mockSpawn;
   let originalEnv;
 
   beforeEach(async () => {
@@ -41,20 +45,15 @@ describe('Projects Routes', () => {
     // Setup test environment
     process.env.WORKSPACES_ROOT = '/home/test/workspaces';
 
-    // Get mocked modules
-    mockFs = require('fs').promises;
-    mockExec = require('child_process').exec;
-    mockSpawn = require('child_process').spawn;
-
     // Reset all mocks
     jest.clearAllMocks();
 
     // Setup default mock returns
-    mockFs.realpath.mockImplementation((p) => Promise.resolve(p));
-    mockFs.access.mockResolvedValue();
-    mockFs.lstat.mockResolvedValue({
+    fs.realpath.mockImplementation(p => Promise.resolve(p));
+    fs.access.mockResolvedValue();
+    fs.lstat.mockResolvedValue({
       isSymbolicLink: () => false,
-      isDirectory: () => true
+      isDirectory: () => true,
     });
 
     // Create Express app with routes
@@ -72,7 +71,7 @@ describe('Projects Routes', () => {
 
   describe('Workspace Path Validation', () => {
     test('should validate safe workspace path', async () => {
-      mockFs.realpath
+      fs.realpath
         .mockResolvedValueOnce('/home/test/workspaces')
         .mockResolvedValueOnce('/home/test/workspaces/myproject');
 
@@ -80,7 +79,7 @@ describe('Projects Routes', () => {
         .post('/api/projects/create-workspace')
         .send({
           path: '/home/test/workspaces/myproject',
-          name: 'My Project'
+          name: 'My Project',
         })
         .expect(200);
 
@@ -88,13 +87,13 @@ describe('Projects Routes', () => {
     });
 
     test('should reject workspace in system directory', async () => {
-      mockFs.realpath.mockResolvedValue('/etc');
+      fs.realpath.mockResolvedValue('/etc');
 
       const response = await request(app)
         .post('/api/projects/create-workspace')
         .send({
           path: '/etc',
-          name: 'System Directory'
+          name: 'System Directory',
         })
         .expect(400);
 
@@ -102,7 +101,7 @@ describe('Projects Routes', () => {
     });
 
     test('should reject workspace outside allowed root', async () => {
-      mockFs.realpath
+      fs.realpath
         .mockResolvedValueOnce('/home/test/workspaces')
         .mockResolvedValueOnce('/home/unauthorized/project');
 
@@ -110,21 +109,23 @@ describe('Projects Routes', () => {
         .post('/api/projects/create-workspace')
         .send({
           path: '/home/unauthorized/project',
-          name: 'Unauthorized Project'
+          name: 'Unauthorized Project',
         })
         .expect(400);
 
-      expect(response.body.error).toContain('Workspace path must be within the allowed workspace root');
+      expect(response.body.error).toContain(
+        'Workspace path must be within the allowed workspace root'
+      );
     });
 
     test('should handle path validation errors gracefully', async () => {
-      mockFs.realpath.mockRejectedValue(new Error('Permission denied'));
+      fs.realpath.mockRejectedValue(new Error('Permission denied'));
 
       const response = await request(app)
         .post('/api/projects/create-workspace')
         .send({
           path: '/forbidden/path',
-          name: 'Test Project'
+          name: 'Test Project',
         })
         .expect(400);
 
@@ -132,20 +133,20 @@ describe('Projects Routes', () => {
     });
 
     test('should allow symlinks within workspace root', async () => {
-      mockFs.realpath
+      fs.realpath
         .mockResolvedValueOnce('/home/test/workspaces')
         .mockResolvedValueOnce('/home/test/workspaces/myproject');
-      mockFs.lstat.mockResolvedValue({
+      fs.lstat.mockResolvedValue({
         isSymbolicLink: () => true,
-        isDirectory: () => true
+        isDirectory: () => true,
       });
-      mockFs.readlink.mockResolvedValue('../target-project');
+      fs.readlink.mockResolvedValue('../target-project');
 
       const response = await request(app)
         .post('/api/projects/create-workspace')
         .send({
           path: '/home/test/workspaces/myproject',
-          name: 'Symlink Project'
+          name: 'Symlink Project',
         })
         .expect(200);
 
@@ -153,21 +154,21 @@ describe('Projects Routes', () => {
     });
 
     test('should reject symlinks outside workspace root', async () => {
-      mockFs.realpath
+      fs.realpath
         .mockResolvedValueOnce('/home/test/workspaces')
         .mockResolvedValueOnce('/home/test/workspaces/myproject')
         .mockResolvedValueOnce('/home/unauthorized/target');
-      mockFs.lstat.mockResolvedValue({
+      fs.lstat.mockResolvedValue({
         isSymbolicLink: () => true,
-        isDirectory: () => true
+        isDirectory: () => true,
       });
-      mockFs.readlink.mockResolvedValue('/home/unauthorized/target');
+      fs.readlink.mockResolvedValue('/home/unauthorized/target');
 
       const response = await request(app)
         .post('/api/projects/create-workspace')
         .send({
           path: '/home/test/workspaces/myproject',
-          name: 'Bad Symlink Project'
+          name: 'Bad Symlink Project',
         })
         .expect(400);
 
@@ -178,25 +179,25 @@ describe('Projects Routes', () => {
 
 describe('Git Routes', () => {
   let app;
-  let mockFs;
-  let mockExec;
+  let fs;
+  let exec;
 
   beforeEach(async () => {
     // Setup test environment
     process.env.WORKSPACES_ROOT = '/home/test/workspaces';
 
     // Get mocked modules
-    mockFs = require('fs').promises;
-    mockExec = require('child_process').exec;
+    fs = require('fs').promises;
+    exec = require('child_process').exec;
 
     // Reset all mocks
     jest.clearAllMocks();
 
     // Setup default mock returns
-    mockFs.access.mockResolvedValue();
-    mockFs.readFile.mockResolvedValue('git file content');
+    fs.access.mockResolvedValue();
+    fs.readFile.mockResolvedValue('git file content');
 
-    mockExec.mockImplementation((command, callback) => {
+    exec.mockImplementation((command, callback) => {
       // Simulate successful git commands
       const commands = {
         'git status --porcelain': { stdout: ' M modified.txt\n?? new.txt\n' },
@@ -204,7 +205,7 @@ describe('Git Routes', () => {
         'git diff': { stdout: 'diff content' },
         'git log --oneline -10': { stdout: 'abc123 Latest commit\n' },
         'git branch -a': { stdout: '* main\n  feature/test\n' },
-        'git remote -v': { stdout: 'origin https://github.com/user/repo.git (fetch)\n' }
+        'git remote -v': { stdout: 'origin https://github.com/user/repo.git (fetch)\n' },
       };
 
       const result = commands[command] || { stdout: '', stderr: '' };
@@ -228,7 +229,7 @@ describe('Git Routes', () => {
         .query({ project: 'myproject' })
         .expect(200);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(exec).toHaveBeenCalledWith(
         expect.stringContaining('git status --porcelain'),
         expect.any(Function)
       );
@@ -236,7 +237,7 @@ describe('Git Routes', () => {
     });
 
     test('should handle git status errors', async () => {
-      mockExec.mockImplementation((command, callback) => {
+      exec.mockImplementation((command, callback) => {
         callback(new Error('Git command failed'), '', '');
       });
 
@@ -249,9 +250,7 @@ describe('Git Routes', () => {
     });
 
     test('should reject requests without project parameter', async () => {
-      const response = await request(app)
-        .get('/api/git/status')
-        .expect(400);
+      const response = await request(app).get('/api/git/status').expect(400);
 
       expect(response.body.error).toContain('Project parameter is required');
     });
@@ -264,10 +263,7 @@ describe('Git Routes', () => {
         .query({ project: 'myproject' })
         .expect(200);
 
-      expect(mockExec).toHaveBeenCalledWith(
-        expect.stringContaining('git diff'),
-        expect.any(Function)
-      );
+      expect(exec).toHaveBeenCalledWith(expect.stringContaining('git diff'), expect.any(Function));
       expect(response.body.success).toBe(true);
     });
 
@@ -277,7 +273,7 @@ describe('Git Routes', () => {
         .query({ project: 'myproject', staged: 'true' })
         .expect(200);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(exec).toHaveBeenCalledWith(
         expect.stringContaining('git diff --cached'),
         expect.any(Function)
       );
@@ -285,7 +281,7 @@ describe('Git Routes', () => {
     });
 
     test('should strip diff headers correctly', async () => {
-      mockExec.mockImplementation((command, callback) => {
+      exec.mockImplementation((command, callback) => {
         const mockDiff = `diff --git a/test.txt b/test.txt
 index abc123..def456 100644
 --- a/test.txt
@@ -318,7 +314,7 @@ index abc123..def456 100644
         .query({ project: 'myproject' })
         .expect(200);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(exec).toHaveBeenCalledWith(
         expect.stringContaining('git log --oneline -10'),
         expect.any(Function)
       );
@@ -331,7 +327,7 @@ index abc123..def456 100644
         .query({ project: 'myproject', count: '5' })
         .expect(200);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(exec).toHaveBeenCalledWith(
         expect.stringContaining('git log --oneline -5'),
         expect.any(Function)
       );
@@ -346,7 +342,7 @@ index abc123..def456 100644
         .query({ project: 'myproject' })
         .expect(200);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(exec).toHaveBeenCalledWith(
         expect.stringContaining('git branch -a'),
         expect.any(Function)
       );
@@ -354,7 +350,7 @@ index abc123..def456 100644
     });
 
     test('should parse branch information correctly', async () => {
-      mockExec.mockImplementation((command, callback) => {
+      exec.mockImplementation((command, callback) => {
         const mockBranches = '* main\n  feature/test\n  feature/another\n  remotes/origin/main';
         callback(null, mockBranches, '');
       });
@@ -376,7 +372,7 @@ index abc123..def456 100644
         .query({ project: 'myproject' })
         .expect(200);
 
-      expect(mockExec).toHaveBeenCalledWith(
+      expect(exec).toHaveBeenCalledWith(
         expect.stringContaining('git remote -v'),
         expect.any(Function)
       );
@@ -384,8 +380,9 @@ index abc123..def456 100644
     });
 
     test('should parse remote information correctly', async () => {
-      mockExec.mockImplementation((command, callback) => {
-        const mockRemotes = 'origin\thttps://github.com/user/repo.git (fetch)\norigin\thttps://github.com/user/repo.git (push)';
+      exec.mockImplementation((command, callback) => {
+        const mockRemotes =
+          'origin\thttps://github.com/user/repo.git (fetch)\norigin\thttps://github.com/user/repo.git (push)';
         callback(null, mockRemotes, '');
       });
 

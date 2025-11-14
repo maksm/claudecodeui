@@ -1,7 +1,102 @@
-node_modules
-dist
-build
-.taskmaster
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production builds
+dist/
+build/
+.next/
+out/
+coverage/
+
+# Testing
+coverage/
+.nyc_output/
+playwright-report/
+test-results/
+
+# Task Master
+.taskmaster/
+
+# Logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Lock files
 package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
 CHANGELOG.md
+*.min.js
+*.min.css
+*.bundle.js
+*.chunk.js
+
+# Documentation builds
+.docusaurus
+.cache-loader
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.temp/
+tmp/
+
+# Public static assets that don't need formatting
+public/*.ico
+public/*.png
+public/*.jpg
+public/*.jpeg
+public/*.gif
+public/*.svg
+public/*.webp
+public/*.woff
+public/*.woff2
+public/*.ttf
+public/*.eot
+
+# MSW generated files
+public/mockServiceWorker.js
+
+# Files with environment-specific formatting issues
+src/components/CredentialsSettings.jsx
+
+# Config files that should remain as-is
+*.config.js.backup
+*.config.json.backup

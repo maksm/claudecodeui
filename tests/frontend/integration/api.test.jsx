@@ -2,7 +2,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
 import { jest } from '@jest/globals';
-import { server, rest, createMockWebSocket, getLastWebSocket } from '../mocks/server.js';
+import { server, http, createMockWebSocket, getLastWebSocket } from '../mocks/server.js';
+import { delay } from 'msw';
 
 // Test component that makes API calls
 const ApiTestComponent = () => {
@@ -22,8 +23,8 @@ const ApiTestComponent = () => {
         },
         body: JSON.stringify({
           username: 'testuser',
-          password: 'password123'
-        })
+          password: 'password123',
+        }),
       });
       const data = await response.json();
       if (data.success) {
@@ -49,8 +50,8 @@ const ApiTestComponent = () => {
         },
         body: JSON.stringify({
           username: 'wronguser',
-          password: 'wrongpassword'
-        })
+          password: 'wrongpassword',
+        }),
       });
       const data = await response.json();
       if (data.success) {
@@ -122,7 +123,7 @@ const ApiTestComponent = () => {
       console.log('WebSocket connected');
     });
 
-    ws.addEventListener('message', (event) => {
+    ws.addEventListener('message', event => {
       const data = JSON.parse(event.data);
       console.log('WebSocket message received:', data);
     });
@@ -132,21 +133,15 @@ const ApiTestComponent = () => {
 
   return (
     <div data-testid="api-test-component">
-      <div data-testid="user-info">
-        {user ? `Logged in as: ${user.username}` : 'Not logged in'}
-      </div>
+      <div data-testid="user-info">{user ? `Logged in as: ${user.username}` : 'Not logged in'}</div>
 
       <div data-testid="projects-info">
         {projects.length > 0 ? `${projects.length} projects loaded` : 'No projects loaded'}
       </div>
 
-      <div data-testid="loading-info">
-        {loading ? 'Loading...' : 'Not loading'}
-      </div>
+      <div data-testid="loading-info">{loading ? 'Loading...' : 'Not loading'}</div>
 
-      <div data-testid="error-info">
-        {error || 'No error'}
-      </div>
+      <div data-testid="error-info">{error || 'No error'}</div>
 
       <button data-testid="login-button" onClick={handleLogin}>
         Login
@@ -274,15 +269,12 @@ describe('API Integration Tests with MSW', () => {
   test('can override MSW handlers for specific tests', async () => {
     // Override the login handler for this specific test
     server.use(
-      rest.post('/api/auth/login', (req, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            success: true,
-            user: { id: 999, username: 'special-user', email: 'special@example.com' },
-            token: 'special-token'
-          })
-        );
+      http.post('/api/auth/login', async () => {
+        return Response.json({
+          success: true,
+          user: { id: 999, username: 'special-user', email: 'special@example.com' },
+          token: 'special-token',
+        });
       })
     );
 
@@ -298,13 +290,13 @@ describe('API Integration Tests with MSW', () => {
 
   test('can simulate 404 errors', async () => {
     server.use(
-      rest.get('/api/projects', (req, res, ctx) => {
-        return res(
-          ctx.status(404),
-          ctx.json({
+      http.get('/api/projects', async () => {
+        return Response.json(
+          {
             success: false,
-            error: 'Projects endpoint not found'
-          })
+            error: 'Projects endpoint not found',
+          },
+          { status: 404 }
         );
       })
     );
@@ -321,16 +313,13 @@ describe('API Integration Tests with MSW', () => {
 
   test('can simulate delayed responses', async () => {
     server.use(
-      rest.post('/api/auth/login', (req, res, ctx) => {
-        return res(
-          ctx.delay(100), // 100ms delay
-          ctx.status(200),
-          ctx.json({
-            success: true,
-            user: { id: 1, username: 'testuser', email: 'test@example.com' },
-            token: 'mock-jwt-token'
-          })
-        );
+      http.post('/api/auth/login', async () => {
+        await delay(100); // 100ms delay
+        return Response.json({
+          success: true,
+          user: { id: 1, username: 'testuser', email: 'test@example.com' },
+          token: 'mock-jwt-token',
+        });
       })
     );
 
@@ -342,9 +331,12 @@ describe('API Integration Tests with MSW', () => {
     // Should show loading state during delay
     expect(screen.getByTestId('loading-info')).toHaveTextContent('Loading...');
 
-    await waitFor(() => {
-      expect(screen.getByTestId('user-info')).toHaveTextContent('Logged in as: testuser');
-    }, { timeout: 200 });
+    await waitFor(
+      () => {
+        expect(screen.getByTestId('user-info')).toHaveTextContent('Logged in as: testuser');
+      },
+      { timeout: 200 }
+    );
   });
 
   test('WebSocket can simulate messages', () => {
@@ -359,7 +351,7 @@ describe('API Integration Tests with MSW', () => {
     // Simulate receiving a message
     ws.simulateMessage({
       type: 'response',
-      data: { content: 'Hello from WebSocket!' }
+      data: { content: 'Hello from WebSocket!' },
     });
 
     // Verify the message handler was called

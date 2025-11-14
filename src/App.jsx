@@ -32,18 +32,21 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TaskMasterProvider } from './contexts/TaskMasterContext';
 import { TasksSettingsProvider } from './contexts/TasksSettingsContext';
 import { WebSocketProvider, useWebSocketContext } from './contexts/WebSocketContext';
+import { SessionManagerProvider, useSessionManager } from './contexts/SessionManagerContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import useLocalStorage from './hooks/useLocalStorage';
 import { api, authenticatedFetch } from './utils/api';
-
 
 // Main App component with routing
 function AppContent() {
   const navigate = useNavigate();
   const { sessionId } = useParams();
 
-  const { updateAvailable, latestVersion, currentVersion, releaseInfo } = useVersionCheck('siteboon', 'claudecodeui');
+  const { updateAvailable, latestVersion, currentVersion, releaseInfo } = useVersionCheck(
+    'siteboon',
+    'claudecodeui'
+  );
   const [showVersionModal, setShowVersionModal] = useState(false);
 
   const [projects, setProjects] = useState([]);
@@ -63,15 +66,20 @@ function AppContent() {
   const [autoScrollToBottom, setAutoScrollToBottom] = useLocalStorage('autoScrollToBottom', true);
   const [sendByCtrlEnter, setSendByCtrlEnter] = useLocalStorage('sendByCtrlEnter', false);
   const [sidebarVisible, setSidebarVisible] = useLocalStorage('sidebarVisible', true);
-  // Session Protection System: Track sessions with active conversations to prevent
-  // automatic project updates from interrupting ongoing chats. When a user sends
-  // a message, the session is marked as "active" and project updates are paused
-  // until the conversation completes or is aborted.
-  const [activeSessions, setActiveSessions] = useState(new Set()); // Track sessions with active conversations
 
-  // Processing Sessions: Track which sessions are currently thinking/processing
-  // This allows us to restore the "Thinking..." banner when switching back to a processing session
-  const [processingSessions, setProcessingSessions] = useState(new Set());
+  // Session Management System: Use SessionManager for per-project session isolation
+  const {
+    getGlobalActiveSessions,
+    getGlobalProcessingSessions,
+    addActiveSession,
+    removeActiveSession,
+    addProcessingSession,
+    removeProcessingSession,
+    hasActiveSessionInProject,
+    isSessionActive,
+    isSessionProcessing,
+    clearProjectSessions,
+  } = useSessionManager();
 
   // External Message Update Trigger: Incremented when external CLI modifies current session's JSONL
   // Triggers ChatInterface to reload messages without switching sessions
@@ -85,9 +93,10 @@ function AppContent() {
   useEffect(() => {
     // Check if running in standalone mode (PWA)
     const checkPWA = () => {
-      const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
-                          window.navigator.standalone ||
-                          document.referrer.includes('android-app://');
+      const isStandalone =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone ||
+        document.referrer.includes('android-app://');
       setIsPWA(isStandalone);
 
       // Add class to html and body for CSS targeting
@@ -144,8 +153,12 @@ function AppContent() {
     }
 
     // Find the selected session in both current and updated project data
-    const currentSelectedSession = currentSelectedProject.sessions?.find(s => s.id === selectedSession.id);
-    const updatedSelectedSession = updatedSelectedProject.sessions?.find(s => s.id === selectedSession.id);
+    const currentSelectedSession = currentSelectedProject.sessions?.find(
+      s => s.id === selectedSession.id
+    );
+    const updatedSelectedSession = updatedSelectedProject.sessions?.find(
+      s => s.id === selectedSession.id
+    );
 
     if (!currentSelectedSession || !updatedSelectedSession) {
       // Selected session was deleted or significantly changed, not purely additive
@@ -170,7 +183,14 @@ function AppContent() {
     if (messages.length > 0) {
       const latestMessage = messages[messages.length - 1];
 
-      if (latestMessage.type === 'projects_updated') {
+      if (
+        latestMessage.type === 'projects_updated' ||
+        latestMessage.type === 'projects_list_updated'
+      ) {
+        console.log(
+          `[App] Received ${latestMessage.type} update, targeted: ${latestMessage.targeted}, hasActiveSession: ${getGlobalActiveSessions().size > 0}`
+        );
+        console.log(`[App] Updated projects count: ${latestMessage.projects?.length || 0}`);
 
         // External Session Update Detection: Check if the changed file is the current session's JSONL
         // If so, and the session is not active, trigger a message reload in ChatInterface
@@ -183,9 +203,11 @@ function AppContent() {
 
             // Check if this is the currently-selected session
             if (changedSessionId === selectedSession.id) {
-              const isSessionActive = activeSessions.has(selectedSession.id);
+              const sessionIsActive = selectedProject
+                ? isSessionActive(selectedProject.name, selectedSession.id)
+                : false;
 
-              if (!isSessionActive) {
+              if (!sessionIsActive) {
                 // Session is not active - safe to reload messages
                 setExternalMessageUpdate(prev => prev + 1);
               }
@@ -193,27 +215,70 @@ function AppContent() {
           }
         }
 
-        // Session Protection Logic: Allow additions but prevent changes during active conversations
-        // This allows new sessions/projects to appear in sidebar while protecting active chat messages
-        // We check for two types of active sessions:
-        // 1. Existing sessions: selectedSession.id exists in activeSessions
-        // 2. New sessions: temporary "new-session-*" identifiers in activeSessions (before real session ID is received)
-        const hasActiveSession = (selectedSession && activeSessions.has(selectedSession.id)) ||
-                                 (activeSessions.size > 0 && Array.from(activeSessions).some(id => id.startsWith('new-session-')));
+        // For targeted updates, only process if they affect our current project
+        if (latestMessage.type === 'projects_updated' && latestMessage.targeted) {
+          // This is a targeted update - backend already filtered it to be project-specific
+          // We still want to process it but with different rules
+          console.log('📁 Processing targeted project update');
 
-        if (hasActiveSession) {
-          // Allow updates but be selective: permit additions, prevent changes to existing items
-          const updatedProjects = latestMessage.projects;
-          const currentProjects = projects;
+          // Apply less strict session protection for targeted updates since they're project-specific
+          const globalActiveSessions = getGlobalActiveSessions();
+          const hasActiveSession =
+            (selectedSession && globalActiveSessions.has(selectedSession.id)) ||
+            (globalActiveSessions.size > 0 &&
+              Array.from(globalActiveSessions).some(id => id.startsWith('new-session-')));
 
-          // Check if this is purely additive (new sessions/projects) vs modification of existing ones
-          const isAdditiveUpdate = isUpdateAdditive(currentProjects, updatedProjects, selectedProject, selectedSession);
+          if (hasActiveSession && selectedSession) {
+            // Only skip if the update would affect the active session itself
+            // Allow sidebar updates for other parts of the project
+            const updatedProjects = latestMessage.projects;
+            const currentProjects = projects;
+            const isAdditiveUpdate = isUpdateAdditive(
+              currentProjects,
+              updatedProjects,
+              selectedProject,
+              selectedSession
+            );
 
-          if (!isAdditiveUpdate) {
-            // Skip updates that would modify existing selected session/project
-            return;
+            if (!isAdditiveUpdate) {
+              console.log('🛡️ Skipping targeted update that would affect active session');
+              return;
+            }
           }
-          // Continue with additive updates below
+        } else {
+          // Original session protection logic for global updates (projects_list_updated)
+          // Session Protection Logic: Allow additions but prevent changes during active conversations
+          // This allows new sessions/projects to appear in sidebar while protecting active chat messages
+          // We check for two types of active sessions:
+          // 1. Existing sessions: selectedSession.id exists in activeSessions
+          // 2. New sessions: temporary "new-session-*" identifiers in activeSessions (before real session ID is received)
+          const globalActiveSessions = getGlobalActiveSessions();
+          const hasActiveSession =
+            (selectedSession && globalActiveSessions.has(selectedSession.id)) ||
+            (globalActiveSessions.size > 0 &&
+              Array.from(globalActiveSessions).some(id => id.startsWith('new-session-')));
+
+          if (hasActiveSession) {
+            // Allow updates but be selective: permit additions, prevent changes to existing items
+            const updatedProjects = latestMessage.projects;
+            const currentProjects = projects;
+
+            // Check if this is purely additive (new sessions/projects) vs modification of existing ones
+            const isAdditiveUpdate = isUpdateAdditive(
+              currentProjects,
+              updatedProjects,
+              selectedProject,
+              selectedSession
+            );
+
+            if (!isAdditiveUpdate) {
+              console.log('[App] Skipping non-additive update during active session');
+              // Skip updates that would modify existing selected session/project
+              return;
+            }
+            console.log('[App] Processing additive update during active session');
+            // Continue with additive updates below
+          }
         }
 
         // Update projects state with the new data from WebSocket
@@ -231,7 +296,9 @@ function AppContent() {
 
             // Update selected session only if it was deleted - avoid unnecessary reloads
             if (selectedSession) {
-              const updatedSelectedSession = updatedSelectedProject.sessions?.find(s => s.id === selectedSession.id);
+              const updatedSelectedSession = updatedSelectedProject.sessions?.find(
+                s => s.id === selectedSession.id
+              );
               if (!updatedSelectedSession) {
                 // Session was deleted
                 setSelectedSession(null);
@@ -242,7 +309,7 @@ function AppContent() {
         }
       }
     }
-  }, [messages, selectedProject, selectedSession, activeSessions]);
+  }, [messages, selectedProject, selectedSession, getGlobalActiveSessions()]);
 
   const fetchProjects = async () => {
     try {
@@ -279,20 +346,22 @@ function AppContent() {
         }
 
         // Check if the projects data has actually changed
-        const hasChanges = data.some((newProject, index) => {
-          const prevProject = prevProjects[index];
-          if (!prevProject) return true;
+        const hasChanges =
+          data.some((newProject, index) => {
+            const prevProject = prevProjects[index];
+            if (!prevProject) return true;
 
-          // Compare key properties that would affect UI
-          return (
-            newProject.name !== prevProject.name ||
-            newProject.displayName !== prevProject.displayName ||
-            newProject.fullPath !== prevProject.fullPath ||
-            JSON.stringify(newProject.sessionMeta) !== JSON.stringify(prevProject.sessionMeta) ||
-            JSON.stringify(newProject.sessions) !== JSON.stringify(prevProject.sessions) ||
-            JSON.stringify(newProject.cursorSessions) !== JSON.stringify(prevProject.cursorSessions)
-          );
-        }) || data.length !== prevProjects.length;
+            // Compare key properties that would affect UI
+            return (
+              newProject.name !== prevProject.name ||
+              newProject.displayName !== prevProject.displayName ||
+              newProject.fullPath !== prevProject.fullPath ||
+              JSON.stringify(newProject.sessionMeta) !== JSON.stringify(prevProject.sessionMeta) ||
+              JSON.stringify(newProject.sessions) !== JSON.stringify(prevProject.sessions) ||
+              JSON.stringify(newProject.cursorSessions) !==
+                JSON.stringify(prevProject.cursorSessions)
+            );
+          }) || data.length !== prevProjects.length;
 
         // Only update if there are actual changes
         return hasChanges ? data : prevProjects;
@@ -350,7 +419,7 @@ function AppContent() {
     }
   }, [sessionId, projects, navigate]);
 
-  const handleProjectSelect = (project) => {
+  const handleProjectSelect = project => {
     setSelectedProject(project);
     setSelectedSession(null);
     navigate('/');
@@ -359,7 +428,7 @@ function AppContent() {
     }
   };
 
-  const handleSessionSelect = (session) => {
+  const handleSessionSelect = session => {
     setSelectedSession(session);
     // Only switch to chat tab when user explicitly selects a session
     // This prevents tab switching during automatic updates
@@ -389,7 +458,7 @@ function AppContent() {
     navigate(`/session/${session.id}`);
   };
 
-  const handleNewSession = (project) => {
+  const handleNewSession = project => {
     setSelectedProject(project);
     setSelectedSession(null);
     setActiveTab('chat');
@@ -399,7 +468,7 @@ function AppContent() {
     }
   };
 
-  const handleSessionDelete = (sessionId) => {
+  const handleSessionDelete = sessionId => {
     // If the deleted session was currently selected, clear it
     if (selectedSession?.id === sessionId) {
       setSelectedSession(null);
@@ -413,13 +482,11 @@ function AppContent() {
         sessions: project.sessions?.filter(session => session.id !== sessionId) || [],
         sessionMeta: {
           ...project.sessionMeta,
-          total: Math.max(0, (project.sessionMeta?.total || 0) - 1)
-        }
+          total: Math.max(0, (project.sessionMeta?.total || 0) - 1),
+        },
       }))
     );
   };
-
-
 
   const handleSidebarRefresh = async () => {
     // Refresh only the sessions for all projects, don't change selected state
@@ -430,18 +497,19 @@ function AppContent() {
       // Optimize to preserve object references and minimize re-renders
       setProjects(prevProjects => {
         // Check if projects data has actually changed
-        const hasChanges = freshProjects.some((newProject, index) => {
-          const prevProject = prevProjects[index];
-          if (!prevProject) return true;
+        const hasChanges =
+          freshProjects.some((newProject, index) => {
+            const prevProject = prevProjects[index];
+            if (!prevProject) return true;
 
-          return (
-            newProject.name !== prevProject.name ||
-            newProject.displayName !== prevProject.displayName ||
-            newProject.fullPath !== prevProject.fullPath ||
-            JSON.stringify(newProject.sessionMeta) !== JSON.stringify(prevProject.sessionMeta) ||
-            JSON.stringify(newProject.sessions) !== JSON.stringify(prevProject.sessions)
-          );
-        }) || freshProjects.length !== prevProjects.length;
+            return (
+              newProject.name !== prevProject.name ||
+              newProject.displayName !== prevProject.displayName ||
+              newProject.fullPath !== prevProject.fullPath ||
+              JSON.stringify(newProject.sessionMeta) !== JSON.stringify(prevProject.sessionMeta) ||
+              JSON.stringify(newProject.sessions) !== JSON.stringify(prevProject.sessions)
+            );
+          }) || freshProjects.length !== prevProjects.length;
 
         return hasChanges ? freshProjects : prevProjects;
       });
@@ -457,8 +525,13 @@ function AppContent() {
 
           // If we have a selected session, try to find it in the refreshed project
           if (selectedSession) {
-            const refreshedSession = refreshedProject.sessions?.find(s => s.id === selectedSession.id);
-            if (refreshedSession && JSON.stringify(refreshedSession) !== JSON.stringify(selectedSession)) {
+            const refreshedSession = refreshedProject.sessions?.find(
+              s => s.id === selectedSession.id
+            );
+            if (
+              refreshedSession &&
+              JSON.stringify(refreshedSession) !== JSON.stringify(selectedSession)
+            ) {
               setSelectedSession(refreshedSession);
             }
           }
@@ -469,7 +542,7 @@ function AppContent() {
     }
   };
 
-  const handleProjectDelete = (projectName) => {
+  const handleProjectDelete = projectName => {
     // If the deleted project was currently selected, clear it
     if (selectedProject?.name === projectName) {
       setSelectedProject(null);
@@ -478,70 +551,78 @@ function AppContent() {
     }
 
     // Update projects state locally instead of full refresh
-    setProjects(prevProjects =>
-      prevProjects.filter(project => project.name !== projectName)
-    );
+    setProjects(prevProjects => prevProjects.filter(project => project.name !== projectName));
   };
 
   // Session Protection Functions: Manage the lifecycle of active sessions
 
   // markSessionAsActive: Called when user sends a message to mark session as protected
   // This includes both real session IDs and temporary "new-session-*" identifiers
-  const markSessionAsActive = useCallback((sessionId) => {
-    if (sessionId) {
-      setActiveSessions(prev => new Set([...prev, sessionId]));
-    }
-  }, []);
+  const markSessionAsActive = useCallback(
+    sessionId => {
+      if (sessionId && selectedProject) {
+        addActiveSession(selectedProject.name, sessionId);
+      }
+    },
+    [addActiveSession, selectedProject]
+  );
 
   // markSessionAsInactive: Called when conversation completes/aborts to re-enable project updates
-  const markSessionAsInactive = useCallback((sessionId) => {
-    if (sessionId) {
-      setActiveSessions(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(sessionId);
-        return newSet;
-      });
-    }
-  }, []);
+  const markSessionAsInactive = useCallback(
+    sessionId => {
+      if (sessionId && selectedProject) {
+        removeActiveSession(selectedProject.name, sessionId);
+      }
+    },
+    [removeActiveSession, selectedProject]
+  );
 
   // Processing Session Functions: Track which sessions are currently thinking/processing
 
   // markSessionAsProcessing: Called when Claude starts thinking/processing
-  const markSessionAsProcessing = useCallback((sessionId) => {
-    if (sessionId) {
-      setProcessingSessions(prev => new Set([...prev, sessionId]));
-    }
-  }, []);
+  const markSessionAsProcessing = useCallback(
+    sessionId => {
+      if (sessionId && selectedProject) {
+        addProcessingSession(selectedProject.name, sessionId);
+      }
+    },
+    [addProcessingSession, selectedProject]
+  );
 
   // markSessionAsNotProcessing: Called when Claude finishes thinking/processing
-  const markSessionAsNotProcessing = useCallback((sessionId) => {
-    if (sessionId) {
-      setProcessingSessions(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(sessionId);
-        return newSet;
-      });
-    }
-  }, []);
+  const markSessionAsNotProcessing = useCallback(
+    sessionId => {
+      if (sessionId && selectedProject) {
+        removeProcessingSession(selectedProject.name, sessionId);
+      }
+    },
+    [removeProcessingSession, selectedProject]
+  );
 
   // replaceTemporarySession: Called when WebSocket provides real session ID for new sessions
   // Removes temporary "new-session-*" identifiers and adds the real session ID
   // This maintains protection continuity during the transition from temporary to real session
-  const replaceTemporarySession = useCallback((realSessionId) => {
-    if (realSessionId) {
-      setActiveSessions(prev => {
-        const newSet = new Set();
-        // Keep all non-temporary sessions and add the real session ID
-        for (const sessionId of prev) {
-          if (!sessionId.startsWith('new-session-')) {
-            newSet.add(sessionId);
-          }
+  const replaceTemporarySession = useCallback(
+    realSessionId => {
+      if (realSessionId && selectedProject) {
+        // Get current global active sessions to find temporary sessions for this project
+        const globalActiveSessions = getGlobalActiveSessions();
+        const tempSessionId = Array.from(globalActiveSessions).find(id =>
+          id.startsWith('new-session-')
+        );
+
+        if (tempSessionId) {
+          // Remove the temporary session and add the real session for this project
+          removeActiveSession(selectedProject.name, tempSessionId);
+          addActiveSession(selectedProject.name, realSessionId);
+          console.log(
+            `[App] Replaced temporary session ${tempSessionId} with real session ${realSessionId} for project ${selectedProject.name}`
+          );
         }
-        newSet.add(realSessionId);
-        return newSet;
-      });
-    }
-  }, []);
+      }
+    },
+    [getGlobalActiveSessions, removeActiveSession, addActiveSession, selectedProject]
+  );
 
   // Version Upgrade Modal Component
   const VersionUpgradeModal = () => {
@@ -552,22 +633,24 @@ function AppContent() {
     if (!showVersionModal) return null;
 
     // Clean up changelog by removing GitHub-specific metadata
-    const cleanChangelog = (body) => {
+    const cleanChangelog = body => {
       if (!body) return '';
 
-      return body
-        // Remove full commit hashes (40 character hex strings)
-        .replace(/\b[0-9a-f]{40}\b/gi, '')
-        // Remove short commit hashes (7-10 character hex strings at start of line or after dash/space)
-        .replace(/(?:^|\s|-)([0-9a-f]{7,10})\b/gi, '')
-        // Remove "Full Changelog" links
-        .replace(/\*\*Full Changelog\*\*:.*$/gim, '')
-        // Remove compare links (e.g., https://github.com/.../compare/v1.0.0...v1.0.1)
-        .replace(/https?:\/\/github\.com\/[^\/]+\/[^\/]+\/compare\/[^\s)]+/gi, '')
-        // Clean up multiple consecutive empty lines
-        .replace(/\n\s*\n\s*\n/g, '\n\n')
-        // Trim whitespace
-        .trim();
+      return (
+        body
+          // Remove full commit hashes (40 character hex strings)
+          .replace(/\b[0-9a-f]{40}\b/gi, '')
+          // Remove short commit hashes (7-10 character hex strings at start of line or after dash/space)
+          .replace(/(?:^|\s|-)([0-9a-f]{7,10})\b/gi, '')
+          // Remove "Full Changelog" links
+          .replace(/\*\*Full Changelog\*\*:.*$/gim, '')
+          // Remove compare links (e.g., https://github.com/.../compare/v1.0.0...v1.0.1)
+          .replace(/https?:\/\/github\.com\/[^/]+\/[^/]+\/compare\/[^\s)]+/gi, '')
+          // Clean up multiple consecutive empty lines
+          .replace(/\n\s*\n\s*\n/g, '\n\n')
+          // Trim whitespace
+          .trim()
+      );
     };
 
     const handleUpdateNow = async () => {
@@ -589,7 +672,9 @@ function AppContent() {
           setUpdateOutput(prev => prev + 'Please restart the server to apply changes.\n');
         } else {
           setUpdateError(data.error || 'Update failed');
-          setUpdateOutput(prev => prev + '\n❌ Update failed: ' + (data.error || 'Unknown error') + '\n');
+          setUpdateOutput(
+            prev => prev + '\n❌ Update failed: ' + (data.error || 'Unknown error') + '\n'
+          );
         }
       } catch (error) {
         setUpdateError(error.message);
@@ -614,12 +699,24 @@ function AppContent() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-                <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
+                <svg
+                  className="w-5 h-5 text-blue-600 dark:text-blue-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
+                  />
                 </svg>
               </div>
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Update Available</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Update Available
+                </h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   {releaseInfo?.title || 'A new version is ready'}
                 </p>
@@ -630,7 +727,12 @@ function AppContent() {
               className="p-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -638,12 +740,20 @@ function AppContent() {
           {/* Version Info */}
           <div className="space-y-3">
             <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Current Version</span>
-              <span className="text-sm text-gray-900 dark:text-white font-mono">{currentVersion}</span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Current Version
+              </span>
+              <span className="text-sm text-gray-900 dark:text-white font-mono">
+                {currentVersion}
+              </span>
             </div>
             <div className="flex justify-between items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-700">
-              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">Latest Version</span>
-              <span className="text-sm text-blue-900 dark:text-blue-100 font-mono">{latestVersion}</span>
+              <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                Latest Version
+              </span>
+              <span className="text-sm text-blue-900 dark:text-blue-100 font-mono">
+                {latestVersion}
+              </span>
             </div>
           </div>
 
@@ -651,7 +761,9 @@ function AppContent() {
           {releaseInfo?.body && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-medium text-gray-900 dark:text-white">What's New:</h3>
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                  What&apos;s New:
+                </h3>
                 {releaseInfo?.htmlUrl && (
                   <a
                     href={releaseInfo.htmlUrl}
@@ -661,7 +773,12 @@ function AppContent() {
                   >
                     View full release
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
                     </svg>
                   </a>
                 )}
@@ -677,9 +794,13 @@ function AppContent() {
           {/* Update Output */}
           {updateOutput && (
             <div className="space-y-2">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-white">Update Progress:</h3>
+              <h3 className="text-sm font-medium text-gray-900 dark:text-white">
+                Update Progress:
+              </h3>
               <div className="bg-gray-900 dark:bg-gray-950 rounded-lg p-4 border border-gray-700 max-h-48 overflow-y-auto">
-                <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">{updateOutput}</pre>
+                <pre className="text-xs text-green-400 font-mono whitespace-pre-wrap">
+                  {updateOutput}
+                </pre>
               </div>
             </div>
           )}
@@ -694,7 +815,7 @@ function AppContent() {
                 </code>
               </div>
               <p className="text-xs text-gray-600 dark:text-gray-400">
-                Or click "Update Now" to run the update automatically.
+                Or click &quot;Update Now&quot; to run the update automatically.
               </p>
             </div>
           )}
@@ -787,7 +908,12 @@ function AppContent() {
                     stroke="currentColor"
                     viewBox="0 0 24 24"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                    />
                   </svg>
                 </button>
 
@@ -821,16 +947,18 @@ function AppContent() {
 
       {/* Mobile Sidebar Overlay */}
       {isMobile && (
-        <div className={`fixed inset-0 z-50 flex transition-all duration-150 ease-out ${
-          sidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-        }`}>
+        <div
+          className={`fixed inset-0 z-50 flex transition-all duration-150 ease-out ${
+            sidebarOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+          }`}
+        >
           <button
             className="fixed inset-0 bg-background/80 backdrop-blur-sm transition-opacity duration-150 ease-out"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation();
               setSidebarOpen(false);
             }}
-            onTouchStart={(e) => {
+            onTouchStart={e => {
               e.preventDefault();
               e.stopPropagation();
               setSidebarOpen(false);
@@ -841,8 +969,8 @@ function AppContent() {
             className={`relative w-[85vw] max-w-sm sm:w-80 h-full bg-card border-r border-border transform transition-transform duration-150 ease-out ${
               sidebarOpen ? 'translate-x-0' : '-translate-x-full'
             }`}
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
+            onTouchStart={e => e.stopPropagation()}
           >
             <Sidebar
               projects={projects}
@@ -870,7 +998,9 @@ function AppContent() {
       )}
 
       {/* Main Content Area - Flexible */}
-      <div className={`flex-1 flex flex-col min-w-0 ${isMobile && !isInputFocused ? 'pb-mobile-nav' : ''}`}>
+      <div
+        className={`flex-1 flex flex-col min-w-0 ${isMobile && !isInputFocused ? 'pb-mobile-nav' : ''}`}
+      >
         <MainContent
           selectedProject={selectedProject}
           selectedSession={selectedSession}
@@ -888,9 +1018,9 @@ function AppContent() {
           onSessionInactive={markSessionAsInactive}
           onSessionProcessing={markSessionAsProcessing}
           onSessionNotProcessing={markSessionAsNotProcessing}
-          processingSessions={processingSessions}
+          processingSessions={getGlobalProcessingSessions()}
           onReplaceTemporarySession={replaceTemporarySession}
-          onNavigateToSession={(sessionId) => navigate(`/session/${sessionId}`)}
+          onNavigateToSession={sessionId => navigate(`/session/${sessionId}`)}
           onShowSettings={() => setShowSettings(true)}
           autoExpandTools={autoExpandTools}
           showRawParameters={showRawParameters}
@@ -943,6 +1073,14 @@ function AppContent() {
 }
 
 // Root App component with router
+function AppContentWithSessionManager() {
+  return (
+    <SessionManagerProvider>
+      <AppContent />
+    </SessionManagerProvider>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -954,12 +1092,12 @@ function App() {
                 <Router
                   future={{
                     v7_startTransition: true,
-                    v7_relativeSplatPath: true
+                    v7_relativeSplatPath: true,
                   }}
                 >
                   <Routes>
-                    <Route path="/" element={<AppContent />} />
-                    <Route path="/session/:sessionId" element={<AppContent />} />
+                    <Route path="/" element={<AppContentWithSessionManager />} />
+                    <Route path="/session/:sessionId" element={<AppContentWithSessionManager />} />
                   </Routes>
                 </Router>
               </ProtectedRoute>

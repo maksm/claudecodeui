@@ -2,7 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
-import { Folder, FolderOpen, File, FileText, FileCode, List, TableProperties, Eye, Search, X } from 'lucide-react';
+import {
+  Folder,
+  FolderOpen,
+  File,
+  FileText,
+  FileCode,
+  List,
+  TableProperties,
+  Eye,
+  Search,
+  X,
+  Edit,
+} from 'lucide-react';
 import { cn } from '../lib/utils';
 import CodeEditor from './CodeEditor';
 import ImageViewer from './ImageViewer';
@@ -17,6 +29,8 @@ function FileTree({ selectedProject }) {
   const [viewMode, setViewMode] = useState('detailed'); // 'simple', 'detailed', 'compact'
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredFiles, setFilteredFiles] = useState([]);
+  const [contextMenu, setContextMenu] = useState(null);
+  const [isMarkdownPreviewMode, setIsMarkdownPreviewMode] = useState(false);
 
   useEffect(() => {
     if (selectedProject) {
@@ -41,7 +55,7 @@ function FileTree({ selectedProject }) {
       setFilteredFiles(filtered);
 
       // Auto-expand directories that contain matches
-      const expandMatches = (items) => {
+      const expandMatches = items => {
         items.forEach(item => {
           if (item.type === 'directory' && item.children && item.children.length > 0) {
             setExpandedDirs(prev => new Set(prev.add(item.path)));
@@ -69,7 +83,7 @@ function FileTree({ selectedProject }) {
       if (matchesName || filteredChildren.length > 0) {
         filtered.push({
           ...item,
-          children: filteredChildren
+          children: filteredChildren,
         });
       }
 
@@ -81,14 +95,14 @@ function FileTree({ selectedProject }) {
     setLoading(true);
     try {
       const response = await api.getFiles(selectedProject.name);
-      
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error('❌ File fetch failed:', response.status, errorText);
         setFiles([]);
         return;
       }
-      
+
       const data = await response.json();
       setFiles(data);
     } catch (error) {
@@ -99,7 +113,7 @@ function FileTree({ selectedProject }) {
     }
   };
 
-  const toggleDirectory = (path) => {
+  const toggleDirectory = path => {
     const newExpanded = new Set(expandedDirs);
     if (newExpanded.has(path)) {
       newExpanded.delete(path);
@@ -110,13 +124,13 @@ function FileTree({ selectedProject }) {
   };
 
   // Change view mode and save preference
-  const changeViewMode = (mode) => {
+  const changeViewMode = mode => {
     setViewMode(mode);
     localStorage.setItem('file-tree-view-mode', mode);
   };
 
   // Format file size
-  const formatFileSize = (bytes) => {
+  const formatFileSize = bytes => {
     if (!bytes || bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -125,12 +139,12 @@ function FileTree({ selectedProject }) {
   };
 
   // Format date as relative time
-  const formatRelativeTime = (date) => {
+  const formatRelativeTime = date => {
     if (!date) return '-';
     const now = new Date();
     const past = new Date(date);
     const diffInSeconds = Math.floor((now - past) / 1000);
-    
+
     if (diffInSeconds < 60) return 'just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} min ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
@@ -138,14 +152,55 @@ function FileTree({ selectedProject }) {
     return past.toLocaleDateString();
   };
 
+  // Handle file opening with markdown preview preference
+  const openFile = (item, previewMode = false) => {
+    if (isMarkdownFile(item.name) && previewMode) {
+      setIsMarkdownPreviewMode(true);
+    } else {
+      setIsMarkdownPreviewMode(false);
+    }
+
+    setSelectedFile({
+      name: item.name,
+      path: item.path,
+      projectPath: selectedProject.path,
+      projectName: selectedProject.name,
+      isMarkdownPreviewMode: isMarkdownFile(item.name) && previewMode,
+    });
+  };
+
+  // Handle context menu
+  const handleContextMenu = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (item.type === 'file' && isMarkdownFile(item.name)) {
+      setContextMenu({
+        x: e.clientX,
+        y: e.clientY,
+        item,
+      });
+    }
+  };
+
+  // Close context menu
+  const closeContextMenu = () => {
+    setContextMenu(null);
+  };
+
+  // Close context menu when clicking outside
+  useEffect(() => {
+    const handleClick = () => closeContextMenu();
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
+
   const renderFileTree = (items, level = 0) => {
-    return items.map((item) => (
+    return items.map(item => (
       <div key={item.path} className="select-none">
         <Button
           variant="ghost"
-          className={cn(
-            "w-full justify-start p-2 h-auto font-normal text-left hover:bg-accent",
-          )}
+          className={cn('w-full justify-start p-2 h-auto font-normal text-left hover:bg-accent')}
           style={{ paddingLeft: `${level * 16 + 12}px` }}
           onClick={() => {
             if (item.type === 'directory') {
@@ -156,18 +211,14 @@ function FileTree({ selectedProject }) {
                 name: item.name,
                 path: item.path,
                 projectPath: selectedProject.path,
-                projectName: selectedProject.name
+                projectName: selectedProject.name,
               });
             } else {
               // Open file in editor
-              setSelectedFile({
-                name: item.name,
-                path: item.path,
-                projectPath: selectedProject.path,
-                projectName: selectedProject.name
-              });
+              openFile(item, false);
             }
           }}
+          onContextMenu={e => handleContextMenu(e, item)}
         >
           <div className="flex items-center gap-2 min-w-0 w-full">
             {item.type === 'directory' ? (
@@ -179,40 +230,53 @@ function FileTree({ selectedProject }) {
             ) : (
               getFileIcon(item.name)
             )}
-            <span className="text-sm truncate text-foreground">
-              {item.name}
-            </span>
+            <span className="text-sm truncate text-foreground">{item.name}</span>
           </div>
         </Button>
-        
-        {item.type === 'directory' && 
-         expandedDirs.has(item.path) && 
-         item.children && 
-         item.children.length > 0 && (
-          <div>
-            {renderFileTree(item.children, level + 1)}
-          </div>
-        )}
+
+        {item.type === 'directory' &&
+          expandedDirs.has(item.path) &&
+          item.children &&
+          item.children.length > 0 && <div>{renderFileTree(item.children, level + 1)}</div>}
       </div>
     ));
   };
 
-  const isImageFile = (filename) => {
+  const isImageFile = filename => {
     const ext = filename.split('.').pop()?.toLowerCase();
     const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp'];
     return imageExtensions.includes(ext);
   };
 
-  const getFileIcon = (filename) => {
+  const isMarkdownFile = filename => {
     const ext = filename.split('.').pop()?.toLowerCase();
-    
-    const codeExtensions = ['js', 'jsx', 'ts', 'tsx', 'py', 'java', 'cpp', 'c', 'php', 'rb', 'go', 'rs'];
-    const docExtensions = ['md', 'txt', 'doc', 'pdf'];
+    return ext === 'md' || ext === 'markdown';
+  };
+
+  const getFileIcon = filename => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+
+    const codeExtensions = [
+      'js',
+      'jsx',
+      'ts',
+      'tsx',
+      'py',
+      'java',
+      'cpp',
+      'c',
+      'php',
+      'rb',
+      'go',
+      'rs',
+    ];
     const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'ico', 'bmp'];
-    
-    if (codeExtensions.includes(ext)) {
+
+    if (isMarkdownFile(filename)) {
+      return <FileText className="w-4 h-4 text-purple-600 dark:text-purple-400 flex-shrink-0" />;
+    } else if (codeExtensions.includes(ext)) {
       return <FileCode className="w-4 h-4 text-green-500 flex-shrink-0" />;
-    } else if (docExtensions.includes(ext)) {
+    } else if (ext === 'txt' || ext === 'doc' || ext === 'pdf') {
       return <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />;
     } else if (imageExtensions.includes(ext)) {
       return <File className="w-4 h-4 text-purple-500 flex-shrink-0" />;
@@ -223,12 +287,10 @@ function FileTree({ selectedProject }) {
 
   // Render detailed view with table-like layout
   const renderDetailedView = (items, level = 0) => {
-    return items.map((item) => (
+    return items.map(item => (
       <div key={item.path} className="select-none">
         <div
-          className={cn(
-            "grid grid-cols-12 gap-2 p-2 hover:bg-accent cursor-pointer items-center",
-          )}
+          className={cn('grid grid-cols-12 gap-2 p-2 hover:bg-accent cursor-pointer items-center')}
           style={{ paddingLeft: `${level * 16 + 12}px` }}
           onClick={() => {
             if (item.type === 'directory') {
@@ -238,17 +300,13 @@ function FileTree({ selectedProject }) {
                 name: item.name,
                 path: item.path,
                 projectPath: selectedProject.path,
-                projectName: selectedProject.name
+                projectName: selectedProject.name,
               });
             } else {
-              setSelectedFile({
-                name: item.name,
-                path: item.path,
-                projectPath: selectedProject.path,
-                projectName: selectedProject.name
-              });
+              openFile(item, false);
             }
           }}
+          onContextMenu={e => handleContextMenu(e, item)}
         >
           <div className="col-span-5 flex items-center gap-2 min-w-0">
             {item.type === 'directory' ? (
@@ -260,9 +318,7 @@ function FileTree({ selectedProject }) {
             ) : (
               getFileIcon(item.name)
             )}
-            <span className="text-sm truncate text-foreground">
-              {item.name}
-            </span>
+            <span className="text-sm truncate text-foreground">{item.name}</span>
           </div>
           <div className="col-span-2 text-sm text-muted-foreground">
             {item.type === 'file' ? formatFileSize(item.size) : '-'}
@@ -274,23 +330,21 @@ function FileTree({ selectedProject }) {
             {item.permissionsRwx || '-'}
           </div>
         </div>
-        
-        {item.type === 'directory' && 
-         expandedDirs.has(item.path) && 
-         item.children && 
-         renderDetailedView(item.children, level + 1)}
+
+        {item.type === 'directory' &&
+          expandedDirs.has(item.path) &&
+          item.children &&
+          renderDetailedView(item.children, level + 1)}
       </div>
     ));
   };
 
   // Render compact view with inline details
   const renderCompactView = (items, level = 0) => {
-    return items.map((item) => (
+    return items.map(item => (
       <div key={item.path} className="select-none">
         <div
-          className={cn(
-            "flex items-center justify-between p-2 hover:bg-accent cursor-pointer",
-          )}
+          className={cn('flex items-center justify-between p-2 hover:bg-accent cursor-pointer')}
           style={{ paddingLeft: `${level * 16 + 12}px` }}
           onClick={() => {
             if (item.type === 'directory') {
@@ -300,17 +354,13 @@ function FileTree({ selectedProject }) {
                 name: item.name,
                 path: item.path,
                 projectPath: selectedProject.path,
-                projectName: selectedProject.name
+                projectName: selectedProject.name,
               });
             } else {
-              setSelectedFile({
-                name: item.name,
-                path: item.path,
-                projectPath: selectedProject.path,
-                projectName: selectedProject.name
-              });
+              openFile(item, false);
             }
           }}
+          onContextMenu={e => handleContextMenu(e, item)}
         >
           <div className="flex items-center gap-2 min-w-0">
             {item.type === 'directory' ? (
@@ -322,9 +372,7 @@ function FileTree({ selectedProject }) {
             ) : (
               getFileIcon(item.name)
             )}
-            <span className="text-sm truncate text-foreground">
-              {item.name}
-            </span>
+            <span className="text-sm truncate text-foreground">{item.name}</span>
           </div>
           <div className="flex items-center gap-3 text-xs text-muted-foreground">
             {item.type === 'file' && (
@@ -335,11 +383,11 @@ function FileTree({ selectedProject }) {
             )}
           </div>
         </div>
-        
-        {item.type === 'directory' && 
-         expandedDirs.has(item.path) && 
-         item.children && 
-         renderCompactView(item.children, level + 1)}
+
+        {item.type === 'directory' &&
+          expandedDirs.has(item.path) &&
+          item.children &&
+          renderCompactView(item.children, level + 1)}
       </div>
     ));
   };
@@ -347,9 +395,7 @@ function FileTree({ selectedProject }) {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="text-gray-500 dark:text-gray-400">
-          Loading files...
-        </div>
+        <div className="text-gray-500 dark:text-gray-400">Loading files...</div>
       </div>
     );
   }
@@ -398,7 +444,7 @@ function FileTree({ selectedProject }) {
             type="text"
             placeholder="Search files and folders..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             className="pl-8 pr-8 h-8 text-sm"
           />
           {searchQuery && (
@@ -426,7 +472,7 @@ function FileTree({ selectedProject }) {
           </div>
         </div>
       )}
-      
+
       <ScrollArea className="flex-1 p-4">
         {files.length === 0 ? (
           <div className="text-center py-8">
@@ -434,9 +480,7 @@ function FileTree({ selectedProject }) {
               <Folder className="w-6 h-6 text-muted-foreground" />
             </div>
             <h4 className="font-medium text-foreground mb-1">No files found</h4>
-            <p className="text-sm text-muted-foreground">
-              Check if the project path is accessible
-            </p>
+            <p className="text-sm text-muted-foreground">Check if the project path is accessible</p>
           </div>
         ) : filteredFiles.length === 0 && searchQuery ? (
           <div className="text-center py-8">
@@ -456,22 +500,54 @@ function FileTree({ selectedProject }) {
           </div>
         )}
       </ScrollArea>
-      
+
       {/* Code Editor Modal */}
       {selectedFile && (
         <CodeEditor
           file={selectedFile}
-          onClose={() => setSelectedFile(null)}
+          onClose={() => {
+            setSelectedFile(null);
+            setIsMarkdownPreviewMode(false);
+          }}
           projectPath={selectedFile.projectPath}
+          initialPreviewMode={selectedFile.isMarkdownPreviewMode}
         />
       )}
-      
+
       {/* Image Viewer Modal */}
-      {selectedImage && (
-        <ImageViewer
-          file={selectedImage}
-          onClose={() => setSelectedImage(null)}
-        />
+      {selectedImage && <ImageViewer file={selectedImage} onClose={() => setSelectedImage(null)} />}
+
+      {/* Context Menu for Markdown Files */}
+      {contextMenu && (
+        <div
+          className="fixed bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-50 min-w-48"
+          style={{
+            left: contextMenu.x,
+            top: contextMenu.y,
+          }}
+          onClick={e => e.stopPropagation()}
+        >
+          <button
+            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            onClick={() => {
+              openFile(contextMenu.item, false);
+              closeContextMenu();
+            }}
+          >
+            <Edit className="w-4 h-4" />
+            Edit Markdown
+          </button>
+          <button
+            className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+            onClick={() => {
+              openFile(contextMenu.item, true);
+              closeContextMenu();
+            }}
+          >
+            <Eye className="w-4 h-4" />
+            Preview Markdown
+          </button>
+        </div>
       )}
     </div>
   );

@@ -30,7 +30,7 @@ export const createMockReqRes = () => {
     method: 'GET',
     url: '/',
     user: null,
-    session: {}
+    session: {},
   };
 
   const res = {
@@ -41,7 +41,7 @@ export const createMockReqRes = () => {
     set: jest.fn().mockReturnThis(),
     cookie: jest.fn(),
     clearCookie: jest.fn(),
-    redirect: jest.fn()
+    redirect: jest.fn(),
   };
 
   const next = jest.fn();
@@ -58,7 +58,7 @@ export const createMockWebSocket = () => ({
   once: jest.fn(),
   emit: jest.fn(),
   removeAllListeners: jest.fn(),
-  terminate: jest.fn()
+  terminate: jest.fn(),
 });
 
 // Helper for async test execution
@@ -67,7 +67,7 @@ export const withTimeout = (promise, timeout = 5000) => {
     promise,
     new Promise((_, reject) =>
       setTimeout(() => reject(new Error(`Test timed out after ${timeout}ms`)), timeout)
-    )
+    ),
   ]);
 };
 
@@ -79,7 +79,7 @@ export const generateTestData = {
     email: 'test@example.com',
     passwordHash: 'hashed-password',
     createdAt: new Date().toISOString(),
-    ...overrides
+    ...overrides,
   }),
 
   project: (overrides = {}) => ({
@@ -89,7 +89,7 @@ export const generateTestData = {
     description: 'A test project',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    ...overrides
+    ...overrides,
   }),
 
   session: (overrides = {}) => ({
@@ -98,7 +98,7 @@ export const generateTestData = {
     messages: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
-    ...overrides
+    ...overrides,
   }),
 
   apiKey: (overrides = {}) => ({
@@ -107,8 +107,8 @@ export const generateTestData = {
     keyName: 'test-key',
     apiKey: 'test-api-key-12345',
     createdAt: new Date().toISOString(),
-    ...overrides
-  })
+    ...overrides,
+  }),
 };
 
 // HTTP status assertion helpers
@@ -116,7 +116,7 @@ export const expectStatus = (response, expectedStatus) => {
   expect(response.status).toBe(expectedStatus);
 };
 
-export const expectSuccess = (response) => {
+export const expectSuccess = response => {
   expect(response.status).toBeGreaterThanOrEqual(200);
   expect(response.status).toBeLessThan(300);
 };
@@ -144,7 +144,7 @@ export const expectRecordCount = (db, table, expectedCount) => {
 };
 
 // Clean up utilities
-export const cleanupDatabase = async (db) => {
+export const cleanupDatabase = async db => {
   if (db && typeof db.close === 'function') {
     db.close();
   }
