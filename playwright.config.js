@@ -40,9 +40,9 @@ export default defineConfig({
           'duplicate-id': { enabled: true },
           'form-field-multiple-labels': { enabled: true },
           'page-has-heading-one': { enabled: true },
-          'region': { enabled: true }
-        }
-      }
+          region: { enabled: true },
+        },
+      },
     },
 
     /* Global timeout for each action */
@@ -92,19 +92,14 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run start',
+    command: 'npm run server',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // 2 minutes
   },
 
   /* Test files to exclude */
-  testIgnore: [
-    '**/node_modules/**',
-    '**/dist/**',
-    '**/build/**',
-    '**/.git/**',
-  ],
+  testIgnore: ['**/node_modules/**', '**/dist/**', '**/build/**', '**/.git/**'],
 
   /* Test files to include */
   testMatch: [
