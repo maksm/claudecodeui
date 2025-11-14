@@ -22,7 +22,7 @@ const activeSessions = new Map();
 // Configure Zai client with environment variables
 const zaiClient = new Anthropic({
   apiKey: process.env.ZAI_API_KEY || process.env.ANTHROPIC_API_KEY,
-  baseURL: process.env.ZAI_BASE_URL || 'https://api.zai.com/v1' // Default Zai endpoint
+  baseURL: process.env.ZAI_BASE_URL || 'https://api.zai.com/v1', // Default Zai endpoint
 });
 
 /**
@@ -35,7 +35,7 @@ function mapCliOptionsToZai(options = {}) {
 
   const zaiOptions = {
     maxTokens: 4096,
-    temperature: 0.7
+    temperature: 0.7,
   };
 
   // Map working directory
@@ -55,7 +55,7 @@ function mapCliOptionsToZai(options = {}) {
   const settings = toolsSettings || {
     allowedTools: [],
     disallowedTools: [],
-    skipPermissions: false
+    skipPermissions: false,
   };
 
   zaiOptions.toolSettings = settings;
@@ -81,7 +81,7 @@ function addSession(sessionId, controller, tempImagePaths = [], tempDir = null) 
     startTime: Date.now(),
     status: 'active',
     tempImagePaths,
-    tempDir
+    tempDir,
   });
 }
 
@@ -156,8 +156,8 @@ async function handleImages(command, images, cwd) {
         source: {
           type: 'base64',
           media_type: mimeType,
-          data: base64Data
-        }
+          data: base64Data,
+        },
       });
     }
 
@@ -182,16 +182,16 @@ async function cleanupTempFiles(tempImagePaths, tempDir) {
   try {
     // Delete individual temp files
     for (const imagePath of tempImagePaths) {
-      await fs.unlink(imagePath).catch(err =>
-        console.error(`Failed to delete temp image ${imagePath}:`, err)
-      );
+      await fs
+        .unlink(imagePath)
+        .catch(err => console.error(`Failed to delete temp image ${imagePath}:`, err));
     }
 
     // Delete temp directory
     if (tempDir) {
-      await fs.rm(tempDir, { recursive: true, force: true }).catch(err =>
-        console.error(`Failed to delete temp directory ${tempDir}:`, err)
-      );
+      await fs
+        .rm(tempDir, { recursive: true, force: true })
+        .catch(err => console.error(`Failed to delete temp directory ${tempDir}:`, err));
     }
 
     console.log(`🧹 [Zai] Cleaned up ${tempImagePaths.length} temp image files`);
@@ -241,7 +241,7 @@ async function queryZaiSDK(command, options = {}, ws) {
     if (finalCommand && finalCommand.trim()) {
       content.push({
         type: 'text',
-        text: finalCommand
+        text: finalCommand,
       });
     }
     // Add images if any
@@ -250,24 +250,29 @@ async function queryZaiSDK(command, options = {}, ws) {
     // Send session-created event for new sessions
     if (!sessionId && !sessionCreatedSent) {
       sessionCreatedSent = true;
-      ws.send(JSON.stringify({
-        type: 'session-created',
-        sessionId: capturedSessionId
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'session-created',
+          sessionId: capturedSessionId,
+        })
+      );
     }
 
     // Make API request with streaming
     console.log(`🔄 [Zai] Starting query for session: ${capturedSessionId}`);
 
-    const stream = await zaiClient.messages.create({
-      model: zaiOptions.model,
-      max_tokens: zaiOptions.maxTokens,
-      temperature: zaiOptions.temperature,
-      messages: [{ role: 'user', content }],
-      stream: true
-    }, {
-      signal: controller.signal
-    });
+    const stream = await zaiClient.messages.create(
+      {
+        model: zaiOptions.model,
+        max_tokens: zaiOptions.maxTokens,
+        temperature: zaiOptions.temperature,
+        messages: [{ role: 'user', content }],
+        stream: true,
+      },
+      {
+        signal: controller.signal,
+      }
+    );
 
     let accumulatedText = '';
     let inputTokens = 0;
@@ -277,24 +282,28 @@ async function queryZaiSDK(command, options = {}, ws) {
     for await (const event of stream) {
       if (event.type === 'message_start') {
         // Handle message start
-        ws.send(JSON.stringify({
-          type: 'claude-response',
-          data: {
-            type: 'thinking_start',
-            thinking: true
-          }
-        }));
+        ws.send(
+          JSON.stringify({
+            type: 'claude-response',
+            data: {
+              type: 'thinking_start',
+              thinking: true,
+            },
+          })
+        );
       } else if (event.type === 'content_block_delta') {
         // Handle content deltas
         if (event.delta?.type === 'text_delta') {
           accumulatedText += event.delta.text;
-          ws.send(JSON.stringify({
-            type: 'claude-response',
-            data: {
-              type: 'text',
-              text: event.delta.text
-            }
-          }));
+          ws.send(
+            JSON.stringify({
+              type: 'claude-response',
+              data: {
+                type: 'text',
+                text: event.delta.text,
+              },
+            })
+          );
         }
       } else if (event.type === 'message_delta') {
         // Handle usage updates
@@ -311,13 +320,15 @@ async function queryZaiSDK(command, options = {}, ws) {
     const contextWindow = parseInt(process.env.CONTEXT_WINDOW) || 160000;
     const totalUsed = inputTokens + outputTokens;
 
-    ws.send(JSON.stringify({
-      type: 'token-budget',
-      data: {
-        used: totalUsed,
-        total: contextWindow
-      }
-    }));
+    ws.send(
+      JSON.stringify({
+        type: 'token-budget',
+        data: {
+          used: totalUsed,
+          total: contextWindow,
+        },
+      })
+    );
 
     // Clean up session on completion
     removeSession(capturedSessionId);
@@ -327,13 +338,14 @@ async function queryZaiSDK(command, options = {}, ws) {
 
     // Send completion event
     console.log('✅ [Zai] Streaming complete, sending completion event');
-    ws.send(JSON.stringify({
-      type: 'claude-complete',
-      sessionId: capturedSessionId,
-      exitCode: 0,
-      isNewSession: !sessionId && !!command
-    }));
-
+    ws.send(
+      JSON.stringify({
+        type: 'claude-complete',
+        sessionId: capturedSessionId,
+        exitCode: 0,
+        isNewSession: !sessionId && !!command,
+      })
+    );
   } catch (error) {
     console.error('[Zai] Query error:', error);
 
@@ -346,10 +358,12 @@ async function queryZaiSDK(command, options = {}, ws) {
     await cleanupTempFiles(tempImagePaths, tempDir);
 
     // Send error to WebSocket
-    ws.send(JSON.stringify({
-      type: 'claude-error',
-      error: error.message
-    }));
+    ws.send(
+      JSON.stringify({
+        type: 'claude-error',
+        error: error.message,
+      })
+    );
 
     throw error;
   }
@@ -409,9 +423,4 @@ function getActiveZaiSDKSessions() {
 }
 
 // Export public API
-export {
-  queryZaiSDK,
-  abortZaiSDKSession,
-  isZaiSDKSessionActive,
-  getActiveZaiSDKSessions
-};
+export { queryZaiSDK, abortZaiSDKSession, isZaiSDKSessionActive, getActiveZaiSDKSessions };

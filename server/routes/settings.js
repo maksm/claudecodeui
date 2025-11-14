@@ -1,6 +1,10 @@
 import express from 'express';
 import { apiKeysDb, credentialsDb } from '../database/db.js';
-import { getAvailableProviders, getDefaultProvider, setDefaultProvider } from '../provider-router.js';
+import {
+  getAvailableProviders,
+  getDefaultProvider,
+  setDefaultProvider,
+} from '../provider-router.js';
 
 const router = express.Router();
 
@@ -214,7 +218,7 @@ router.post('/providers/default', async (req, res) => {
     setDefaultProvider(provider.trim());
     res.json({
       success: true,
-      defaultProvider: provider.trim()
+      defaultProvider: provider.trim(),
     });
   } catch (error) {
     console.error('Error setting default provider:', error);

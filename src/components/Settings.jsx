@@ -72,8 +72,8 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [jsonValidationError, setJsonValidationError] = useState('');
   const [toolsProvider, setToolsProvider] = useState('claude'); // 'claude' or 'cursor'
-  const [claudeBackend, setClaudeBackend] = useState(() =>
-    localStorage.getItem('claude-backend') || 'claude'
+  const [claudeBackend, setClaudeBackend] = useState(
+    () => localStorage.getItem('claude-backend') || 'claude'
   ); // 'claude' or 'zai'
 
   // Code Editor settings

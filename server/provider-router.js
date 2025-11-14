@@ -19,7 +19,7 @@ import { spawnCursor, abortCursorSession, isCursorSessionActive } from './cursor
 // Available providers
 export const PROVIDERS = {
   CLAUDE: 'claude',
-  CURSOR: 'cursor'
+  CURSOR: 'cursor',
 };
 
 // Session to provider mapping
@@ -34,7 +34,9 @@ let defaultProvider = process.env.DEFAULT_PROVIDER || PROVIDERS.CLAUDE;
  */
 export function setDefaultProvider(provider) {
   if (!Object.values(PROVIDERS).includes(provider)) {
-    throw new Error(`Invalid provider: ${provider}. Must be one of: ${Object.values(PROVIDERS).join(', ')}`);
+    throw new Error(
+      `Invalid provider: ${provider}. Must be one of: ${Object.values(PROVIDERS).join(', ')}`
+    );
   }
   defaultProvider = provider;
   console.log(`✅ Default provider set to: ${provider}`);
@@ -55,7 +57,7 @@ export function getDefaultProvider() {
 export function getAvailableProviders() {
   return {
     providers: Object.values(PROVIDERS),
-    default: defaultProvider
+    default: defaultProvider,
   };
 }
 
@@ -106,11 +108,15 @@ export async function routeQuery(command, options = {}, ws, provider = null) {
 
   // Validate provider
   if (!Object.values(PROVIDERS).includes(selectedProvider)) {
-    console.error(`Invalid provider: ${selectedProvider}, falling back to default: ${defaultProvider}`);
+    console.error(
+      `Invalid provider: ${selectedProvider}, falling back to default: ${defaultProvider}`
+    );
     selectedProvider = defaultProvider;
   }
 
-  console.log(`🔀 Routing query to provider: ${selectedProvider} (session: ${options.sessionId || 'new'})`);
+  console.log(
+    `🔀 Routing query to provider: ${selectedProvider} (session: ${options.sessionId || 'new'})`
+  );
 
   // Map session to provider for future requests
   if (options.sessionId) {
@@ -223,7 +229,7 @@ export function getSessionProviderInfo(sessionId) {
   return {
     provider,
     isActive,
-    defaultProvider
+    defaultProvider,
   };
 }
 
@@ -253,9 +259,9 @@ export function getProviderStats() {
     totalSessions: sessionProviderMap.size,
     byProvider: {
       [PROVIDERS.CLAUDE]: 0,
-      [PROVIDERS.CURSOR]: 0
+      [PROVIDERS.CURSOR]: 0,
     },
-    defaultProvider
+    defaultProvider,
   };
 
   for (const provider of sessionProviderMap.values()) {
@@ -277,5 +283,5 @@ export default {
   getDefaultProvider,
   getAvailableProviders,
   switchProvider,
-  getProviderStats
+  getProviderStats,
 };
