@@ -26,7 +26,6 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
-        continue-on-error: true
 
   security:
     name: Security Audit
@@ -47,7 +46,6 @@ jobs:
 
       - name: Audit dependencies
         run: npm audit --audit-level high
-        continue-on-error: true
 
   build:
     name: Build Application
