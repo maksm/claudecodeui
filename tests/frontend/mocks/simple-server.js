@@ -16,14 +16,17 @@ export const handlers = [
       return Response.json({
         success: true,
         user: { id: 1, username: 'testuser', email: 'test@example.com' },
-        token: 'mock-jwt-token'
+        token: 'mock-jwt-token',
       });
     }
 
-    return Response.json({
-      success: false,
-      error: 'Invalid credentials'
-    }, { status: 401 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Invalid credentials',
+      },
+      { status: 401 }
+    );
   }),
 
   http.get('/api/projects', () => {
@@ -35,33 +38,39 @@ export const handlers = [
           name: 'Test Project',
           path: '/home/user/test-project',
           description: 'A test project',
-          lastModified: new Date().toISOString()
+          lastModified: new Date().toISOString(),
         },
         {
           id: 2,
           name: 'Another Project',
           path: '/home/user/another-project',
           description: 'Another test project',
-          lastModified: new Date().toISOString()
-        }
-      ]
+          lastModified: new Date().toISOString(),
+        },
+      ],
     });
   }),
 
   // Error simulation endpoints
   http.get('/api/error/500', () => {
-    return Response.json({
-      success: false,
-      error: 'Internal server error'
-    }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Internal server error',
+      },
+      { status: 500 }
+    );
   }),
 
   http.get('/api/error/404', () => {
-    return Response.json({
-      success: false,
-      error: 'Not found'
-    }, { status: 404 });
-  })
+    return Response.json(
+      {
+        success: false,
+        error: 'Not found',
+      },
+      { status: 404 }
+    );
+  }),
 ];
 
 // Create MSW server
@@ -80,19 +89,17 @@ export const mockWebSocket = {
       removeEventListener: jest.fn(),
 
       // Simulate receiving messages
-      simulateMessage: (data) => {
-        const messageHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'message'
-        );
+      simulateMessage: data => {
+        const messageHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'message');
         if (messageHandler) {
           messageHandler[1]({ data: JSON.stringify(data) });
         }
-      }
+      },
     };
 
     mockWebSocket.instances.push(ws);
     return ws;
-  })
+  }),
 };
 
 // Setup global WebSocket mock

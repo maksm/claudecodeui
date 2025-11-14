@@ -1,11 +1,10 @@
-import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react'
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
 
 export default defineConfig(({ command, mode }) => {
   // Load env file based on `mode` in the current working directory.
-  const env = loadEnv(mode, process.cwd(), '')
-  
-  
+  const env = loadEnv(mode, process.cwd(), '');
+
   return {
     plugins: [react()],
     server: {
@@ -17,13 +16,13 @@ export default defineConfig(({ command, mode }) => {
         '/api': `http://localhost:${env.PORT || 3001}`,
         '/ws': {
           target: `ws://localhost:${env.PORT || 3001}`,
-          ws: true
+          ws: true,
         },
         '/shell': {
           target: `ws://localhost:${env.PORT || 3001}`,
-          ws: true
-        }
-      }
+          ws: true,
+        },
+      },
     },
     build: {
       outDir: 'dist',
@@ -40,12 +39,17 @@ export default defineConfig(({ command, mode }) => {
               '@codemirror/lang-json',
               '@codemirror/lang-markdown',
               '@codemirror/lang-python',
-              '@codemirror/theme-one-dark'
+              '@codemirror/theme-one-dark',
             ],
-            'vendor-xterm': ['@xterm/xterm', '@xterm/addon-fit', '@xterm/addon-clipboard', '@xterm/addon-webgl']
-          }
-        }
-      }
-    }
-  }
-})
+            'vendor-xterm': [
+              '@xterm/xterm',
+              '@xterm/addon-fit',
+              '@xterm/addon-clipboard',
+              '@xterm/addon-webgl',
+            ],
+          },
+        },
+      },
+    },
+  };
+});

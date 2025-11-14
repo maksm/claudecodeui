@@ -10,16 +10,7 @@ jest.mock('../../../src/utils/api');
 
 // Test component to use the auth context
 const TestComponent = () => {
-  const {
-    user,
-    token,
-    login,
-    register,
-    logout,
-    isLoading,
-    needsSetup,
-    error
-  } = useAuth();
+  const { user, token, login, register, logout, isLoading, needsSetup, error } = useAuth();
 
   return (
     <div data-testid="auth-test">
@@ -29,15 +20,9 @@ const TestComponent = () => {
       <div data-testid="needs-setup">{needsSetup.toString()}</div>
       <div data-testid="error">{error || 'null'}</div>
 
-      <button onClick={() => login('testuser', 'testpass')}>
-        Login
-      </button>
-      <button onClick={() => register('newuser', 'newpass')}>
-        Register
-      </button>
-      <button onClick={logout}>
-        Logout
-      </button>
+      <button onClick={() => login('testuser', 'testpass')}>Login</button>
+      <button onClick={() => register('newuser', 'newpass')}>Register</button>
+      <button onClick={logout}>Logout</button>
     </div>
   );
 };
@@ -95,7 +80,7 @@ describe('AuthContext', () => {
     it('checks auth status on mount', async () => {
       const mockResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ needsSetup: false })
+        json: jest.fn().mockResolvedValue({ needsSetup: false }),
       };
       api.auth.status = jest.fn().mockResolvedValue(mockResponse);
 
@@ -107,7 +92,7 @@ describe('AuthContext', () => {
     it('handles system setup requirement', async () => {
       const mockStatusResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ needsSetup: true })
+        json: jest.fn().mockResolvedValue({ needsSetup: true }),
       };
       api.auth.status = jest.fn().mockResolvedValue(mockStatusResponse);
 
@@ -124,11 +109,11 @@ describe('AuthContext', () => {
 
       const mockStatusResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ needsSetup: false })
+        json: jest.fn().mockResolvedValue({ needsSetup: false }),
       };
       const mockUserResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ user: { username: 'testuser' } })
+        json: jest.fn().mockResolvedValue({ user: { username: 'testuser' } }),
       };
       api.auth.status = jest.fn().mockResolvedValue(mockStatusResponse);
       api.auth.user = jest.fn().mockResolvedValue(mockUserResponse);
@@ -146,11 +131,11 @@ describe('AuthContext', () => {
 
       const mockStatusResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ needsSetup: false })
+        json: jest.fn().mockResolvedValue({ needsSetup: false }),
       };
       const mockUserResponse = {
         ok: false,
-        status: 401
+        status: 401,
       };
       api.auth.status = jest.fn().mockResolvedValue(mockStatusResponse);
       api.auth.user = jest.fn().mockResolvedValue(mockUserResponse);
@@ -170,7 +155,9 @@ describe('AuthContext', () => {
       renderWithAuthProvider();
 
       await waitFor(() => {
-        expect(screen.getByTestId('error')).toHaveTextContent('Failed to check authentication status');
+        expect(screen.getByTestId('error')).toHaveTextContent(
+          'Failed to check authentication status'
+        );
         expect(screen.getByTestId('loading')).toHaveTextContent('false');
       });
     });
@@ -184,8 +171,8 @@ describe('AuthContext', () => {
         ok: true,
         json: jest.fn().mockResolvedValue({
           token: 'new-token',
-          user: { username: 'testuser' }
-        })
+          user: { username: 'testuser' },
+        }),
       };
       api.auth.login = jest.fn().mockResolvedValue(mockResponse);
 
@@ -205,7 +192,7 @@ describe('AuthContext', () => {
 
       const mockResponse = {
         ok: false,
-        json: jest.fn().mockResolvedValue({ error: 'Invalid credentials' })
+        json: jest.fn().mockResolvedValue({ error: 'Invalid credentials' }),
       };
       api.auth.login = jest.fn().mockResolvedValue(mockResponse);
 
@@ -242,8 +229,8 @@ describe('AuthContext', () => {
         ok: true,
         json: jest.fn().mockResolvedValue({
           token: 'register-token',
-          user: { username: 'newuser' }
-        })
+          user: { username: 'newuser' },
+        }),
       };
       api.auth.register = jest.fn().mockResolvedValue(mockResponse);
 
@@ -263,7 +250,7 @@ describe('AuthContext', () => {
 
       const mockResponse = {
         ok: false,
-        json: jest.fn().mockResolvedValue({ error: 'Username already exists' })
+        json: jest.fn().mockResolvedValue({ error: 'Username already exists' }),
       };
       api.auth.register = jest.fn().mockResolvedValue(mockResponse);
 
@@ -284,11 +271,11 @@ describe('AuthContext', () => {
 
       const mockStatusResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ needsSetup: false })
+        json: jest.fn().mockResolvedValue({ needsSetup: false }),
       };
       const mockUserResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ user: { username: 'testuser' } })
+        json: jest.fn().mockResolvedValue({ user: { username: 'testuser' } }),
       };
       api.auth.status = jest.fn().mockResolvedValue(mockStatusResponse);
       api.auth.user = jest.fn().mockResolvedValue(mockUserResponse);
@@ -353,17 +340,18 @@ describe('AuthContext', () => {
       const user = userEvent.setup();
 
       // First trigger an error
-      api.auth.login = jest.fn()
+      api.auth.login = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: false,
-          json: jest.fn().mockResolvedValue({ error: 'Login failed' })
+          json: jest.fn().mockResolvedValue({ error: 'Login failed' }),
         })
         .mockResolvedValueOnce({
           ok: true,
           json: jest.fn().mockResolvedValue({
             token: 'success-token',
-            user: { username: 'testuser' }
-          })
+            user: { username: 'testuser' },
+          }),
         });
 
       renderWithAuthProvider();
@@ -401,11 +389,11 @@ describe('AuthContext', () => {
 
       const mockStatusResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ needsSetup: false })
+        json: jest.fn().mockResolvedValue({ needsSetup: false }),
       };
       const mockUserResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ user: { username: 'persistent-user' } })
+        json: jest.fn().mockResolvedValue({ user: { username: 'persistent-user' } }),
       };
       api.auth.status = jest.fn().mockResolvedValue(mockStatusResponse);
       api.auth.user = jest.fn().mockResolvedValue(mockUserResponse);
@@ -423,7 +411,7 @@ describe('AuthContext', () => {
 
       const mockStatusResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ needsSetup: false })
+        json: jest.fn().mockResolvedValue({ needsSetup: false }),
       };
       api.auth.status = jest.fn().mockResolvedValue(mockStatusResponse);
 
@@ -444,7 +432,7 @@ describe('AuthContext', () => {
     it('provides all required context values', async () => {
       const mockStatusResponse = {
         ok: true,
-        json: jest.fn().mockResolvedValue({ needsSetup: false })
+        json: jest.fn().mockResolvedValue({ needsSetup: false }),
       };
       api.auth.status = jest.fn().mockResolvedValue(mockStatusResponse);
 
@@ -452,11 +440,21 @@ describe('AuthContext', () => {
         const context = useAuth();
         return (
           <div data-testid="context-values">
-            <span data-testid="has-login">{typeof context.login === 'function' ? 'true' : 'false'}</span>
-            <span data-testid="has-register">{typeof context.register === 'function' ? 'true' : 'false'}</span>
-            <span data-testid="has-logout">{typeof context.logout === 'function' ? 'true' : 'false'}</span>
-            <span data-testid="has-isLoading">{typeof context.isLoading === 'boolean' ? 'true' : 'false'}</span>
-            <span data-testid="has-needsSetup">{typeof context.needsSetup === 'boolean' ? 'true' : 'false'}</span>
+            <span data-testid="has-login">
+              {typeof context.login === 'function' ? 'true' : 'false'}
+            </span>
+            <span data-testid="has-register">
+              {typeof context.register === 'function' ? 'true' : 'false'}
+            </span>
+            <span data-testid="has-logout">
+              {typeof context.logout === 'function' ? 'true' : 'false'}
+            </span>
+            <span data-testid="has-isLoading">
+              {typeof context.isLoading === 'boolean' ? 'true' : 'false'}
+            </span>
+            <span data-testid="has-needsSetup">
+              {typeof context.needsSetup === 'boolean' ? 'true' : 'false'}
+            </span>
           </div>
         );
       };

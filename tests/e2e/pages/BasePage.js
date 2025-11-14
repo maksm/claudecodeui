@@ -58,7 +58,7 @@ export class BasePage {
   async takeScreenshot(name) {
     await this.page.screenshot({
       path: `test-results/screenshots/${name}-${Date.now()}.png`,
-      fullPage: true
+      fullPage: true,
     });
   }
 
@@ -68,10 +68,9 @@ export class BasePage {
   }
 
   async waitForAPIResponse(urlPattern, timeout = 10000) {
-    return await this.page.waitForResponse(
-      response => response.url().includes(urlPattern),
-      { timeout }
-    );
+    return await this.page.waitForResponse(response => response.url().includes(urlPattern), {
+      timeout,
+    });
   }
 
   async mockAPIResponse(urlPattern, response) {
@@ -79,7 +78,7 @@ export class BasePage {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
-        body: JSON.stringify(response)
+        body: JSON.stringify(response),
       });
     });
   }
@@ -157,7 +156,7 @@ export class BasePage {
       const style = window.getComputedStyle(el);
       return {
         color: style.color,
-        backgroundColor: style.backgroundColor
+        backgroundColor: style.backgroundColor,
       };
     });
     return computedStyle;

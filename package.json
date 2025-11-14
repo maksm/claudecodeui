@@ -29,7 +29,7 @@
     "preview": "vite preview",
     "start": "npm run build && npm run server",
     "release": "./release.sh",
-    "lint": "eslint . && prettier --check .",
+    "lint": "eslint . --max-warnings=400 && prettier --check .",
     "lint:fix": "eslint --fix . && prettier --write .",
     "format": "prettier --write .",
     "test": "node --experimental-vm-modules node_modules/.bin/jest",
@@ -151,6 +151,7 @@
     "autoprefixer": "^10.4.16",
     "babel-jest": "^30.2.0",
     "commitizen": "^4.3.1",
+    "commitlint": "^20.1.0",
     "concurrently": "^8.2.2",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.39.1",
@@ -182,7 +183,7 @@
   },
   "lint-staged": {
     "**/*.{js,jsx,mjs,cjs}": [
-      "eslint --fix",
+      "eslint --fix --quiet",
       "prettier --write"
     ],
     "**/*.{json,md,yml,yaml}": [

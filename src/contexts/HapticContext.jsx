@@ -1,5 +1,63 @@
 import React, { createContext, useContext, useCallback, useEffect, useState } from 'react';
 
+// Device capability detection (defined outside component to avoid hoisting issues)
+const getDeviceCapabilities = () => {
+  if (typeof navigator === 'undefined') {
+    return {
+      supported: false,
+      canVibrate: false,
+      maxDuration: 0,
+      maxIntensity: 0,
+      deviceType: 'unknown',
+    };
+  }
+
+  const capabilities = {
+    supported: 'vibrate' in navigator,
+    canVibrate: 'vibrate' in navigator,
+    maxDuration: 0,
+    maxIntensity: 0,
+    deviceType: 'unknown',
+  };
+
+  if (capabilities.canVibrate) {
+    try {
+      // Test vibration support
+      navigator.vibrate(0);
+
+      // Detect device type for capability estimation
+      const userAgent = navigator.userAgent.toLowerCase();
+
+      if (userAgent.includes('iphone') || userAgent.includes('ipad')) {
+        capabilities.deviceType = 'ios';
+        capabilities.maxDuration = 5000; // iOS typically supports longer vibrations
+        capabilities.maxIntensity = 1; // iOS has limited intensity control
+      } else if (userAgent.includes('android')) {
+        capabilities.deviceType = 'android';
+        capabilities.maxDuration = 10000; // Android typically supports longer vibrations
+        capabilities.maxIntensity = 1; // Android intensity varies by device
+      } else {
+        capabilities.deviceType = 'other';
+        capabilities.maxDuration = 5000;
+        capabilities.maxIntensity = 1;
+      }
+
+      return capabilities;
+    } catch (error) {
+      console.warn('Vibration not supported:', error);
+      return {
+        supported: false,
+        canVibrate: false,
+        maxDuration: 0,
+        maxIntensity: 0,
+        deviceType: 'unknown',
+      };
+    }
+  }
+
+  return capabilities;
+};
+
 // Haptic patterns for different interactions
 const HAPTIC_PATTERNS = {
   // Success patterns
@@ -48,57 +106,7 @@ const HAPTIC_PATTERNS = {
   LIGHT: [25],
   MEDIUM: [50],
   STRONG: [100],
-  HEAVY: [200]
-};
-
-// Device capability detection
-const getDeviceCapabilities = () => {
-  if (typeof navigator === 'undefined') {
-    return {
-      supported: false,
-      canVibrate: false,
-      maxDuration: 0,
-      maxIntensity: 0,
-      deviceType: 'unknown'
-    };
-  }
-
-  const capabilities = {
-    supported: 'vibrate' in navigator,
-    canVibrate: 'vibrate' in navigator,
-    maxDuration: 0,
-    maxIntensity: 0,
-    deviceType: 'unknown'
-  };
-
-  if (capabilities.canVibrate) {
-    try {
-      // Test vibration support
-      navigator.vibrate(0);
-
-      // Detect device type for capability estimation
-      const userAgent = navigator.userAgent.toLowerCase();
-
-      if (userAgent.includes('iphone') || userAgent.includes('ipad')) {
-        capabilities.deviceType = 'ios';
-        capabilities.maxDuration = 5000; // iOS typically supports longer vibrations
-        capabilities.maxIntensity = 1; // iOS has limited intensity control
-      } else if (userAgent.includes('android')) {
-        capabilities.deviceType = 'android';
-        capabilities.maxDuration = 10000; // Android typically supports longer vibrations
-        capabilities.maxIntensity = 1; // Android intensity varies by device
-      } else {
-        capabilities.deviceType = 'other';
-        capabilities.maxDuration = 5000;
-        capabilities.maxIntensity = 1;
-      }
-    } catch (error) {
-      capabilities.canVibrate = false;
-      console.debug('Vibration not supported:', error);
-    }
-  }
-
-  return capabilities;
+  HEAVY: [200],
 };
 
 const HapticContext = createContext({
@@ -113,7 +121,8 @@ const HapticContext = createContext({
   triggerPattern: () => {},
   setEnabled: () => {},
   setIntensity: () => {},
-  getDeviceCapabilities: () => {}
+  getDeviceCapabilities: () => {},
+  getCurrentCapabilities: () => {},
 });
 
 export const useHaptic = () => {
@@ -133,64 +142,80 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
   // Get device capabilities on mount
   useEffect(() => {
     const deviceCaps = getDeviceCapabilities();
-    setCapabilities(deviceCaps);
+
+    // Defer setState to avoid synchronous setState warning
+    setTimeout(() => {
+      setCapabilities(deviceCaps);
+    }, 0);
 
     console.log('Haptic capabilities:', deviceCaps);
   }, []);
 
   // Apply intensity to vibration pattern
-  const applyIntensity = useCallback((pattern, intensityLevel) => {
-    if (!Array.isArray(pattern)) {
-      return pattern;
-    }
+  const applyIntensity = useCallback(
+    (pattern, intensityLevel) => {
+      if (!Array.isArray(pattern)) {
+        return pattern;
+      }
 
-    return pattern.map(duration => {
-      const adjustedDuration = Math.round(duration * intensityLevel);
-      return Math.max(0, Math.min(adjustedDuration, capabilities.maxDuration || 10000));
-    });
-  }, [capabilities.maxDuration]);
+      return pattern.map(duration => {
+        const adjustedDuration = Math.round(duration * intensityLevel);
+        return Math.max(0, Math.min(adjustedDuration, capabilities.maxDuration || 10000));
+      });
+    },
+    [capabilities.maxDuration]
+  );
 
   // Trigger haptic feedback
-  const trigger = useCallback((pattern = HAPTIC_PATTERNS.TAP, customIntensity = null) => {
-    if (!enabled || !capabilities.canVibrate) {
-      return false;
-    }
+  const trigger = useCallback(
+    (pattern = HAPTIC_PATTERNS.TAP, customIntensity = null) => {
+      if (!enabled || !capabilities.canVibrate) {
+        return false;
+      }
 
-    try {
-      const finalIntensity = customIntensity !== null ? customIntensity : intensity;
-      const adjustedPattern = applyIntensity(pattern, finalIntensity);
+      try {
+        const finalIntensity = customIntensity !== null ? customIntensity : intensity;
+        const adjustedPattern = applyIntensity(pattern, finalIntensity);
 
-      // Add to history
-      setPatternHistory(prev => [...prev.slice(-9), {
-        pattern: adjustedPattern,
-        timestamp: Date.now(),
-        intensity: finalIntensity
-      }]);
+        // Add to history
+        setPatternHistory(prev => [
+          ...prev.slice(-9),
+          {
+            pattern: adjustedPattern,
+            timestamp: Date.now(),
+            intensity: finalIntensity,
+          },
+        ]);
 
-      // Trigger vibration
-      navigator.vibrate(adjustedPattern);
+        // Trigger vibration
+        navigator.vibrate(adjustedPattern);
 
-      console.debug('Haptic triggered:', { pattern: adjustedPattern, intensity: finalIntensity });
-      return true;
-    } catch (error) {
-      console.error('Haptic trigger failed:', error);
-      return false;
-    }
-  }, [enabled, capabilities.canVibrate, intensity, applyIntensity]);
+        console.debug('Haptic triggered:', { pattern: adjustedPattern, intensity: finalIntensity });
+        return true;
+      } catch (error) {
+        console.error('Haptic trigger failed:', error);
+        return false;
+      }
+    },
+    [enabled, capabilities.canVibrate, intensity, applyIntensity]
+  );
 
   // Trigger specific pattern by name
-  const triggerPattern = useCallback((patternName, customIntensity = null) => {
-    const pattern = HAPTIC_PATTERNS[patternName.toUpperCase()];
-    if (!pattern) {
-      console.warn(`Unknown haptic pattern: ${patternName}`);
-      return false;
-    }
+  const triggerPattern = useCallback(
+    (patternName, customIntensity = null) => {
+      const pattern = HAPTIC_PATTERNS[patternName.toUpperCase()];
+      if (!pattern) {
+        console.warn(`Unknown haptic pattern: ${patternName}`);
+        return false;
+      }
 
-    return trigger(pattern, customIntensity);
-  }, [trigger]);
+      return trigger(pattern, customIntensity);
+    },
+    [trigger]
+  );
 
-  // Get device capabilities
-  const getDeviceCapabilities = useCallback(() => {
+  // Get current capabilities
+  const getCurrentCapabilities = useCallback(() => {
     return capabilities;
   }, [capabilities]);
 
@@ -200,14 +225,17 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
   }, []);
 
   // Check if specific pattern is available
-  const hasPattern = useCallback((patternName) => {
+  const hasPattern = useCallback(patternName => {
     return patternName.toUpperCase() in HAPTIC_PATTERNS;
   }, []);
 
   // Get recent patterns
-  const getRecentPatterns = useCallback((count = 5) => {
-    return patternHistory.slice(-count);
-  }, [patternHistory]);
+  const getRecentPatterns = useCallback(
+    (count = 5) => {
+      return patternHistory.slice(-count);
+    },
+    [patternHistory]
+  );
 
   // Advanced haptic functions
   const hapticUtils = {
@@ -240,7 +268,7 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
     strong: () => trigger(HAPTIC_PATTERNS.STRONG),
 
     // Custom pattern
-    custom: (pattern, intensityLevel = 1) => trigger(pattern, intensityLevel)
+    custom: (pattern, intensityLevel = 1) => trigger(pattern, intensityLevel),
   };
 
   const value = {
@@ -256,20 +284,17 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
     setEnabled,
     setIntensity,
     getDeviceCapabilities,
+    getCurrentCapabilities,
     clearHistory,
     hasPattern,
     getRecentPatterns,
 
     // Utilities
     patterns: HAPTIC_PATTERNS,
-    utils: hapticUtils
+    utils: hapticUtils,
   };
 
-  return (
-    <HapticContext.Provider value={value}>
-      {children}
-    </HapticContext.Provider>
-  );
+  return <HapticContext.Provider value={value}>{children}</HapticContext.Provider>;
 };
 
 // Convenience hook for common haptic patterns

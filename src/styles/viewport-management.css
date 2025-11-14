@@ -112,7 +112,9 @@
   }
 
   /* Ensure inputs don't get hidden */
-  input, textarea, [contenteditable] {
+  input,
+  textarea,
+  [contenteditable] {
     font-size: 16px !important; /* Prevents zoom on iOS */
   }
 
@@ -272,7 +274,8 @@
 }
 
 .safe-all {
-  padding: var(--safe-area-inset-top) var(--safe-area-inset-right) var(--safe-area-inset-bottom) var(--safe-area-inset-left);
+  padding: var(--safe-area-inset-top) var(--safe-area-inset-right) var(--safe-area-inset-bottom)
+    var(--safe-area-inset-left);
 }
 
 /* Viewport height utilities */

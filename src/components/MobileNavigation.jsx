@@ -28,11 +28,11 @@ const MobileNavigation = ({
     chat: '/chat',
     projects: '/projects',
     shell: '/shell',
-    settings: '/settings'
+    settings: '/settings',
   };
 
   // Get current view from path
-  const getCurrentViewFromPath = (pathname) => {
+  const getCurrentViewFromPath = pathname => {
     const path = pathname.replace(/^\//, '');
     if (!path || path === 'chat') return 'chat';
     if (path === 'projects') return 'projects';
@@ -44,11 +44,12 @@ const MobileNavigation = ({
   // Update active view when location changes
   useEffect(() => {
     const view = getCurrentViewFromPath(location.pathname);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActiveView(view);
   }, [location.pathname]);
 
   // Handle navigation
-  const handleNavClick = (viewId) => {
+  const handleNavClick = viewId => {
     triggerHaptic(30);
     setActiveView(viewId);
     navigate(viewRoutes[viewId]);
@@ -68,7 +69,7 @@ const MobileNavigation = ({
   };
 
   // Handle search
-  const handleSearchClick = (query) => {
+  const handleSearchClick = query => {
     triggerHaptic(50);
     // Implement search functionality
     console.log('Search:', query);
@@ -93,7 +94,7 @@ const MobileNavigation = ({
         minHeight: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        paddingBottom: '60px' // Account for toolbar
+        paddingBottom: '60px', // Account for toolbar
       }}
       {...props}
     >
@@ -108,7 +109,7 @@ const MobileNavigation = ({
             bottom: 0,
             background: 'rgba(0, 0, 0, 0.5)',
             zIndex: 999,
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
           onClick={() => setSidebarOpen(false)}
         />
@@ -128,7 +129,7 @@ const MobileNavigation = ({
             zIndex: 1000,
             transform: 'translateX(0)',
             overflowY: 'auto',
-            WebkitOverflowScrolling: 'touch'
+            WebkitOverflowScrolling: 'touch',
           }}
         >
           {/* Sidebar Header */}
@@ -138,7 +139,7 @@ const MobileNavigation = ({
               borderBottom: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center'
+              alignItems: 'center',
             }}
           >
             <h3 style={{ margin: 0, color: theme === 'dark' ? '#f9fafb' : '#111827' }}>
@@ -152,7 +153,7 @@ const MobileNavigation = ({
                 fontSize: '20px',
                 cursor: 'pointer',
                 color: theme === 'dark' ? '#9ca3af' : '#6b7280',
-                padding: '4px'
+                padding: '4px',
               }}
             >
               ×
@@ -172,14 +173,22 @@ const MobileNavigation = ({
                 style={{
                   width: '100%',
                   padding: '12px 16px',
-                  background: activeView === viewId
-                    ? (theme === 'dark' ? '#1e40af' : '#dbeafe')
-                    : 'transparent',
+                  background:
+                    activeView === viewId
+                      ? theme === 'dark'
+                        ? '#1e40af'
+                        : '#dbeafe'
+                      : 'transparent',
                   border: 'none',
                   borderRadius: '8px',
-                  color: activeView === viewId
-                    ? (theme === 'dark' ? '#60a5fa' : '#1e40af')
-                    : (theme === 'dark' ? '#f9fafb' : '#111827'),
+                  color:
+                    activeView === viewId
+                      ? theme === 'dark'
+                        ? '#60a5fa'
+                        : '#1e40af'
+                      : theme === 'dark'
+                        ? '#f9fafb'
+                        : '#111827',
                   textAlign: 'left',
                   fontSize: '16px',
                   fontWeight: '500',
@@ -188,7 +197,7 @@ const MobileNavigation = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
-                  transition: 'all 0.2s ease'
+                  transition: 'all 0.2s ease',
                 }}
               >
                 <span style={{ fontSize: '20px' }}>
@@ -197,9 +206,7 @@ const MobileNavigation = ({
                   {viewId === 'shell' && '🖥️'}
                   {viewId === 'settings' && '⚙️'}
                 </span>
-                <span style={{ textTransform: 'capitalize' }}>
-                  {viewId}
-                </span>
+                <span style={{ textTransform: 'capitalize' }}>{viewId}</span>
               </button>
             ))}
           </div>
@@ -221,7 +228,7 @@ const MobileNavigation = ({
                 textAlign: 'left',
                 fontSize: '16px',
                 cursor: 'pointer',
-                marginBottom: '8px'
+                marginBottom: '8px',
               }}
             >
               Recent Projects
@@ -238,7 +245,7 @@ const MobileNavigation = ({
                 color: theme === 'dark' ? '#f9fafb' : '#111827',
                 textAlign: 'left',
                 fontSize: '16px',
-                cursor: 'pointer'
+                cursor: 'pointer',
               }}
             >
               Settings
@@ -254,7 +261,7 @@ const MobileNavigation = ({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
-          transition: 'all 0.3s ease'
+          transition: 'all 0.3s ease',
         }}
       >
         {/* Content wrapper */}
@@ -262,7 +269,7 @@ const MobileNavigation = ({
           style={{
             flex: 1,
             overflow: 'hidden',
-            position: 'relative'
+            position: 'relative',
           }}
         >
           {children}
@@ -292,7 +299,7 @@ const MobileNavigation = ({
             zIndex: 1001,
             display: 'flex',
             alignItems: 'flex-end',
-            cursor: 'pointer'
+            cursor: 'pointer',
           }}
           onClick={() => setIsMenuOpen(false)}
         >
@@ -305,9 +312,9 @@ const MobileNavigation = ({
               cursor: 'default',
               width: '100%',
               maxHeight: '60vh',
-              overflowY: 'auto'
+              overflowY: 'auto',
             }}
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <h3 style={{ margin: '0 0 16px 0', color: theme === 'dark' ? '#f9fafb' : '#111827' }}>
               Quick Actions
@@ -330,7 +337,7 @@ const MobileNavigation = ({
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '4px'
+                  gap: '4px',
                 }}
               >
                 <span style={{ fontSize: '24px' }}>➕</span>
@@ -353,7 +360,7 @@ const MobileNavigation = ({
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '4px'
+                  gap: '4px',
                 }}
               >
                 <span style={{ fontSize: '24px' }}>📤</span>
@@ -376,7 +383,7 @@ const MobileNavigation = ({
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: '4px'
+                  gap: '4px',
                 }}
               >
                 <span style={{ fontSize: '24px' }}>❓</span>
@@ -388,7 +395,7 @@ const MobileNavigation = ({
       )}
 
       {/* CSS for mobile navigation */}
-      <style jsx>{`
+      <style>{`
         .sidebar-nav-item:hover {
           background: ${theme === 'dark' ? 'rgba(96, 165, 250, 0.1)' : 'rgba(59, 130, 246, 0.1)'};
         }

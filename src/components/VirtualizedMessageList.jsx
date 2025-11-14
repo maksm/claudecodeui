@@ -5,12 +5,12 @@ import { useTheme } from '../contexts/ThemeContext';
 
 // Message height calculator
 const MESSAGE_HEIGHTS = {
-  small: 80,    // Short text messages
-  medium: 120,  // Average text messages
-  large: 200,   // Long text or code blocks
-  system: 60,  // System messages
-  file: 140,   // File attachments
-  image: 200   // Image messages
+  small: 80, // Short text messages
+  medium: 120, // Average text messages
+  large: 200, // Long text or code blocks
+  system: 60, // System messages
+  file: 140, // File attachments
+  image: 200, // Image messages
 };
 
 // Message row component
@@ -33,8 +33,12 @@ const MessageRow = ({ index, style, data }) => {
         padding: '8px 16px',
         borderBottom: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
         background: isActive
-          ? (theme === 'dark' ? '#1e40af' : '#dbeafe')
-          : (theme === 'dark' ? '#111827' : '#ffffff')
+          ? theme === 'dark'
+            ? '#1e40af'
+            : '#dbeafe'
+          : theme === 'dark'
+            ? '#111827'
+            : '#ffffff',
       }}
       className={`message-row ${isActive ? 'active' : ''}`}
       onMouseEnter={() => onMessageHover?.(message.id)}
@@ -50,7 +54,7 @@ const MessageRow = ({ index, style, data }) => {
               lineHeight: '1.5',
               color: theme === 'dark' ? '#f9fafb' : '#111827',
               wordWrap: 'break-word',
-              whiteSpace: 'pre-wrap'
+              whiteSpace: 'pre-wrap',
             }}
           >
             {message.content}
@@ -59,13 +63,16 @@ const MessageRow = ({ index, style, data }) => {
       </div>
 
       {/* Message metadata */}
-      <div className="message-meta" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: '12px',
-        color: theme === 'dark' ? '#9ca3af' : '#6b7280'
-      }}>
+      <div
+        className="message-meta"
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: '12px',
+          color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+        }}
+      >
         <span>
           {message.sender && `${message.sender} • `}
           {formatTime(message.timestamp)}
@@ -79,13 +86,16 @@ const MessageRow = ({ index, style, data }) => {
 
       {/* File attachment */}
       {message.attachment && (
-        <div className="message-attachment" style={{
-          marginTop: '8px',
-          padding: '8px',
-          background: theme === 'dark' ? '#374151' : '#f3f4f6',
-          borderRadius: '8px',
-          fontSize: '12px'
-        }}>
+        <div
+          className="message-attachment"
+          style={{
+            marginTop: '8px',
+            padding: '8px',
+            background: theme === 'dark' ? '#374151' : '#f3f4f6',
+            borderRadius: '8px',
+            fontSize: '12px',
+          }}
+        >
           📎 {message.attachment.name}
           {message.attachment.size && ` (${formatFileSize(message.attachment.size)})`}
         </div>
@@ -93,21 +103,28 @@ const MessageRow = ({ index, style, data }) => {
 
       {/* System message styling */}
       {message.type === 'system' && (
-        <div style={{
-          fontStyle: 'italic',
-          textAlign: 'center',
-          color: theme === 'dark' ? '#9ca3af' : '#6b7280'
-        }}>
+        <div
+          style={{
+            fontStyle: 'italic',
+            textAlign: 'center',
+            color: theme === 'dark' ? '#9ca3af' : '#6b7280',
+          }}
+        >
           {message.content}
         </div>
       )}
 
-      <style jsx>{`
+      <style>{`
         .message-row:hover {
           cursor: pointer;
-          background: ${isActive
-            ? (theme === 'dark' ? '#1e40af' : '#dbeafe')
-            : (theme === 'dark' ? '#1f2937' : '#f9fafb')
+          background: ${
+            isActive
+              ? theme === 'dark'
+                ? '#1e40af'
+                : '#dbeafe'
+              : theme === 'dark'
+                ? '#1f2937'
+                : '#f9fafb'
           };
         }
       `}</style>
@@ -116,7 +133,7 @@ const MessageRow = ({ index, style, data }) => {
 };
 
 // Calculate message height based on content
-const getMessageHeight = (message) => {
+const getMessageHeight = message => {
   if (!message || !message.content) return MESSAGE_HEIGHTS.system;
 
   const contentLength = message.content.length;
@@ -152,7 +169,7 @@ const getMessageHeight = (message) => {
 };
 
 // Format timestamp
-const formatTime = (timestamp) => {
+const formatTime = timestamp => {
   if (!timestamp) return '';
 
   const date = new Date(timestamp);
@@ -171,7 +188,7 @@ const formatTime = (timestamp) => {
 };
 
 // Format file size
-const formatFileSize = (bytes) => {
+const formatFileSize = bytes => {
   if (bytes === 0) return '0 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -193,27 +210,32 @@ const VirtualizedMessageList = ({
   ...props
 }) => {
   const { theme } = useTheme();
-  const listRef = useRef(null);
 
   // Ref for the List component
   const listRef = useRef(null);
 
   // Memoized data for performance
-  const listData = useMemo(() => ({
-    messages,
-    theme,
-    activeMessageId,
-    onMessageClick,
-    onMessageHover
-  }), [messages, theme, activeMessageId, onMessageClick, onMessageHover]);
+  const listData = useMemo(
+    () => ({
+      messages,
+      theme,
+      activeMessageId,
+      onMessageClick,
+      onMessageHover,
+    }),
+    [messages, theme, activeMessageId, onMessageClick, onMessageHover]
+  );
 
   // Calculate total item count including loading indicator
   const itemCount = messages.length + (loading ? 1 : 0);
 
   // Infinite loader configuration
-  const isItemLoaded = useCallback((index) => {
-    return !loading || index < messages.length;
-  }, [loading, messages.length]);
+  const isItemLoaded = useCallback(
+    index => {
+      return !loading || index < messages.length;
+    },
+    [loading, messages.length]
+  );
 
   const loadMoreItems = useCallback(() => {
     if (!loading && hasNextPage) {
@@ -222,12 +244,15 @@ const VirtualizedMessageList = ({
   }, [loading, hasNextPage, loadNextPage]);
 
   // Scroll to message by ID
-  const scrollToMessage = useCallback((messageId) => {
-    const messageIndex = messages.findIndex(msg => msg.id === messageId);
-    if (messageIndex !== -1 && listRef.current) {
-      listRef.current.scrollToItem(messageIndex, 'center');
-    }
-  }, [messages]);
+  const scrollToMessage = useCallback(
+    messageId => {
+      const messageIndex = messages.findIndex(msg => msg.id === messageId);
+      if (messageIndex !== -1 && listRef.current) {
+        listRef.current.scrollToItem(messageIndex, 'center');
+      }
+    },
+    [messages]
+  );
 
   // Scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -277,25 +302,35 @@ const VirtualizedMessageList = ({
   }, [isAtBottom]);
 
   // Expose methods via ref
-  React.useImperativeHandle(props.ref, () => ({
-    scrollToMessage,
-    scrollToBottom,
-    getScrollInfo,
-    isAtBottom,
-    getListRef: () => listRef.current
-  }), [scrollToMessage, scrollToBottom, getScrollInfo, isAtBottom]);
+  React.useImperativeHandle(
+    props.ref,
+    () => ({
+      scrollToMessage,
+      scrollToBottom,
+      getScrollInfo,
+      isAtBottom,
+      getListRef: () => listRef.current,
+    }),
+    [scrollToMessage, scrollToBottom, getScrollInfo, isAtBottom]
+  );
 
   // Item key generator
-  const itemKey = useCallback((index) => {
-    const message = messages[index];
-    return message ? `message-${message.id}` : `loading-${index}`;
-  }, [messages]);
+  const itemKey = useCallback(
+    index => {
+      const message = messages[index];
+      return message ? `message-${message.id}` : `loading-${index}`;
+    },
+    [messages]
+  );
 
   // Item size function for variable height (if needed in future)
-  const itemSize = useCallback((index) => {
-    const message = messages[index];
-    return getMessageHeight(message);
-  }, [messages]);
+  const itemSize = useCallback(
+    index => {
+      const message = messages[index];
+      return getMessageHeight(message);
+    },
+    [messages]
+  );
 
   if (messages.length === 0 && !loading) {
     return (
@@ -307,7 +342,7 @@ const VirtualizedMessageList = ({
           alignItems: 'center',
           justifyContent: 'center',
           color: theme === 'dark' ? '#9ca3af' : '#6b7280',
-          fontSize: '16px'
+          fontSize: '16px',
         }}
         {...props}
       >
@@ -327,7 +362,7 @@ const VirtualizedMessageList = ({
       className={`virtualized-message-list ${className}`}
       style={{
         height: '100%',
-        position: 'relative'
+        position: 'relative',
       }}
       {...props}
     >
@@ -338,7 +373,7 @@ const VirtualizedMessageList = ({
       >
         {({ onItemsRendered, ref }) => (
           <List
-            ref={(list) => {
+            ref={list => {
               // Forward ref to both components
               if (typeof ref === 'function') ref(list);
               listRef.current = list;

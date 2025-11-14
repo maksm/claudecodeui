@@ -11,7 +11,8 @@ import {
   createMockUser,
   createMockProject,
   createMockTask,
-  waitForMswRequest
+  waitForMswRequest,
+  mockApiEndpoint,
 } from '../utils/msw-utils';
 
 // Mock components for testing API interactions
@@ -27,7 +28,7 @@ const TestAuthComponent = ({ onLogin, onLogout }) => {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
+        body: JSON.stringify({ username, password }),
       });
 
       const data = await response.json();
@@ -125,7 +126,7 @@ describe('API Scenarios with MSW', () => {
         expect(onLogin).toHaveBeenCalledWith({
           user: mockUser,
           token: 'mock-jwt-token',
-          expiresIn: 3600
+          expiresIn: 3600,
         });
       });
 
@@ -183,7 +184,7 @@ describe('API Scenarios with MSW', () => {
     it('loads projects successfully', async () => {
       const mockProjectsList = [
         createMockProject({ id: 1, name: 'Project 1' }),
-        createMockProject({ id: 2, name: 'Project 2' })
+        createMockProject({ id: 2, name: 'Project 2' }),
       ];
       mockProjects.success(mockProjectsList);
 
@@ -236,7 +237,7 @@ describe('API Scenarios with MSW', () => {
     it('loads tasks successfully', async () => {
       const mockTasksList = [
         createMockTask({ id: 1, title: 'Task 1', status: 'done' }),
-        createMockTask({ id: 2, title: 'Task 2', status: 'in-progress' })
+        createMockTask({ id: 2, title: 'Task 2', status: 'in-progress' }),
       ];
       mockTasks.success(mockTasksList);
 
@@ -257,8 +258,8 @@ describe('API Scenarios with MSW', () => {
         body: JSON.stringify({
           title: 'New Task',
           description: 'Task description',
-          projectId: 1
-        })
+          projectId: 1,
+        }),
       });
 
       const data = await response.json();
@@ -276,8 +277,8 @@ describe('API Scenarios with MSW', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: 'Updated Task',
-          status: 'done'
-        })
+          status: 'done',
+        }),
       });
 
       const data = await response.json();
@@ -290,7 +291,7 @@ describe('API Scenarios with MSW', () => {
       mockTasks.deleteSuccess(1);
 
       const response = await fetch('/api/tasks/1', {
-        method: 'DELETE'
+        method: 'DELETE',
       });
 
       const data = await response.json();
@@ -342,8 +343,8 @@ describe('API Scenarios with MSW', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: 'Generate development tasks',
-          numTasks: 10
-        })
+          numTasks: 10,
+        }),
       });
 
       const data = await response.json();
@@ -384,8 +385,8 @@ describe('API Scenarios with MSW', () => {
           hash: 'abc123',
           message: 'feat: Add new feature',
           author: 'Test User',
-          date: '2024-01-05T10:00:00Z'
-        }
+          date: '2024-01-05T10:00:00Z',
+        },
       ];
       mockGit.logSuccess(mockCommits);
 
@@ -404,8 +405,8 @@ describe('API Scenarios with MSW', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: 'Test commit message',
-          files: ['file1.js', 'file2.js']
-        })
+          files: ['file1.js', 'file2.js'],
+        }),
       });
 
       const data = await response.json();
@@ -438,7 +439,7 @@ describe('API Scenarios with MSW', () => {
 
     it('handles 500 server error', async () => {
       const mockHandler = mockApiEndpoint('get', '/api/error/500', 500, {
-        error: 'Internal Server Error'
+        error: 'Internal Server Error',
       });
 
       const response = await fetch('/api/error/500');
@@ -450,7 +451,7 @@ describe('API Scenarios with MSW', () => {
 
     it('handles 404 not found', async () => {
       const mockHandler = mockApiEndpoint('get', '/api/error/404', 404, {
-        error: 'Not Found'
+        error: 'Not Found',
       });
 
       const response = await fetch('/api/error/404');
@@ -465,7 +466,10 @@ describe('API Scenarios with MSW', () => {
     it('handles slow responses', async () => {
       const startTime = Date.now();
 
-      const mockHandler = mockApiEndpoint('get', '/api/slow-endpoint', 200,
+      const mockHandler = mockApiEndpoint(
+        'get',
+        '/api/slow-endpoint',
+        200,
         { message: 'Slow response' },
         { delay: 1000 }
       );

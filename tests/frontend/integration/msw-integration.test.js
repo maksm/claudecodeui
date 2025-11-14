@@ -19,10 +19,7 @@ describe('MSW Integration Test', () => {
     // Use a simple mock handler
     server.use(
       http.get('/api/test', (req, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({ message: 'Hello from MSW!' })
-        );
+        return res(ctx.status(200), ctx.json({ message: 'Hello from MSW!' }));
       })
     );
 
@@ -36,17 +33,14 @@ describe('MSW Integration Test', () => {
   it('should intercept and mock POST requests', async () => {
     server.use(
       http.post('/api/test', (req, res, ctx) => {
-        return res(
-          ctx.status(201),
-          ctx.json({ received: true })
-        );
+        return res(ctx.status(201), ctx.json({ received: true }));
       })
     );
 
     const response = await fetch('/api/test', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ test: 'data' })
+      body: JSON.stringify({ test: 'data' }),
     });
     const data = await response.json();
 
@@ -57,10 +51,7 @@ describe('MSW Integration Test', () => {
   it('should handle error responses', async () => {
     server.use(
       http.get('/api/error', (req, res, ctx) => {
-        return res(
-          ctx.status(500),
-          ctx.json({ error: 'Internal Server Error' })
-        );
+        return res(ctx.status(500), ctx.json({ error: 'Internal Server Error' }));
       })
     );
 

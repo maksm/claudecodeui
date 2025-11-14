@@ -51,7 +51,9 @@ describe('ErrorBoundary Component', () => {
 
     expect(screen.queryByText('No error')).not.toBeInTheDocument();
     expect(screen.getByText(/something went wrong/i)).toBeInTheDocument();
-    expect(screen.getByText(/an error occurred while loading the chat interface/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/an error occurred while loading the chat interface/i)
+    ).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument();
   });
 
@@ -66,7 +68,7 @@ describe('ErrorBoundary Component', () => {
       'ErrorBoundary caught an error:',
       expect.any(Error),
       expect.objectContaining({
-        componentStack: expect.any(String)
+        componentStack: expect.any(String),
       })
     );
   });
@@ -213,10 +215,25 @@ describe('ErrorBoundary Component', () => {
       </ErrorBoundary>
     );
 
-    const errorContainer = screen.getByText(/something went wrong/i).closest('div').parentElement.parentElement;
-    expect(errorContainer).toHaveClass('flex', 'flex-col', 'items-center', 'justify-center', 'p-8', 'text-center');
+    const errorContainer = screen.getByText(/something went wrong/i).closest('div')
+      .parentElement.parentElement;
+    expect(errorContainer).toHaveClass(
+      'flex',
+      'flex-col',
+      'items-center',
+      'justify-center',
+      'p-8',
+      'text-center'
+    );
 
     const errorBox = screen.getByText(/something went wrong/i).closest('div');
-    expect(errorBox).toHaveClass('bg-red-50', 'border', 'border-red-200', 'rounded-lg', 'p-6', 'max-w-md');
+    expect(errorBox).toHaveClass(
+      'bg-red-50',
+      'border',
+      'border-red-200',
+      'rounded-lg',
+      'p-6',
+      'max-w-md'
+    );
   });
 });

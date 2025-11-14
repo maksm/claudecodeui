@@ -19,7 +19,7 @@ importScripts('https://cdn.jsdelivr.net/npm/prismjs/components/prism-yaml.min.js
 
 // Configure marked options
 marked.setOptions({
-  highlight: function(code, lang) {
+  highlight: function (code, lang) {
     if (Prism.languages[lang]) {
       return Prism.highlight(code, Prism.languages[lang]);
     }
@@ -30,7 +30,7 @@ marked.setOptions({
   sanitize: false,
   smartLists: true,
   smartypants: true,
-  xhtml: true
+  xhtml: true,
 });
 
 // Cache for processed markdown
@@ -38,7 +38,7 @@ const cache = new Map();
 const MAX_CACHE_SIZE = 1000;
 
 // Worker message handler
-self.onmessage = function(e) {
+self.onmessage = function (e) {
   const { id, type, data } = e.data;
 
   switch (type) {
@@ -74,8 +74,8 @@ function processMarkdown(id, { content, options = {} }) {
           html: cached.html,
           metadata: cached.metadata,
           cached: true,
-          processingTime: performance.now() - startTime
-        }
+          processingTime: performance.now() - startTime,
+        },
       });
       return;
     }
@@ -83,7 +83,7 @@ function processMarkdown(id, { content, options = {} }) {
     // Process markdown
     const html = marked.parse(content, {
       ...options,
-      async: false // Use sync mode in worker
+      async: false, // Use sync mode in worker
     });
 
     // Generate metadata
@@ -105,18 +105,17 @@ function processMarkdown(id, { content, options = {} }) {
         html,
         metadata,
         cached: false,
-        processingTime: performance.now() - startTime
-      }
+        processingTime: performance.now() - startTime,
+      },
     });
-
   } catch (error) {
     self.postMessage({
       id,
       type: 'error',
       data: {
         error: error.message,
-        stack: error.stack
-      }
+        stack: error.stack,
+      },
     });
   }
 }
@@ -156,7 +155,7 @@ function generateMetadata(content, html) {
     codeLanguages: [...new Set(codeLanguages)],
     linkCount: links.length,
     imageCount: imageLinks.length,
-    processedAt: new Date().toISOString()
+    processedAt: new Date().toISOString(),
   };
 }
 
@@ -176,7 +175,7 @@ function configureWorker(settings) {
   if (settings.markedOptions) {
     marked.setOptions({
       ...marked.getDefaults(),
-      ...settings.markedOptions
+      ...settings.markedOptions,
     });
   }
 
@@ -184,8 +183,8 @@ function configureWorker(settings) {
     type: 'configured',
     data: {
       cacheSize: cache.size,
-      settings
-    }
+      settings,
+    },
   });
 }
 
@@ -197,7 +196,7 @@ function clearCache() {
   self.postMessage({
     type: 'cacheCleared',
     data: {
-      cacheSize: 0
-    }
+      cacheSize: 0,
+    },
   });
 }

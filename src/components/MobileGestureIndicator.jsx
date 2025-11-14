@@ -10,26 +10,28 @@ const MobileGestureIndicator = () => {
   const indicatorAnimation = useSpring({
     opacity: showIndicator ? 1 : 0,
     transform: showIndicator ? 'scale(1) translateY(0)' : 'scale(0.8) translateY(10px)',
-    config: { tension: 300, friction: 25 }
+    config: { tension: 300, friction: 25 },
   });
 
   // Direction arrow animation
   const arrowAnimation = useSpring({
-    transform: swipeDirection === 'left'
-      ? 'translateX(-5px)'
-      : swipeDirection === 'right'
-      ? 'translateX(5px)'
-      : swipeDirection === 'up'
-      ? 'translateY(-5px)'
-      : swipeDirection === 'down'
-      ? 'translateY(5px)'
-      : 'translate(0, 0)',
-    config: { tension: 200, friction: 20 }
+    transform:
+      swipeDirection === 'left'
+        ? 'translateX(-5px)'
+        : swipeDirection === 'right'
+          ? 'translateX(5px)'
+          : swipeDirection === 'up'
+            ? 'translateY(-5px)'
+            : swipeDirection === 'down'
+              ? 'translateY(5px)'
+              : 'translate(0, 0)',
+    config: { tension: 200, friction: 20 },
   });
 
   // Show/hide indicator based on gesture state
   useEffect(() => {
     if (isSwiping) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShowIndicator(true);
     } else if (!isDragging) {
       // Hide after a delay when dragging stops
@@ -85,7 +87,7 @@ const MobileGestureIndicator = () => {
         left: '50%',
         transform: 'translateX(-50%)',
         zIndex: 1000,
-        pointerEvents: 'none'
+        pointerEvents: 'none',
       }}
     >
       <div className="mobile-gesture-indicator">
@@ -93,16 +95,14 @@ const MobileGestureIndicator = () => {
           style={{
             ...arrowAnimation,
             display: 'inline-block',
-            marginBottom: '4px'
+            marginBottom: '4px',
           }}
         >
           {getDirectionIcon()}
         </animated.div>
-        <div className="gesture-text">
-          {getDirectionText()}
-        </div>
+        <div className="gesture-text">{getDirectionText()}</div>
 
-        <style jsx>{`
+        <style>{`
           .mobile-gesture-indicator {
             background: rgba(0, 0, 0, 0.8);
             color: white;

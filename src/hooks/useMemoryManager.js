@@ -1,3 +1,4 @@
+/* global Worker, MutationObserver, ResizeObserver */
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { getMemoryManager } from '../services/memoryManager';
 
@@ -14,27 +15,42 @@ export const useMemoryManager = (options = {}) => {
 
   return {
     memoryManager,
-    registerComponent: useCallback((componentId, component, metadata) => {
-      return memoryManager.registerComponent(componentId, component, metadata);
-    }, [memoryManager]),
-    registerSubscription: useCallback((subscription, componentId, metadata) => {
-      return memoryManager.registerSubscription(subscription, componentId, metadata);
-    }, [memoryManager]),
-    registerTimer: useCallback((timerId, componentId, type, metadata) => {
-      return memoryManager.registerTimer(timerId, componentId, type, metadata);
-    }, [memoryManager]),
-    registerObserver: useCallback((observer, componentId, metadata) => {
-      return memoryManager.registerObserver(observer, componentId, metadata);
-    }, [memoryManager]),
-    registerEventListener: useCallback((target, type, handler, componentId, options) => {
-      return memoryManager.registerEventListener(target, type, handler, componentId, options);
-    }, [memoryManager]),
+    registerComponent: useCallback(
+      (componentId, component, metadata) => {
+        return memoryManager.registerComponent(componentId, component, metadata);
+      },
+      [memoryManager]
+    ),
+    registerSubscription: useCallback(
+      (subscription, componentId, metadata) => {
+        return memoryManager.registerSubscription(subscription, componentId, metadata);
+      },
+      [memoryManager]
+    ),
+    registerTimer: useCallback(
+      (timerId, componentId, type, metadata) => {
+        return memoryManager.registerTimer(timerId, componentId, type, metadata);
+      },
+      [memoryManager]
+    ),
+    registerObserver: useCallback(
+      (observer, componentId, metadata) => {
+        return memoryManager.registerObserver(observer, componentId, metadata);
+      },
+      [memoryManager]
+    ),
+    registerEventListener: useCallback(
+      (target, type, handler, componentId, options) => {
+        return memoryManager.registerEventListener(target, type, handler, componentId, options);
+      },
+      [memoryManager]
+    ),
     getMemoryStats: useCallback(() => {
       return memoryManager.getMemoryStats();
     }, [memoryManager]),
     checkForMemoryLeaks: useCallback(() => {
       return memoryManager.checkForMemoryLeaks();
-    }, [memoryManager])
+    }, [memoryManager]),
   };
 };
 
@@ -53,7 +69,7 @@ export const useMemoryCleanup = (componentId, metadata = {}) => {
   }, [componentId, registerComponent, metadata]);
 
   // Register cleanup function
-  const registerCleanup = useCallback((cleanupFn) => {
+  const registerCleanup = useCallback(cleanupFn => {
     cleanupRef.current.push(cleanupFn);
     return cleanupRef.current.length - 1;
   }, []);
@@ -79,48 +95,54 @@ export const useMemoryCleanup = (componentId, metadata = {}) => {
 
   return {
     registerCleanup,
-    addCleanup: registerCleanup
+    addCleanup: registerCleanup,
   };
 };
 
 /**
  * Hook for managing timers with automatic cleanup
  */
-export const useManagedTimer = (componentId) => {
+export const useManagedTimer = componentId => {
   const { memoryManager, registerTimer } = useMemoryManager();
   const timersRef = useRef(new Set());
 
   // Create managed timeout
-  const setTimeout = useCallback((callback, delay, ...args) => {
-    const timerId = window.setTimeout(() => {
-      callback(...args);
-      timersRef.current.delete(timerId);
-    }, delay);
+  const setTimeout = useCallback(
+    (callback, delay, ...args) => {
+      const timerId = window.setTimeout(() => {
+        callback(...args);
+        timersRef.current.delete(timerId);
+      }, delay);
 
-    timersRef.current.add(timerId);
-    registerTimer(timerId, componentId, 'timeout');
+      timersRef.current.add(timerId);
+      registerTimer(timerId, componentId, 'timeout');
 
-    return timerId;
-  }, [componentId, registerTimer]);
+      return timerId;
+    },
+    [componentId, registerTimer]
+  );
 
   // Create managed interval
-  const setInterval = useCallback((callback, delay, ...args) => {
-    const timerId = window.setInterval(callback, delay, ...args);
+  const setInterval = useCallback(
+    (callback, delay, ...args) => {
+      const timerId = window.setInterval(callback, delay, ...args);
 
-    timersRef.current.add(timerId);
-    registerTimer(timerId, componentId, 'interval');
+      timersRef.current.add(timerId);
+      registerTimer(timerId, componentId, 'interval');
 
-    return timerId;
-  }, [componentId, registerTimer]);
+      return timerId;
+    },
+    [componentId, registerTimer]
+  );
 
   // Clear managed timeout
-  const clearTimeout = useCallback((timerId) => {
+  const clearTimeout = useCallback(timerId => {
     window.clearTimeout(timerId);
     timersRef.current.delete(timerId);
   }, []);
 
   // Clear managed interval
-  const clearInterval = useCallback((timerId) => {
+  const clearInterval = useCallback(timerId => {
     window.clearInterval(timerId);
     timersRef.current.delete(timerId);
   }, []);
@@ -143,29 +165,34 @@ export const useManagedTimer = (componentId) => {
     clearTimeout,
     clearInterval,
     clearAllTimers,
-    activeTimers: timersRef.current.size
   };
 };
 
 /**
  * Hook for managing event listeners with automatic cleanup
  */
-export const useManagedEventListener = (componentId) => {
+export const useManagedEventListener = componentId => {
   const { memoryManager, registerEventListener } = useMemoryManager();
   const listenersRef = useRef(new Set());
 
   // Add managed event listener
-  const addEventListener = useCallback((target, type, handler, options) => {
-    const listenerId = registerEventListener(target, type, handler, componentId, options);
-    listenersRef.current.add(listenerId);
-    return listenerId;
-  }, [componentId, registerEventListener]);
+  const addEventListener = useCallback(
+    (target, type, handler, options) => {
+      const listenerId = registerEventListener(target, type, handler, componentId, options);
+      listenersRef.current.add(listenerId);
+      return listenerId;
+    },
+    [componentId, registerEventListener]
+  );
 
   // Remove managed event listener
-  const removeEventListener = useCallback((target, listenerId) => {
-    memoryManager.removeEventListener(target, listenerId);
-    listenersRef.current.delete(listenerId);
-  }, [memoryManager]);
+  const removeEventListener = useCallback(
+    (target, listenerId) => {
+      memoryManager.removeEventListener(target, listenerId);
+      listenersRef.current.delete(listenerId);
+    },
+    [memoryManager]
+  );
 
   // Cleanup all listeners
   const removeAllListeners = useCallback(() => {
@@ -185,46 +212,57 @@ export const useManagedEventListener = (componentId) => {
     addEventListener,
     removeEventListener,
     removeAllListeners,
-    activeListeners: listenersRef.current.size
   };
 };
 
 /**
  * Hook for managing observers with automatic cleanup
  */
-export const useManagedObserver = (componentId) => {
+export const useManagedObserver = componentId => {
   const { memoryManager, registerObserver } = useMemoryManager();
   const observersRef = useRef(new Set());
 
   // Create managed IntersectionObserver
-  const useIntersectionObserver = useCallback((callback, options) => {
-    const observer = new IntersectionObserver(callback, options);
-    const observerId = registerObserver(observer, componentId, { type: 'intersection' });
-    observersRef.current.add(observerId);
-    return { observer, id: observerId };
-  }, [componentId, registerObserver]);
+  const useIntersectionObserver = useCallback(
+    (callback, options) => {
+      const observer = new IntersectionObserver(callback, options);
+      const observerId = registerObserver(observer, componentId, { type: 'intersection' });
+      observersRef.current.add(observerId);
+      return { observer, id: observerId };
+    },
+    [componentId, registerObserver]
+  );
 
   // Create managed MutationObserver
-  const useMutationObserver = useCallback((callback, options) => {
-    const observer = new MutationObserver(callback, options);
-    const observerId = registerObserver(observer, componentId, { type: 'mutation' });
-    observersRef.current.add(observerId);
-    return { observer, id: observerId };
-  }, [componentId, registerObserver]);
+  const useMutationObserver = useCallback(
+    (callback, options) => {
+      const observer = new MutationObserver(callback, options);
+      const observerId = registerObserver(observer, componentId, { type: 'mutation' });
+      observersRef.current.add(observerId);
+      return { observer, id: observerId };
+    },
+    [componentId, registerObserver]
+  );
 
   // Create managed ResizeObserver
-  const useResizeObserver = useCallback((callback) => {
-    const observer = new ResizeObserver(callback);
-    const observerId = registerObserver(observer, componentId, { type: 'resize' });
-    observersRef.current.add(observerId);
-    return { observer, id: observerId };
-  }, [componentId, registerObserver]);
+  const useResizeObserver = useCallback(
+    callback => {
+      const observer = new ResizeObserver(callback);
+      const observerId = registerObserver(observer, componentId, { type: 'resize' });
+      observersRef.current.add(observerId);
+      return { observer, id: observerId };
+    },
+    [componentId, registerObserver]
+  );
 
   // Disconnect observer
-  const disconnectObserver = useCallback((observerId) => {
-    memoryManager.disconnectObserver(observerId);
-    observersRef.current.delete(observerId);
-  }, [memoryManager]);
+  const disconnectObserver = useCallback(
+    observerId => {
+      memoryManager.disconnectObserver(observerId);
+      observersRef.current.delete(observerId);
+    },
+    [memoryManager]
+  );
 
   // Disconnect all observers
   const disconnectAllObservers = useCallback(() => {
@@ -240,37 +278,42 @@ export const useManagedObserver = (componentId) => {
     useResizeObserver,
     disconnectObserver,
     disconnectAllObservers,
-    activeObservers: observersRef.current.size
   };
 };
 
 /**
  * Hook for managing web workers with automatic cleanup
  */
-export const useManagedWebWorker = (componentId) => {
+export const useManagedWebWorker = componentId => {
   const { memoryManager, registerWebWorker } = useMemoryManager();
   const workersRef = useRef(new Set());
 
-  // Create managed web worker
-  const createWorker = useCallback((workerScript, options = {}) => {
-    const worker = new Worker(workerScript, options);
-    const workerId = registerWebWorker(worker, componentId, options);
-    workersRef.current.add(workerId);
-
-    // Handle worker errors
-    worker.onerror = (error) => {
-      console.error('Web worker error:', error);
-      terminateWorker(workerId);
-    };
-
-    return { worker, id: workerId };
-  }, [componentId, registerWebWorker]);
-
   // Terminate worker
-  const terminateWorker = useCallback((workerId) => {
-    memoryManager.unregisterWebWorker(workerId);
-    workersRef.current.delete(workerId);
-  }, [memoryManager]);
+  const terminateWorker = useCallback(
+    workerId => {
+      memoryManager.unregisterWebWorker(workerId);
+      workersRef.current.delete(workerId);
+    },
+    [memoryManager]
+  );
+
+  // Create managed web worker
+  const createWorker = useCallback(
+    (workerScript, options = {}) => {
+      const worker = new Worker(workerScript, options);
+      const workerId = registerWebWorker(worker, componentId, options);
+      workersRef.current.add(workerId);
+
+      // Handle worker errors
+      worker.onerror = error => {
+        console.error('Web worker error:', error);
+        terminateWorker(workerId);
+      };
+
+      return { worker, id: workerId };
+    },
+    [componentId, registerWebWorker, terminateWorker]
+  );
 
   // Terminate all workers
   const terminateAllWorkers = useCallback(() => {
@@ -284,7 +327,6 @@ export const useManagedWebWorker = (componentId) => {
     createWorker,
     terminateWorker,
     terminateAllWorkers,
-    activeWorkers: workersRef.current.size
   };
 };
 
@@ -337,6 +379,7 @@ export const useMemoryMonitor = (options = {}) => {
   // Start monitoring on mount if auto-start is enabled
   useEffect(() => {
     if (autoStart) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       startMonitoring();
     }
 
@@ -372,36 +415,42 @@ export const useMemoryMonitor = (options = {}) => {
     updateStats,
     startMonitoring,
     stopMonitoring,
-    forceCleanup
+    forceCleanup,
   };
 };
 
 /**
  * Hook for subscription management (RxJS-like)
  */
-export const useManagedSubscription = (componentId) => {
+export const useManagedSubscription = componentId => {
   const { memoryManager, registerSubscription } = useMemoryManager();
   const subscriptionsRef = useRef(new Set());
 
   // Subscribe and track
-  const subscribe = useCallback((observable, onNext, onError, onComplete) => {
-    const subscription = observable.subscribe({
-      next: onNext,
-      error: onError,
-      complete: onComplete
-    });
+  const subscribe = useCallback(
+    (observable, onNext, onError, onComplete) => {
+      const subscription = observable.subscribe({
+        next: onNext,
+        error: onError,
+        complete: onComplete,
+      });
 
-    const subscriptionId = registerSubscription(subscription, componentId);
-    subscriptionsRef.current.add(subscriptionId);
+      const subscriptionId = registerSubscription(subscription, componentId);
+      subscriptionsRef.current.add(subscriptionId);
 
-    return subscriptionId;
-  }, [componentId, registerSubscription]);
+      return subscriptionId;
+    },
+    [componentId, registerSubscription]
+  );
 
   // Unsubscribe
-  const unsubscribe = useCallback((subscriptionId) => {
-    memoryManager.unsubscribe(subscriptionId);
-    subscriptionsRef.current.delete(subscriptionId);
-  }, [memoryManager]);
+  const unsubscribe = useCallback(
+    subscriptionId => {
+      memoryManager.unsubscribe(subscriptionId);
+      subscriptionsRef.current.delete(subscriptionId);
+    },
+    [memoryManager]
+  );
 
   // Unsubscribe all
   const unsubscribeAll = useCallback(() => {
@@ -415,7 +464,6 @@ export const useManagedSubscription = (componentId) => {
     subscribe,
     unsubscribe,
     unsubscribeAll,
-    activeSubscriptions: subscriptionsRef.current.size
   };
 };
 
@@ -442,6 +490,7 @@ export const useMemoryDevTools = () => {
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       refreshStats();
     }
   }, [refreshStats]);
@@ -453,7 +502,7 @@ export const useMemoryDevTools = () => {
     refreshStats,
     performCleanup,
     checkLeaks,
-    isDevelopment: process.env.NODE_ENV === 'development'
+    isDevelopment: process.env.NODE_ENV === 'development',
   };
 };
 

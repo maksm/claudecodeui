@@ -81,7 +81,7 @@ class TestDatabase {
     return {
       userId: result.lastInsertRowid,
       username: 'testuser',
-      email: 'test@example.com'
+      email: 'test@example.com',
     };
   }
 

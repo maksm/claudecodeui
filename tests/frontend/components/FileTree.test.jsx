@@ -9,7 +9,7 @@ import { api } from '../../../src/utils/api';
 jest.mock('../../../src/utils/api');
 
 jest.mock('../../../src/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }) => <div data-testid="scroll-area">{children}</div>
+  ScrollArea: ({ children }) => <div data-testid="scroll-area">{children}</div>,
 }));
 
 jest.mock('../../../src/components/ui/button', () => ({
@@ -25,7 +25,7 @@ jest.mock('../../../src/components/ui/button', () => ({
     >
       {children}
     </button>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ui/input', () => ({
@@ -38,7 +38,7 @@ jest.mock('../../../src/components/ui/input', () => ({
       {...props}
       data-testid={props['data-testid'] || 'input'}
     />
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ui/badge', () => ({
@@ -51,7 +51,7 @@ jest.mock('../../../src/components/ui/badge', () => ({
     >
       {children}
     </span>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/CodeEditor', () => ({
@@ -59,26 +59,32 @@ jest.mock('../../../src/components/CodeEditor', () => ({
     <div data-testid="code-editor">
       <div data-testid="file-name">{file?.name}</div>
       <div data-testid="file-content">{file?.content}</div>
-      <button data-testid="close-editor" onClick={onClose}>Close</button>
-      <button data-testid="save-file" onClick={() => onSave(file?.content)}>Save</button>
+      <button data-testid="close-editor" onClick={onClose}>
+        Close
+      </button>
+      <button data-testid="save-file" onClick={() => onSave(file?.content)}>
+        Save
+      </button>
     </div>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ImageViewer', () => ({
   default: ({ image, onClose }) => (
     <div data-testid="image-viewer">
       <img src={image?.url} alt={image?.name} />
-      <button data-testid="close-image" onClick={onClose}>Close</button>
+      <button data-testid="close-image" onClick={onClose}>
+        Close
+      </button>
     </div>
-  )
+  ),
 }));
 
 describe('FileTree Component', () => {
   const mockSelectedProject = {
     id: 'test-project',
     name: 'Test Project',
-    path: '/path/to/project'
+    path: '/path/to/project',
   };
 
   const mockFiles = [
@@ -98,9 +104,9 @@ describe('FileTree Component', () => {
               type: 'file',
               extension: 'jsx',
               size: 1024,
-              modified: '2024-01-01T00:00:00Z'
-            }
-          ]
+              modified: '2024-01-01T00:00:00Z',
+            },
+          ],
         },
         {
           name: 'index.js',
@@ -108,9 +114,9 @@ describe('FileTree Component', () => {
           type: 'file',
           extension: 'js',
           size: 512,
-          modified: '2024-01-02T00:00:00Z'
-        }
-      ]
+          modified: '2024-01-02T00:00:00Z',
+        },
+      ],
     },
     {
       name: 'package.json',
@@ -118,8 +124,8 @@ describe('FileTree Component', () => {
       type: 'file',
       extension: 'json',
       size: 2048,
-      modified: '2024-01-03T00:00:00Z'
-    }
+      modified: '2024-01-03T00:00:00Z',
+    },
   ];
 
   beforeEach(() => {
@@ -129,8 +135,8 @@ describe('FileTree Component', () => {
     // Mock successful API response
     api.mockResolvedValue({
       data: {
-        files: mockFiles
-      }
+        files: mockFiles,
+      },
     });
   });
 
@@ -203,7 +209,7 @@ describe('FileTree Component', () => {
       const user = userEvent.setup();
       const mockFileContent = {
         content: 'console.log("Hello World");',
-        language: 'javascript'
+        language: 'javascript',
       };
 
       api.mockResolvedValueOnce({ data: { files: mockFiles } });
@@ -229,7 +235,7 @@ describe('FileTree Component', () => {
       const user = userEvent.setup();
       const mockFileContent = {
         content: 'console.log("Hello World");',
-        language: 'javascript'
+        language: 'javascript',
       };
 
       api.mockResolvedValueOnce({ data: { files: mockFiles } });
@@ -258,7 +264,7 @@ describe('FileTree Component', () => {
       const user = userEvent.setup();
       const mockFileContent = {
         content: 'console.log("Hello World");',
-        language: 'javascript'
+        language: 'javascript',
       };
 
       api.mockResolvedValueOnce({ data: { files: mockFiles } });
@@ -287,8 +293,8 @@ describe('FileTree Component', () => {
           url: expect.stringContaining('/api/files/save'),
           data: expect.objectContaining({
             path: '/path/to/project/package.json',
-            content: mockFileContent.content
-          })
+            content: mockFileContent.content,
+          }),
         })
       );
     });
@@ -302,8 +308,8 @@ describe('FileTree Component', () => {
           type: 'file',
           extension: 'jpg',
           size: 1024,
-          isImage: true
-        }
+          isImage: true,
+        },
       ];
 
       api.mockResolvedValueOnce({ data: { files: imageFiles } });
@@ -345,8 +351,8 @@ describe('FileTree Component', () => {
       });
 
       // Find and click view mode toggle
-      const viewModeToggle = screen.getByTestId('view-mode-toggle') ||
-                             screen.getByLabelText(/view mode/i);
+      const viewModeToggle =
+        screen.getByTestId('view-mode-toggle') || screen.getByLabelText(/view mode/i);
 
       if (viewModeToggle) {
         await user.click(viewModeToggle);
@@ -379,8 +385,8 @@ describe('FileTree Component', () => {
         expect(screen.getByTestId('scroll-area')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText(/search/i) ||
-                         screen.getByRole('textbox', { name: /search/i });
+      const searchInput =
+        screen.getByPlaceholderText(/search/i) || screen.getByRole('textbox', { name: /search/i });
 
       if (searchInput) {
         await user.type(searchInput, 'package');
@@ -400,8 +406,8 @@ describe('FileTree Component', () => {
         expect(screen.getByTestId('scroll-area')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText(/search/i) ||
-                         screen.getByRole('textbox', { name: /search/i });
+      const searchInput =
+        screen.getByPlaceholderText(/search/i) || screen.getByRole('textbox', { name: /search/i });
 
       if (searchInput) {
         await user.type(searchInput, 'App');
@@ -423,14 +429,14 @@ describe('FileTree Component', () => {
         expect(screen.getByTestId('scroll-area')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText(/search/i) ||
-                         screen.getByRole('textbox', { name: /search/i });
+      const searchInput =
+        screen.getByPlaceholderText(/search/i) || screen.getByRole('textbox', { name: /search/i });
 
       if (searchInput) {
         await user.type(searchInput, 'package');
 
-        const clearButton = screen.getByTestId('clear-search') ||
-                           screen.getByLabelText(/clear search/i);
+        const clearButton =
+          screen.getByTestId('clear-search') || screen.getByLabelText(/clear search/i);
 
         if (clearButton) {
           await user.click(clearButton);
@@ -491,8 +497,8 @@ describe('FileTree Component', () => {
           method: 'DELETE',
           url: expect.stringContaining('/api/files'),
           data: expect.objectContaining({
-            path: '/path/to/project/package.json'
-          })
+            path: '/path/to/project/package.json',
+          }),
         })
       );
     });
@@ -562,8 +568,8 @@ describe('FileTree Component', () => {
       await user.tab();
 
       // Should be able to focus on interactive elements
-      const firstInteractiveElement = screen.getByRole('button', { name: /expand/i }) ||
-                                     screen.getByText('src');
+      const firstInteractiveElement =
+        screen.getByRole('button', { name: /expand/i }) || screen.getByText('src');
 
       expect(firstInteractiveElement).toBeInTheDocument();
     });
@@ -572,7 +578,7 @@ describe('FileTree Component', () => {
       const user = userEvent.setup();
       const mockFileContent = {
         content: 'console.log("Hello World");',
-        language: 'javascript'
+        language: 'javascript',
       };
 
       api.mockResolvedValueOnce({ data: { files: mockFiles } });
@@ -603,7 +609,7 @@ describe('FileTree Component', () => {
         type: 'file',
         extension: 'js',
         size: 1024,
-        modified: '2024-01-01T00:00:00Z'
+        modified: '2024-01-01T00:00:00Z',
       }));
 
       api.mockResolvedValue({ data: { files: largeFileStructure } });
@@ -624,8 +630,8 @@ describe('FileTree Component', () => {
         expect(screen.getByTestId('scroll-area')).toBeInTheDocument();
       });
 
-      const searchInput = screen.getByPlaceholderText(/search/i) ||
-                         screen.getByRole('textbox', { name: /search/i });
+      const searchInput =
+        screen.getByPlaceholderText(/search/i) || screen.getByRole('textbox', { name: /search/i });
 
       if (searchInput) {
         const startTime = performance.now();

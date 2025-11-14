@@ -4,7 +4,12 @@
   "description": "AI-powered development interface with real-time collaboration and intelligent code assistance",
   "start_url": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui", "browser"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui",
+    "browser"
+  ],
   "background_color": "#111827",
   "theme_color": "#3b82f6",
   "orientation": "portrait-primary",
@@ -158,7 +163,19 @@
       "files": [
         {
           "name": "file",
-          "accept": [".txt", ".js", ".jsx", ".ts", ".tsx", ".json", ".md", ".py", ".java", ".cpp", ".c"]
+          "accept": [
+            ".txt",
+            ".js",
+            ".jsx",
+            ".ts",
+            ".tsx",
+            ".json",
+            ".md",
+            ".py",
+            ".java",
+            ".cpp",
+            ".c"
+          ]
         }
       ]
     }

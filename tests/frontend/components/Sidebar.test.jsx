@@ -14,7 +14,7 @@ jest.mock('../../../src/contexts/TaskMasterContext');
 jest.mock('../../../src/contexts/TasksSettingsContext');
 
 jest.mock('../../../src/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }) => <div data-testid="scroll-area">{children}</div>
+  ScrollArea: ({ children }) => <div data-testid="scroll-area">{children}</div>,
 }));
 
 jest.mock('../../../src/components/ui/button', () => ({
@@ -30,7 +30,7 @@ jest.mock('../../../src/components/ui/button', () => ({
     >
       {children}
     </button>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ui/input', () => ({
@@ -43,7 +43,7 @@ jest.mock('../../../src/components/ui/input', () => ({
       {...props}
       data-testid={props['data-testid'] || 'input'}
     />
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ui/badge', () => ({
@@ -56,15 +56,15 @@ jest.mock('../../../src/components/ui/badge', () => ({
     >
       {children}
     </span>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ClaudeLogo', () => ({
-  default: ({ className }) => <div data-testid="claude-logo" className={className} />
+  default: ({ className }) => <div data-testid="claude-logo" className={className} />,
 }));
 
 jest.mock('../../../src/components/CursorLogo', () => ({
-  default: ({ className }) => <div data-testid="cursor-logo" className={className} />
+  default: ({ className }) => <div data-testid="cursor-logo" className={className} />,
 }));
 
 jest.mock('../../../src/components/TaskIndicator', () => ({
@@ -73,7 +73,7 @@ jest.mock('../../../src/components/TaskIndicator', () => ({
       <span data-testid="session-id">{session?.id}</span>
       <span data-testid="session-status">{session?.status}</span>
     </div>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ProjectCreationWizard', () => ({
@@ -84,7 +84,7 @@ jest.mock('../../../src/components/ProjectCreationWizard', () => ({
       </button>
       <button onClick={onClose}>Cancel</button>
     </div>
-  )
+  ),
 }));
 
 describe('Sidebar Component', () => {
@@ -100,20 +100,20 @@ describe('Sidebar Component', () => {
           title: 'Session One',
           messages: [
             { role: 'user', content: 'Hello' },
-            { role: 'assistant', content: 'Hi there!' }
+            { role: 'assistant', content: 'Hi there!' },
           ],
           lastModified: '2024-01-01T12:00:00Z',
-          status: 'active'
-        }
-      ]
+          status: 'active',
+        },
+      ],
     },
     {
       id: 'project-2',
       name: 'Project Two',
       path: '/path/to/project2',
       lastModified: '2024-01-02T00:00:00Z',
-      sessions: []
-    }
+      sessions: [],
+    },
   ];
 
   const defaultProps = {
@@ -123,7 +123,7 @@ describe('Sidebar Component', () => {
     onProjectSelect: jest.fn(),
     onSessionSelect: jest.fn(),
     onNewSession: jest.fn(),
-    isActive: true
+    isActive: true,
   };
 
   beforeEach(() => {
@@ -134,13 +134,13 @@ describe('Sidebar Component', () => {
     useTaskMaster.mockReturnValue({
       tasks: [],
       nextTask: null,
-      loading: false
+      loading: false,
     });
 
     // Mock Tasks Settings context
     useTasksSettings.mockReturnValue({
       tasksEnabled: true,
-      isTaskMasterReady: true
+      isTaskMasterReady: true,
     });
 
     // Mock API responses
@@ -209,8 +209,8 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup();
       render(<Sidebar {...defaultProps} />);
 
-      const expandButton = screen.getByTestId('expand-project-1') ||
-                         screen.getByRole('button', { name: /expand/i });
+      const expandButton =
+        screen.getByTestId('expand-project-1') || screen.getByRole('button', { name: /expand/i });
 
       if (expandButton) {
         await user.click(expandButton);
@@ -224,8 +224,8 @@ describe('Sidebar Component', () => {
       render(<Sidebar {...defaultProps} />);
 
       // First expand to see sessions
-      const expandButton = screen.getByTestId('expand-project-1') ||
-                         screen.getByRole('button', { name: /expand/i });
+      const expandButton =
+        screen.getByTestId('expand-project-1') || screen.getByRole('button', { name: /expand/i });
 
       if (expandButton) {
         await user.click(expandButton);
@@ -244,8 +244,9 @@ describe('Sidebar Component', () => {
 
       render(<Sidebar {...defaultProps} />);
 
-      const deleteButton = screen.getByTestId('delete-project-2') ||
-                          screen.getByRole('button', { name: /delete project two/i });
+      const deleteButton =
+        screen.getByTestId('delete-project-2') ||
+        screen.getByRole('button', { name: /delete project two/i });
 
       if (deleteButton) {
         await user.click(deleteButton);
@@ -257,7 +258,7 @@ describe('Sidebar Component', () => {
         expect(api).toHaveBeenCalledWith(
           expect.objectContaining({
             method: 'DELETE',
-            url: '/api/projects/project-2'
+            url: '/api/projects/project-2',
           })
         );
       }
@@ -291,8 +292,9 @@ describe('Sidebar Component', () => {
 
       render(<Sidebar {...defaultProps} />);
 
-      const deleteSessionButton = screen.getByTestId('delete-session-1') ||
-                                 screen.getByRole('button', { name: /delete session/i });
+      const deleteSessionButton =
+        screen.getByTestId('delete-session-1') ||
+        screen.getByRole('button', { name: /delete session/i });
 
       if (deleteSessionButton) {
         await user.click(deleteSessionButton);
@@ -304,7 +306,7 @@ describe('Sidebar Component', () => {
         expect(api).toHaveBeenCalledWith(
           expect.objectContaining({
             method: 'DELETE',
-            url: '/api/sessions/session-1'
+            url: '/api/sessions/session-1',
           })
         );
       }
@@ -319,15 +321,12 @@ describe('Sidebar Component', () => {
         sessions: [
           {
             ...mockProjects[0].sessions[0],
-            lastModified: oneHourAgo.toISOString()
-          }
-        ]
+            lastModified: oneHourAgo.toISOString(),
+          },
+        ],
       };
 
-      render(<Sidebar
-        {...defaultProps}
-        projects={[projectWithRecentSession]}
-      />);
+      render(<Sidebar {...defaultProps} projects={[projectWithRecentSession]} />);
 
       // Time ago should be displayed
       expect(screen.getByText(/hours? ago/i)).toBeInTheDocument();
@@ -339,7 +338,7 @@ describe('Sidebar Component', () => {
       useTaskMaster.mockReturnValue({
         tasks: [],
         nextTask: { id: 1, title: 'Next Task', priority: 'high' },
-        loading: false
+        loading: false,
       });
 
       render(<Sidebar {...defaultProps} />);
@@ -351,7 +350,7 @@ describe('Sidebar Component', () => {
     it('hides Task Master section when disabled', () => {
       useTasksSettings.mockReturnValue({
         tasksEnabled: false,
-        isTaskMasterReady: false
+        isTaskMasterReady: false,
       });
 
       render(<Sidebar {...defaultProps} />);
@@ -363,7 +362,7 @@ describe('Sidebar Component', () => {
       useTaskMaster.mockReturnValue({
         tasks: [],
         nextTask: null,
-        loading: true
+        loading: true,
       });
 
       render(<Sidebar {...defaultProps} />);
@@ -375,7 +374,7 @@ describe('Sidebar Component', () => {
       useTaskMaster.mockReturnValue({
         tasks: [],
         nextTask: null,
-        loading: false
+        loading: false,
       });
 
       render(<Sidebar {...defaultProps} />);
@@ -389,8 +388,9 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup();
       render(<Sidebar {...defaultProps} />);
 
-      const searchInput = screen.getByPlaceholderText(/search projects/i) ||
-                         screen.getByRole('textbox', { name: /search/i });
+      const searchInput =
+        screen.getByPlaceholderText(/search projects/i) ||
+        screen.getByRole('textbox', { name: /search/i });
 
       if (searchInput) {
         await user.type(searchInput, 'Two');
@@ -406,8 +406,9 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup();
       render(<Sidebar {...defaultProps} />);
 
-      const searchInput = screen.getByPlaceholderText(/search projects/i) ||
-                         screen.getByRole('textbox', { name: /search/i });
+      const searchInput =
+        screen.getByPlaceholderText(/search projects/i) ||
+        screen.getByRole('textbox', { name: /search/i });
 
       if (searchInput) {
         await user.type(searchInput, 'Session');
@@ -422,14 +423,16 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup();
       render(<Sidebar {...defaultProps} />);
 
-      const searchInput = screen.getByPlaceholderText(/search projects/i) ||
-                         screen.getByRole('textbox', { name: /search/i });
+      const searchInput =
+        screen.getByPlaceholderText(/search projects/i) ||
+        screen.getByRole('textbox', { name: /search/i });
 
       if (searchInput) {
         await user.type(searchInput, 'test');
 
-        const clearButton = screen.getByTestId('clear-search') ||
-                           screen.getByRole('button', { name: /clear search/i });
+        const clearButton =
+          screen.getByTestId('clear-search') ||
+          screen.getByRole('button', { name: /clear search/i });
 
         if (clearButton) {
           await user.click(clearButton);
@@ -455,7 +458,7 @@ describe('Sidebar Component', () => {
       expect(api).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'GET',
-          url: '/api/projects'
+          url: '/api/projects',
         })
       );
     });
@@ -514,19 +517,17 @@ describe('Sidebar Component', () => {
 
   describe('Session Protection', () => {
     it('pauses updates when session is active', () => {
-      render(<Sidebar
-        {...defaultProps}
-        selectedSession={{ id: 'active-session', status: 'active' }}
-      />);
+      render(
+        <Sidebar {...defaultProps} selectedSession={{ id: 'active-session', status: 'active' }} />
+      );
 
       expect(screen.getByText(/Session in progress/i)).toBeInTheDocument();
     });
 
     it('shows session protection status', () => {
-      render(<Sidebar
-        {...defaultProps}
-        selectedSession={{ id: 'active-session', status: 'active' }}
-      />);
+      render(
+        <Sidebar {...defaultProps} selectedSession={{ id: 'active-session', status: 'active' }} />
+      );
 
       expect(screen.getByTestId('task-indicator')).toBeInTheDocument();
       expect(screen.getByTestId('session-id')).toHaveTextContent('active-session');
@@ -534,17 +535,13 @@ describe('Sidebar Component', () => {
     });
 
     it('resumes updates when session ends', async () => {
-      const { rerender } = render(<Sidebar
-        {...defaultProps}
-        selectedSession={{ id: 'active-session', status: 'active' }}
-      />);
+      const { rerender } = render(
+        <Sidebar {...defaultProps} selectedSession={{ id: 'active-session', status: 'active' }} />
+      );
 
       expect(screen.getByText(/Session in progress/i)).toBeInTheDocument();
 
-      rerender(<Sidebar
-        {...defaultProps}
-        selectedSession={null}
-      />);
+      rerender(<Sidebar {...defaultProps} selectedSession={null} />);
 
       expect(screen.queryByText(/Session in progress/i)).not.toBeInTheDocument();
     });
@@ -627,8 +624,9 @@ describe('Sidebar Component', () => {
       const user = userEvent.setup();
       render(<Sidebar {...defaultProps} />);
 
-      const searchInput = screen.getByPlaceholderText(/search projects/i) ||
-                         screen.getByRole('textbox', { name: /search/i });
+      const searchInput =
+        screen.getByPlaceholderText(/search projects/i) ||
+        screen.getByRole('textbox', { name: /search/i });
 
       if (searchInput) {
         const startTime = performance.now();
@@ -650,14 +648,11 @@ describe('Sidebar Component', () => {
         name: `Project ${i}`,
         path: `/path/to/project-${i}`,
         lastModified: new Date().toISOString(),
-        sessions: []
+        sessions: [],
       }));
 
       const startTime = performance.now();
-      render(<Sidebar
-        {...defaultProps}
-        projects={largeProjectList}
-      />);
+      render(<Sidebar {...defaultProps} projects={largeProjectList} />);
       const endTime = performance.now();
 
       // Should render within reasonable time
@@ -681,10 +676,7 @@ describe('Sidebar Component', () => {
       global.innerWidth = 375;
       global.dispatchEvent(new Event('resize'));
 
-      render(<Sidebar
-        {...defaultProps}
-        isActive={false}
-      />);
+      render(<Sidebar {...defaultProps} isActive={false} />);
 
       const sidebar = screen.getByTestId('sidebar');
       expect(sidebar).toHaveClass('collapsed');

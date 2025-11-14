@@ -42,7 +42,7 @@ class MessagePaginationService {
         lastMessageId: info.lastMessageId,
         createdAt: info.createdAt,
         hasMore: true,
-        loading: false
+        loading: false,
       };
 
       this.sessionMetadata.set(sessionId, metadata);
@@ -81,7 +81,7 @@ class MessagePaginationService {
         before: data.beforeCursor,
         after: data.afterCursor,
         hasMore: data.hasMore !== false,
-        totalLoaded: messages.length
+        totalLoaded: messages.length,
       });
 
       // Update metadata
@@ -94,7 +94,7 @@ class MessagePaginationService {
         hasMore: data.hasMore !== false,
         beforeCursor: data.beforeCursor,
         afterCursor: data.afterCursor,
-        totalLoaded: messages.length
+        totalLoaded: messages.length,
       };
     } catch (error) {
       console.error('Failed to load initial messages:', error);
@@ -140,14 +140,14 @@ class MessagePaginationService {
         ...sessionCursor,
         before: data.beforeCursor,
         hasMoreOlder: data.hasMore !== false,
-        totalLoaded: (sessionCursor.totalLoaded || 0) + messages.length
+        totalLoaded: (sessionCursor.totalLoaded || 0) + messages.length,
       });
 
       return {
         messages,
         hasMore: data.hasMore !== false,
         beforeCursor: data.beforeCursor,
-        addedToTop: true
+        addedToTop: true,
       };
     } catch (error) {
       console.error('Failed to load older messages:', error);
@@ -192,14 +192,14 @@ class MessagePaginationService {
       this.updateCursor(sessionId, {
         ...sessionCursor,
         after: data.afterCursor,
-        hasMoreNewer: data.hasMore !== false
+        hasMoreNewer: data.hasMore !== false,
       });
 
       return {
         messages,
         hasMore: data.hasMore !== false,
         afterCursor: data.afterCursor,
-        addedToBottom: true
+        addedToBottom: true,
       };
     } catch (error) {
       console.error('Failed to load newer messages:', error);
@@ -291,8 +291,9 @@ class MessagePaginationService {
     });
 
     // Sort by timestamp
-    return Array.from(messageMap.values())
-      .sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    return Array.from(messageMap.values()).sort(
+      (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
+    );
   }
 
   /**
@@ -372,7 +373,7 @@ class MessagePaginationService {
       hasMoreOlder: this.hasMoreOlderMessages(sessionId),
       hasMoreNewer: this.hasMoreNewerMessages(sessionId),
       isLoading: this.isLoading(sessionId),
-      cacheSize: this.messageCache.size
+      cacheSize: this.messageCache.size,
     };
   }
 
@@ -385,7 +386,7 @@ class MessagePaginationService {
       wholeWord = false,
       limit = 100,
       includeContent = true,
-      includeMetadata = true
+      includeMetadata = true,
     } = options;
 
     const messages = this.getCachedMessages(sessionId);
@@ -410,7 +411,10 @@ class MessagePaginationService {
         }
 
         if (wholeWord) {
-          const regex = new RegExp(`\\b${this.escapeRegExp(searchQuery)}\\b`, caseSensitive ? '' : 'i');
+          const regex = new RegExp(
+            `\\b${this.escapeRegExp(searchQuery)}\\b`,
+            caseSensitive ? '' : 'i'
+          );
           return regex.test(searchText);
         }
 
@@ -419,7 +423,7 @@ class MessagePaginationService {
       .slice(0, limit)
       .map(message => ({
         message,
-        score: this.calculateRelevanceScore(message, query, caseSensitive)
+        score: this.calculateRelevanceScore(message, query, caseSensitive),
       }))
       .sort((a, b) => b.score - a.score)
       .map(result => result.message);

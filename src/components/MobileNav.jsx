@@ -8,29 +8,33 @@ function MobileNav({ activeTab, setActiveTab, isInputFocused }) {
     {
       id: 'chat',
       icon: MessageSquare,
-      onClick: () => setActiveTab('chat')
+      onClick: () => setActiveTab('chat'),
     },
     {
       id: 'shell',
       icon: Terminal,
-      onClick: () => setActiveTab('shell')
+      onClick: () => setActiveTab('shell'),
     },
     {
       id: 'files',
       icon: Folder,
-      onClick: () => setActiveTab('files')
+      onClick: () => setActiveTab('files'),
     },
     {
       id: 'git',
       icon: GitBranch,
-      onClick: () => setActiveTab('git')
+      onClick: () => setActiveTab('git'),
     },
     // Conditionally add tasks tab if enabled
-    ...(tasksEnabled ? [{
-      id: 'tasks',
-      icon: CheckSquare,
-      onClick: () => setActiveTab('tasks')
-    }] : [])
+    ...(tasksEnabled
+      ? [
+          {
+            id: 'tasks',
+            icon: CheckSquare,
+            onClick: () => setActiveTab('tasks'),
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -40,15 +44,15 @@ function MobileNav({ activeTab, setActiveTab, isInputFocused }) {
       }`}
     >
       <div className="flex items-center justify-around py-1">
-        {navItems.map((item) => {
+        {navItems.map(item => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
-          
+
           return (
             <button
               key={item.id}
               onClick={item.onClick}
-              onTouchStart={(e) => {
+              onTouchStart={e => {
                 e.preventDefault();
                 item.onClick();
               }}

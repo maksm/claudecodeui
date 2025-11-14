@@ -25,7 +25,7 @@ class MemoryManager {
       currentUsage: 0,
       cleanupCount: 0,
       leakCount: 0,
-      lastCleanup: null
+      lastCleanup: null,
     };
 
     // Performance monitoring
@@ -33,7 +33,7 @@ class MemoryManager {
       componentMounts: 0,
       componentUnmounts: 0,
       averageCleanupTime: 0,
-      memoryGrowthRate: 0
+      memoryGrowthRate: 0,
     };
 
     // Initialize monitoring
@@ -100,7 +100,7 @@ class MemoryManager {
       metadata,
       registeredAt: Date.now(),
       mountCount: 0,
-      unmountCount: 0
+      unmountCount: 0,
     };
 
     this.components.set(componentId, registration);
@@ -179,7 +179,7 @@ class MemoryManager {
       subscription,
       componentId,
       metadata,
-      registeredAt: Date.now()
+      registeredAt: Date.now(),
     };
 
     this.subscriptions.add(registration);
@@ -203,7 +203,10 @@ class MemoryManager {
     const registration = this.findSubscriptionById(subscriptionId);
     if (registration) {
       try {
-        if (registration.subscription && typeof registration.subscription.unsubscribe === 'function') {
+        if (
+          registration.subscription &&
+          typeof registration.subscription.unsubscribe === 'function'
+        ) {
           registration.subscription.unsubscribe();
         } else if (registration.subscription && typeof registration.subscription === 'function') {
           // Handle RxJS subscriptions
@@ -226,7 +229,7 @@ class MemoryManager {
       componentId,
       type,
       metadata,
-      registeredAt: Date.now()
+      registeredAt: Date.now(),
     };
 
     this.timers.add(registration);
@@ -263,7 +266,7 @@ class MemoryManager {
       observer,
       componentId,
       metadata,
-      registeredAt: Date.now()
+      registeredAt: Date.now(),
     };
 
     this.observers.add(registration);
@@ -310,7 +313,7 @@ class MemoryManager {
       handler,
       componentId,
       options,
-      registeredAt: Date.now()
+      registeredAt: Date.now(),
     };
 
     if (!this.eventListeners.has(target)) {
@@ -359,7 +362,7 @@ class MemoryManager {
       worker,
       componentId,
       metadata,
-      registeredAt: Date.now()
+      registeredAt: Date.now(),
     };
 
     this.webWorkers.add(registration);
@@ -444,7 +447,6 @@ class MemoryManager {
       // Update performance metrics
       const cleanupTime = performance.now() - startTime;
       this.updateCleanupMetrics(cleanupTime);
-
     } catch (error) {
       console.error('Auto cleanup failed:', error);
     }
@@ -552,7 +554,8 @@ class MemoryManager {
   updateCleanupMetrics(cleanupTime) {
     const totalCleanups = this.memoryStats.cleanupCount;
     this.performanceMetrics.averageCleanupTime =
-      (this.performanceMetrics.averageCleanupTime * (totalCleanups - 1) + cleanupTime) / totalCleanups;
+      (this.performanceMetrics.averageCleanupTime * (totalCleanups - 1) + cleanupTime) /
+      totalCleanups;
   }
 
   /**
@@ -574,7 +577,7 @@ class MemoryManager {
       activeObservers,
       activeWorkers,
       memoryUsage: window.performance?.memory?.usedJSHeapSize || 0,
-      memoryLimit: window.performance?.memory?.jsHeapSizeLimit || 0
+      memoryLimit: window.performance?.memory?.jsHeapSizeLimit || 0,
     };
   }
 
@@ -590,7 +593,7 @@ class MemoryManager {
       issues.push({
         type: 'subscription_leak',
         severity: 'high',
-        message: `Too many subscriptions (${stats.activeSubscriptions}) for ${stats.activeComponents} components`
+        message: `Too many subscriptions (${stats.activeSubscriptions}) for ${stats.activeComponents} components`,
       });
     }
 
@@ -599,7 +602,7 @@ class MemoryManager {
       issues.push({
         type: 'timer_leak',
         severity: 'medium',
-        message: `Too many active timers (${stats.activeTimers}) for ${stats.activeComponents} components`
+        message: `Too many active timers (${stats.activeTimers}) for ${stats.activeComponents} components`,
       });
     }
 
@@ -608,7 +611,7 @@ class MemoryManager {
       issues.push({
         type: 'observer_leak',
         severity: 'medium',
-        message: `Too many observers (${stats.activeObservers}) for ${stats.activeComponents} components`
+        message: `Too many observers (${stats.activeObservers}) for ${stats.activeComponents} components`,
       });
     }
 
@@ -617,7 +620,7 @@ class MemoryManager {
       issues.push({
         type: 'memory_pressure',
         severity: 'critical',
-        message: `Memory usage (${Math.round(stats.memoryUsage / 1024 / 1024)}MB) exceeds limit`
+        message: `Memory usage (${Math.round(stats.memoryUsage / 1024 / 1024)}MB) exceeds limit`,
       });
     }
 
@@ -636,7 +639,7 @@ class MemoryManager {
         stats: () => this.getMemoryStats(),
         check: () => this.checkForMemoryLeaks(),
         cleanup: () => this.performAutoCleanup(),
-        emergency: () => this.performEmergencyCleanup()
+        emergency: () => this.performEmergencyCleanup(),
       };
 
       console.log('Memory Manager dev tools available via window.mm');

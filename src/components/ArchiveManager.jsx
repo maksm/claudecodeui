@@ -1,5 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { Archive, Download, Upload, Trash2, Search, Filter, Calendar, Tag, BarChart3, X, Check, AlertTriangle, Package, Clock, HardDrive } from 'lucide-react';
+import {
+  Archive,
+  Download,
+  Upload,
+  Trash2,
+  Search,
+  Filter,
+  Calendar,
+  Tag,
+  BarChart3,
+  X,
+  Check,
+  AlertTriangle,
+  Package,
+  Clock,
+  HardDrive,
+} from 'lucide-react';
 import { useSessionArchive } from '../hooks/useSessionArchive';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -46,7 +62,7 @@ const ArchiveManager = ({
     formatDate,
     calculateSavings,
     getAllTags,
-    getArchiveStats
+    getArchiveStats,
   } = useSessionArchive();
 
   // Get all available tags
@@ -107,14 +123,21 @@ const ArchiveManager = ({
     });
 
     return filtered;
-  }, [archives, searchQuery, filterTags, dateRange, sortBy, sortOrder, searchArchives, filterByTags]);
+  }, [
+    archives,
+    searchQuery,
+    filterTags,
+    dateRange,
+    sortBy,
+    sortOrder,
+    searchArchives,
+    filterByTags,
+  ]);
 
   // Handle archive selection
-  const handleArchiveSelect = (archiveId) => {
+  const handleArchiveSelect = archiveId => {
     setSelectedArchives(prev =>
-      prev.includes(archiveId)
-        ? prev.filter(id => id !== archiveId)
-        : [...prev, archiveId]
+      prev.includes(archiveId) ? prev.filter(id => id !== archiveId) : [...prev, archiveId]
     );
   };
 
@@ -128,7 +151,7 @@ const ArchiveManager = ({
   };
 
   // Handle archive loading
-  const handleLoadArchive = async (archiveId) => {
+  const handleLoadArchive = async archiveId => {
     try {
       const result = await loadArchive(archiveId);
       onArchiveLoad?.(result.sessionData, archiveId);
@@ -138,8 +161,10 @@ const ArchiveManager = ({
   };
 
   // Handle single archive deletion
-  const handleDeleteArchive = async (archiveId) => {
-    if (window.confirm('Are you sure you want to delete this archive? This action cannot be undone.')) {
+  const handleDeleteArchive = async archiveId => {
+    if (
+      window.confirm('Are you sure you want to delete this archive? This action cannot be undone.')
+    ) {
       try {
         await deleteArchive(archiveId);
       } catch (error) {
@@ -150,7 +175,11 @@ const ArchiveManager = ({
 
   // Handle batch deletion
   const handleBatchDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete ${selectedArchives.length} archives? This action cannot be undone.`)) {
+    if (
+      window.confirm(
+        `Are you sure you want to delete ${selectedArchives.length} archives? This action cannot be undone.`
+      )
+    ) {
       try {
         await batchDeleteArchives(selectedArchives);
         setSelectedArchives([]);
@@ -163,7 +192,8 @@ const ArchiveManager = ({
   // Handle export
   const handleExport = async () => {
     try {
-      const archiveIds = selectedArchives.length > 0 ? selectedArchives : filteredArchives.map(a => a.id);
+      const archiveIds =
+        selectedArchives.length > 0 ? selectedArchives : filteredArchives.map(a => a.id);
       const result = await createExportPackage(archiveIds);
 
       // Download the export file
@@ -175,14 +205,13 @@ const ArchiveManager = ({
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-
     } catch (error) {
       console.error('Failed to export archives:', error);
     }
   };
 
   // Handle import
-  const handleImport = async (event) => {
+  const handleImport = async event => {
     const file = event.target.files[0];
     if (!file) return;
 
@@ -283,11 +312,15 @@ const ArchiveManager = ({
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{archiveStats.totalArchives}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {archiveStats.totalArchives}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Total Archives</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{formatFileSize(archiveStats.totalSize)}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {formatFileSize(archiveStats.totalSize)}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Storage Used</div>
           </div>
           <div className="text-center">
@@ -297,7 +330,9 @@ const ArchiveManager = ({
             <div className="text-sm text-gray-600 dark:text-gray-400">Compressed</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">{archiveStats.tags.length}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">
+              {archiveStats.tags.length}
+            </div>
             <div className="text-sm text-gray-600 dark:text-gray-400">Tags Used</div>
           </div>
         </div>
@@ -306,7 +341,9 @@ const ArchiveManager = ({
         {progress && (
           <div className="mt-4">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{progress.stage}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                {progress.stage}
+              </span>
               <span className="text-sm text-gray-600 dark:text-gray-400">{progress.progress}%</span>
             </div>
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
@@ -327,7 +364,7 @@ const ArchiveManager = ({
           <input
             type="text"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search archives..."
             className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
@@ -353,7 +390,7 @@ const ArchiveManager = ({
 
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={e => setSortBy(e.target.value)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="createdAt">Date Created</option>
@@ -364,7 +401,7 @@ const ArchiveManager = ({
 
           <select
             value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
+            onChange={e => setSortOrder(e.target.value)}
             className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="desc">Newest First</option>
@@ -401,11 +438,11 @@ const ArchiveManager = ({
                   {allTags.map(tag => (
                     <button
                       key={tag}
-                      onClick={() => setFilterTags(prev =>
-                        prev.includes(tag)
-                          ? prev.filter(t => t !== tag)
-                          : [...prev, tag]
-                      )}
+                      onClick={() =>
+                        setFilterTags(prev =>
+                          prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+                        )
+                      }
                       className={`px-3 py-1 rounded-full text-sm transition-colors ${
                         filterTags.includes(tag)
                           ? 'bg-blue-600 text-white'
@@ -429,7 +466,7 @@ const ArchiveManager = ({
                 <input
                   type="date"
                   value={dateRange.start}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, start: e.target.value }))}
+                  onChange={e => setDateRange(prev => ({ ...prev, start: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
@@ -441,7 +478,7 @@ const ArchiveManager = ({
                 <input
                   type="date"
                   value={dateRange.end}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, end: e.target.value }))}
+                  onChange={e => setDateRange(prev => ({ ...prev, end: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                 />
               </div>
@@ -501,13 +538,14 @@ const ArchiveManager = ({
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <Archive className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p className="text-lg">
-              {archives.length === 0 ? 'No archived sessions yet' : 'No archives match your filters'}
+              {archives.length === 0
+                ? 'No archived sessions yet'
+                : 'No archives match your filters'}
             </p>
             <p className="text-sm mt-2">
               {archives.length === 0
                 ? 'Archive your chat sessions to free up storage and improve performance'
-                : 'Try adjusting your search or filters'
-              }
+                : 'Try adjusting your search or filters'}
             </p>
           </div>
         ) : (
@@ -521,9 +559,15 @@ const ArchiveManager = ({
                 className="rounded"
               />
               <span className="flex-1 font-medium text-gray-900 dark:text-white">Title</span>
-              <span className="hidden md:block text-sm font-medium text-gray-600 dark:text-gray-400">Date</span>
-              <span className="hidden md:block text-sm font-medium text-gray-600 dark:text-gray-400">Size</span>
-              <span className="w-20 text-sm font-medium text-gray-600 dark:text-gray-400">Actions</span>
+              <span className="hidden md:block text-sm font-medium text-gray-600 dark:text-gray-400">
+                Date
+              </span>
+              <span className="hidden md:block text-sm font-medium text-gray-600 dark:text-gray-400">
+                Size
+              </span>
+              <span className="w-20 text-sm font-medium text-gray-600 dark:text-gray-400">
+                Actions
+              </span>
             </div>
 
             {/* Archive Items */}

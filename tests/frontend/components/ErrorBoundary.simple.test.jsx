@@ -28,9 +28,7 @@ class SimpleErrorBoundary extends React.Component {
           {this.props.showDetails && this.state.error && (
             <details data-testid="error-details">
               <summary>Error Details</summary>
-              <pre data-testid="error-message">
-                {this.state.error.toString()}
-              </pre>
+              <pre data-testid="error-message">{this.state.error.toString()}</pre>
             </details>
           )}
           <button

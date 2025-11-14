@@ -15,7 +15,7 @@ class TestReportGenerator {
       accessibility: {},
       visual: {},
       e2e: {},
-      performance: {}
+      performance: {},
     };
   }
 
@@ -36,8 +36,8 @@ class TestReportGenerator {
 
     try {
       const files = await fs.readdir(this.outputDir);
-      const accessibilityFiles = files.filter(file =>
-        file.includes('accessibility') || file.includes('wcag-certificate')
+      const accessibilityFiles = files.filter(
+        file => file.includes('accessibility') || file.includes('wcag-certificate')
       );
 
       for (const file of accessibilityFiles) {
@@ -52,14 +52,16 @@ class TestReportGenerator {
             passes: data.passes || 0,
             incomplete: data.incomplete || 0,
             score: data.score || 0,
-            wcagLevel: data.wcagVersion || '2.1'
+            wcagLevel: data.wcagVersion || '2.1',
           };
         } catch (error) {
           console.warn(`⚠️  Could not parse accessibility report ${file}:`, error.message);
         }
       }
 
-      console.log(`✅ Collected ${Object.keys(this.reports.accessibility).length} accessibility reports`);
+      console.log(
+        `✅ Collected ${Object.keys(this.reports.accessibility).length} accessibility reports`
+      );
     } catch (error) {
       console.error('❌ Error collecting accessibility reports:', error.message);
     }
@@ -92,8 +94,8 @@ class TestReportGenerator {
 
       // Collect visual report JSON files
       const files = await fs.readdir(this.outputDir);
-      const visualReportFiles = files.filter(file =>
-        file.includes('visual') && file.endsWith('.json')
+      const visualReportFiles = files.filter(
+        file => file.includes('visual') && file.endsWith('.json')
       );
 
       for (const file of visualReportFiles) {
@@ -107,8 +109,8 @@ class TestReportGenerator {
             comparisons: data.summary || { total: 0, identical: 0, different: 0 },
             screenshots: {
               baseline: baselineCount,
-              comparison: comparisonCount
-            }
+              comparison: comparisonCount,
+            },
           };
         } catch (error) {
           console.warn(`⚠️  Could not parse visual report ${file}:`, error.message);
@@ -119,10 +121,12 @@ class TestReportGenerator {
         baselineScreenshots: baselineCount,
         comparisonScreenshots: comparisonCount,
         totalComparisons: comparisonCount,
-        reportFiles: Object.keys(this.reports.visual).length
+        reportFiles: Object.keys(this.reports.visual).length,
       };
 
-      console.log(`✅ Collected visual regression data: ${baselineCount} baselines, ${comparisonCount} comparisons`);
+      console.log(
+        `✅ Collected visual regression data: ${baselineCount} baselines, ${comparisonCount} comparisons`
+      );
     } catch (error) {
       console.error('❌ Error collecting visual reports:', error.message);
     }
@@ -139,7 +143,7 @@ class TestReportGenerator {
         total: 0,
         passed: 0,
         failed: 0,
-        skipped: 0
+        skipped: 0,
       };
 
       try {
@@ -188,8 +192,8 @@ class TestReportGenerator {
 
     try {
       const files = await fs.readdir(this.outputDir);
-      const performanceFiles = files.filter(file =>
-        file.includes('performance') || file.includes('lighthouse')
+      const performanceFiles = files.filter(
+        file => file.includes('performance') || file.includes('lighthouse')
       );
 
       for (const file of performanceFiles) {
@@ -202,15 +206,18 @@ class TestReportGenerator {
             timestamp: data.timestamp || new Date().toISOString(),
             performance: data.performance || data.lhr?.categories?.performance?.score || 0,
             accessibility: data.accessibility || data.lhr?.categories?.accessibility?.score || 0,
-            bestPractices: data.bestPractices || data.lhr?.categories?.['best-practices']?.score || 0,
-            seo: data.seo || data.lhr?.categories?.seo?.score || 0
+            bestPractices:
+              data.bestPractices || data.lhr?.categories?.['best-practices']?.score || 0,
+            seo: data.seo || data.lhr?.categories?.seo?.score || 0,
           };
         } catch (error) {
           console.warn(`⚠️  Could not parse performance report ${file}:`, error.message);
         }
       }
 
-      console.log(`✅ Collected ${Object.keys(this.reports.performance).length} performance reports`);
+      console.log(
+        `✅ Collected ${Object.keys(this.reports.performance).length} performance reports`
+      );
     } catch (error) {
       console.error('❌ Error collecting performance reports:', error.message);
     }
@@ -222,13 +229,18 @@ class TestReportGenerator {
     if (accessibilityReports.length === 0) {
       return {
         status: 'not_run',
-        message: 'No accessibility reports found'
+        message: 'No accessibility reports found',
       };
     }
 
-    const totalViolations = accessibilityReports.reduce((sum, report) => sum + report.violations, 0);
+    const totalViolations = accessibilityReports.reduce(
+      (sum, report) => sum + report.violations,
+      0
+    );
     const totalPasses = accessibilityReports.reduce((sum, report) => sum + report.passes, 0);
-    const averageScore = accessibilityReports.reduce((sum, report) => sum + report.score, 0) / accessibilityReports.length;
+    const averageScore =
+      accessibilityReports.reduce((sum, report) => sum + report.score, 0) /
+      accessibilityReports.length;
 
     return {
       status: totalViolations === 0 ? 'passed' : 'failed',
@@ -236,13 +248,13 @@ class TestReportGenerator {
         totalTests: totalViolations + totalPasses,
         violations: totalViolations,
         passes: totalPasses,
-        averageScore: Math.round(averageScore)
+        averageScore: Math.round(averageScore),
       },
       wcagCompliance: {
         levelA: true, // Assuming Level A tests were run
         levelAA: averageScore >= 90,
-        levelAAA: averageScore >= 95
-      }
+        levelAAA: averageScore >= 95,
+      },
     };
   }
 
@@ -252,7 +264,7 @@ class TestReportGenerator {
     if (!visualSummary || visualSummary.totalComparisons === 0) {
       return {
         status: 'not_run',
-        message: 'No visual regression reports found'
+        message: 'No visual regression reports found',
       };
     }
 
@@ -273,8 +285,8 @@ class TestReportGenerator {
         comparisonScreenshots: visualSummary.comparisonScreenshots,
         totalComparisons,
         identicalComparisons,
-        differentComparisons
-      }
+        differentComparisons,
+      },
     };
   }
 
@@ -284,7 +296,7 @@ class TestReportGenerator {
     if (e2eResults.total === 0) {
       return {
         status: 'not_run',
-        message: 'No E2E test results found'
+        message: 'No E2E test results found',
       };
     }
 
@@ -295,8 +307,8 @@ class TestReportGenerator {
         passed: e2eResults.passed,
         failed: e2eResults.failed,
         skipped: e2eResults.skipped,
-        passRate: Math.round((e2eResults.passed / e2eResults.total) * 100)
-      }
+        passRate: Math.round((e2eResults.passed / e2eResults.total) * 100),
+      },
     };
   }
 
@@ -306,20 +318,24 @@ class TestReportGenerator {
     if (performanceReports.length === 0) {
       return {
         status: 'not_run',
-        message: 'No performance reports found'
+        message: 'No performance reports found',
       };
     }
 
-    const avgPerformance = performanceReports.reduce((sum, report) => sum + report.performance, 0) / performanceReports.length;
-    const avgAccessibility = performanceReports.reduce((sum, report) => sum + report.accessibility, 0) / performanceReports.length;
+    const avgPerformance =
+      performanceReports.reduce((sum, report) => sum + report.performance, 0) /
+      performanceReports.length;
+    const avgAccessibility =
+      performanceReports.reduce((sum, report) => sum + report.accessibility, 0) /
+      performanceReports.length;
 
     return {
       status: avgPerformance >= 0.9 ? 'passed' : 'failed',
       summary: {
         performanceScore: Math.round(avgPerformance * 100),
         accessibilityScore: Math.round(avgAccessibility * 100),
-        reportCount: performanceReports.length
-      }
+        reportCount: performanceReports.length,
+      },
     };
   }
 
@@ -341,7 +357,7 @@ class TestReportGenerator {
       metadata: {
         generatedAt: new Date().toISOString(),
         version: '1.0.0',
-        testSuite: 'Claude Code UI Comprehensive Tests'
+        testSuite: 'Claude Code UI Comprehensive Tests',
       },
       overall: {
         status: overallStatus,
@@ -349,27 +365,27 @@ class TestReportGenerator {
           totalCategories: 4,
           passed: allResults.filter(r => r.status === 'passed').length,
           failed: failedTests,
-          notRun: notRunTests
-        }
+          notRun: notRunTests,
+        },
       },
       categories: {
         accessibility: accessibilitySummary,
         visualRegression: visualSummary,
         e2eTests: e2eSummary,
-        performance: performanceSummary
+        performance: performanceSummary,
       },
       detailedResults: {
         accessibility: this.reports.accessibility,
         visual: this.reports.visual,
         e2e: this.reports.e2e,
-        performance: this.reports.performance
+        performance: this.reports.performance,
       },
       recommendations: this.generateRecommendations({
         accessibility: accessibilitySummary,
         visual: visualSummary,
         e2e: e2eSummary,
-        performance: performanceSummary
-      })
+        performance: performanceSummary,
+      }),
     };
 
     return report;
@@ -384,7 +400,7 @@ class TestReportGenerator {
         category: 'Accessibility',
         priority: 'high',
         message: 'Fix accessibility violations to meet WCAG compliance',
-        details: 'Review axe-core violation reports and implement required changes'
+        details: 'Review axe-core violation reports and implement required changes',
       });
     }
 
@@ -394,7 +410,8 @@ class TestReportGenerator {
         category: 'Visual Regression',
         priority: 'medium',
         message: 'Visual changes detected - review and update baselines if intentional',
-        details: 'Compare visual differences and update baseline screenshots if changes are expected'
+        details:
+          'Compare visual differences and update baseline screenshots if changes are expected',
       });
     }
 
@@ -404,7 +421,7 @@ class TestReportGenerator {
         category: 'E2E Tests',
         priority: 'high',
         message: 'Fix failing E2E tests',
-        details: 'Review test failures and fix application issues or update test expectations'
+        details: 'Review test failures and fix application issues or update test expectations',
       });
     }
 
@@ -414,20 +431,22 @@ class TestReportGenerator {
         category: 'Performance',
         priority: 'medium',
         message: 'Improve application performance',
-        details: 'Optimize loading times, reduce bundle size, and improve runtime performance'
+        details: 'Optimize loading times, reduce bundle size, and improve runtime performance',
       });
     }
 
     // Success recommendations
-    if (summaries.accessibility.status === 'passed' &&
-        summaries.visualRegression.status === 'passed' &&
-        summaries.e2eTests.status === 'passed' &&
-        summaries.performance.status === 'passed') {
+    if (
+      summaries.accessibility.status === 'passed' &&
+      summaries.visualRegression.status === 'passed' &&
+      summaries.e2eTests.status === 'passed' &&
+      summaries.performance.status === 'passed'
+    ) {
       recommendations.push({
         category: 'All Tests',
         priority: 'info',
         message: 'All tests passed! Application is ready for production.',
-        details: 'Comprehensive testing suite shows excellent quality across all categories.'
+        details: 'Comprehensive testing suite shows excellent quality across all categories.',
       });
     }
 
@@ -576,17 +595,25 @@ class TestReportGenerator {
                 ${this.generateCategoryHTML('Performance', '⚡', report.categories.performance)}
             </div>
 
-            ${report.recommendations.length > 0 ? `
+            ${
+              report.recommendations.length > 0
+                ? `
             <div class="recommendations">
                 <h3>📋 Recommendations</h3>
-                ${report.recommendations.map(rec => `
+                ${report.recommendations
+                  .map(
+                    rec => `
                     <div class="recommendation recommendation-${rec.priority}">
                         <strong>${rec.category} (${rec.priority})</strong>: ${rec.message}
                         ${rec.details ? `<p style="margin: 5px 0 0 0; color: #6b7280;">${rec.details}</p>` : ''}
                     </div>
-                `).join('')}
+                `
+                  )
+                  .join('')}
             </div>
-            ` : ''}
+            `
+                : ''
+            }
         </div>
 
         <div class="footer">
@@ -706,7 +733,7 @@ class TestReportGenerator {
       json: jsonReportPath,
       html: htmlReportPath,
       text: textReportPath,
-      summary: report
+      summary: report,
     };
   }
 
@@ -737,9 +764,10 @@ ${report.categories.performance.message || `${report.categories.performance.summ
 ${report.recommendations.map(rec => `- ${rec.category}: ${rec.message}`).join('\n')}
 
 === NEXT STEPS ===
-${report.overall.status === 'passed'
-  ? '✅ All tests passed! Ready for deployment.'
-  : '❌ Some tests failed. Review the recommendations and fix issues before deployment.'
+${
+  report.overall.status === 'passed'
+    ? '✅ All tests passed! Ready for deployment.'
+    : '❌ Some tests failed. Review the recommendations and fix issues before deployment.'
 }
 
 Report files:
@@ -759,7 +787,9 @@ async function main() {
     console.log('\n🎉 Report generation completed successfully!');
     console.log('\n📊 Summary:');
     console.log(`   Overall Status: ${results.summary.overall.status.toUpperCase()}`);
-    console.log(`   Categories: ${results.summary.overall.summary.passed} passed, ${results.summary.overall.summary.failed} failed`);
+    console.log(
+      `   Categories: ${results.summary.overall.summary.passed} passed, ${results.summary.overall.summary.failed} failed`
+    );
 
     if (results.summary.overall.status === 'failed') {
       console.log('\n❌ Tests failed - check recommendations for next steps');
@@ -767,7 +797,6 @@ async function main() {
     } else {
       console.log('\n✅ All systems go!');
     }
-
   } catch (error) {
     console.error('\n💥 Fatal error during report generation:', error);
     process.exit(1);

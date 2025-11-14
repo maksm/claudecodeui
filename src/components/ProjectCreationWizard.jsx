@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { X, FolderPlus, GitBranch, Key, ChevronRight, ChevronLeft, Check, Loader2, AlertCircle } from 'lucide-react';
+import {
+  X,
+  FolderPlus,
+  GitBranch,
+  Key,
+  ChevronRight,
+  ChevronLeft,
+  Check,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { api } from '../utils/api';
@@ -61,7 +71,7 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
     }
   };
 
-  const loadPathSuggestions = async (inputPath) => {
+  const loadPathSuggestions = async inputPath => {
     try {
       // Extract the directory to browse (parent of input)
       const lastSlash = inputPath.lastIndexOf('/');
@@ -88,7 +98,9 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
 
     if (step === 1) {
       if (!workspaceType) {
-        setError('Please select whether you have an existing workspace or want to create a new one');
+        setError(
+          'Please select whether you have an existing workspace or want to create a new one'
+        );
         return;
       }
       setStep(2);
@@ -150,7 +162,7 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
     }
   };
 
-  const selectPathSuggestion = (suggestion) => {
+  const selectPathSuggestion = suggestion => {
     setWorkspacePath(suggestion.path);
     setShowPathDropdown(false);
   };
@@ -180,7 +192,7 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
         {/* Progress Indicator */}
         <div className="px-6 pt-4 pb-2">
           <div className="flex items-center justify-between">
-            {[1, 2, 3].map((s) => (
+            {[1, 2, 3].map(s => (
               <React.Fragment key={s}>
                 <div className="flex items-center gap-2">
                   <div
@@ -188,8 +200,8 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                       s < step
                         ? 'bg-green-500 text-white'
                         : s === step
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-500'
                     }`}
                   >
                     {s < step ? <Check className="w-4 h-4" /> : s}
@@ -248,7 +260,8 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                           Existing Workspace
                         </h5>
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                          I already have a workspace on my server and just need to add it to the project list
+                          I already have a workspace on my server and just need to add it to the
+                          project list
                         </p>
                       </div>
                     </div>
@@ -288,14 +301,20 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
               {/* Workspace Path */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  {workspaceType === 'existing' ? 'Workspace Path' : 'Where should the workspace be created?'}
+                  {workspaceType === 'existing'
+                    ? 'Workspace Path'
+                    : 'Where should the workspace be created?'}
                 </label>
                 <div className="relative">
                   <Input
                     type="text"
                     value={workspacePath}
-                    onChange={(e) => setWorkspacePath(e.target.value)}
-                    placeholder={workspaceType === 'existing' ? '/path/to/existing/workspace' : '/path/to/new/workspace'}
+                    onChange={e => setWorkspacePath(e.target.value)}
+                    placeholder={
+                      workspaceType === 'existing'
+                        ? '/path/to/existing/workspace'
+                        : '/path/to/new/workspace'
+                    }
                     className="w-full"
                   />
                   {showPathDropdown && pathSuggestions.length > 0 && (
@@ -306,8 +325,12 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                           onClick={() => selectPathSuggestion(suggestion)}
                           className="w-full px-4 py-2 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-sm"
                         >
-                          <div className="font-medium text-gray-900 dark:text-white">{suggestion.name}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{suggestion.path}</div>
+                          <div className="font-medium text-gray-900 dark:text-white">
+                            {suggestion.name}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {suggestion.path}
+                          </div>
                         </button>
                       ))}
                     </div>
@@ -330,7 +353,7 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                     <Input
                       type="text"
                       value={githubUrl}
-                      onChange={(e) => setGithubUrl(e.target.value)}
+                      onChange={e => setGithubUrl(e.target.value)}
                       placeholder="https://github.com/username/repository"
                       className="w-full"
                     />
@@ -349,7 +372,8 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                             GitHub Authentication (Optional)
                           </h5>
                           <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Only required for private repositories. Public repos can be cloned without authentication.
+                            Only required for private repositories. Public repos can be cloned
+                            without authentication.
                           </p>
                         </div>
                       </div>
@@ -406,11 +430,11 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                               </label>
                               <select
                                 value={selectedGithubToken}
-                                onChange={(e) => setSelectedGithubToken(e.target.value)}
+                                onChange={e => setSelectedGithubToken(e.target.value)}
                                 className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm"
                               >
                                 <option value="">-- Select a token --</option>
-                                {availableTokens.map((token) => (
+                                {availableTokens.map(token => (
                                   <option key={token.id} value={token.id}>
                                     {token.credential_name}
                                   </option>
@@ -425,7 +449,7 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                               <Input
                                 type="password"
                                 value={newGithubToken}
-                                onChange={(e) => setNewGithubToken(e.target.value)}
+                                onChange={e => setNewGithubToken(e.target.value)}
                                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                                 className="w-full"
                               />
@@ -439,7 +463,9 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                         <div className="space-y-4">
                           <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-3 border border-blue-200 dark:border-blue-800">
                             <p className="text-sm text-blue-800 dark:text-blue-200">
-                              💡 <strong>Public repositories</strong> don't require authentication. You can skip providing a token if cloning a public repo.
+                              💡 <strong>Public repositories</strong> don&apos;t require
+                              authentication. You can skip providing a token if cloning a public
+                              repo.
                             </p>
                           </div>
 
@@ -450,12 +476,13 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                             <Input
                               type="password"
                               value={newGithubToken}
-                              onChange={(e) => setNewGithubToken(e.target.value)}
+                              onChange={e => setNewGithubToken(e.target.value)}
                               placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx (leave empty for public repos)"
                               className="w-full"
                             />
                             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                              No stored tokens available. You can add tokens in Settings → API Keys for easier reuse.
+                              No stored tokens available. You can add tokens in Settings → API Keys
+                              for easier reuse.
                             </p>
                           </div>
                         </div>
@@ -501,8 +528,8 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                           {tokenMode === 'stored' && selectedGithubToken
                             ? `Using stored token: ${availableTokens.find(t => t.id.toString() === selectedGithubToken)?.credential_name || 'Unknown'}`
                             : tokenMode === 'new' && newGithubToken
-                            ? 'Using provided token'
-                            : 'No authentication'}
+                              ? 'Using provided token'
+                              : 'No authentication'}
                         </span>
                       </div>
                     </>
@@ -515,8 +542,8 @@ const ProjectCreationWizard = ({ onClose, onProjectCreated }) => {
                   {workspaceType === 'existing'
                     ? 'The workspace will be added to your project list and will be available for Claude/Cursor sessions.'
                     : githubUrl
-                    ? 'A new workspace will be created and the repository will be cloned from GitHub.'
-                    : 'An empty workspace directory will be created at the specified path.'}
+                      ? 'A new workspace will be created and the repository will be cloned from GitHub.'
+                      : 'An empty workspace directory will be created at the specified path.'}
                 </p>
               </div>
             </div>

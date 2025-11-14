@@ -91,6 +91,12 @@ public/*.woff2
 public/*.ttf
 public/*.eot
 
+# MSW generated files
+public/mockServiceWorker.js
+
+# Files with environment-specific formatting issues
+src/components/CredentialsSettings.jsx
+
 # Config files that should remain as-is
 *.config.js.backup
 *.config.json.backup

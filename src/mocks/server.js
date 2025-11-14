@@ -7,7 +7,7 @@ export const server = setupServer(...handlers);
 // Start server in test environment if needed
 if (process.env.NODE_ENV === 'test') {
   server.listen({
-    onUnhandledRequest: 'error'
+    onUnhandledRequest: 'error',
   });
 }
 

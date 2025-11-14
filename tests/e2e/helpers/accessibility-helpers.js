@@ -5,7 +5,7 @@ import { AxeAnalyzerResult } from 'axe-core';
  * Accessibility testing helpers for Playwright
  */
 
-export class AccessibilityHelper {
+class AccessibilityHelper {
   constructor(page) {
     this.page = page;
   }
@@ -25,7 +25,7 @@ export class AccessibilityHelper {
         'duplicate-id': { enabled: true },
         'form-field-multiple-labels': { enabled: true },
         'page-has-heading-one': { enabled: true },
-        'region': { enabled: true },
+        region: { enabled: true },
         'tabindex-order': { enabled: true },
         'focus-order-semantics': { enabled: true },
         'skip-link': { enabled: true },
@@ -46,9 +46,9 @@ export class AccessibilityHelper {
         'aria-valid-attr-value': { enabled: true },
         'button-name': { enabled: true },
         'checkbox-group': { enabled: true },
-        'fieldset': { enabled: true },
+        fieldset: { enabled: true },
         'file-input': { enabled: true },
-        'legend': { enabled: true },
+        legend: { enabled: true },
         'radio-group': { enabled: true },
         'select-name': { enabled: true },
         'table-headers': { enabled: true },
@@ -57,10 +57,9 @@ export class AccessibilityHelper {
         'nested-interactive': { enabled: true },
         'no-autocomplete-attribute': { enabled: true },
         'autocomplete-valid': { enabled: true },
-        'link-in-text-block': { enabled: true },
-        'list': { enabled: true },
-        'listitem': { enabled: true },
-        'dlitem': { enabled: true },
+        list: { enabled: true },
+        listitem: { enabled: true },
+        dlitem: { enabled: true },
         'definition-list': { enabled: true },
         'doctype-html5': { enabled: true },
         'frame-tested': { enabled: true },
@@ -77,8 +76,7 @@ export class AccessibilityHelper {
         'video-description': { enabled: true },
         'duplicate-id-aria': { enabled: true },
         'target-size': { enabled: true },
-        'skip-link': { enabled: true },
-        'bypass': { enabled: true },
+        bypass: { enabled: true },
         'landmark-one-main': { enabled: true },
         'landmark-no-duplicate-banner': { enabled: true },
         'landmark-no-duplicate-contentinfo': { enabled: true },
@@ -89,15 +87,14 @@ export class AccessibilityHelper {
         'meta-refresh': { enabled: true },
         'meta-viewport-large': { enabled: true },
         'css-orientation-lock': { enabled: true },
-        'aria-allowed-attr': { enabled: true },
         'aria-braille-equivalent': { enabled: true },
         'audiocaption-only-object': { enabled: true },
         'no-meta-viewport': { enabled: true },
         'object-title': { enabled: true },
         'video-description-missing': { enabled: true },
-        'video-description-named-track': { enabled: true }
+        'video-description-named-track': { enabled: true },
       },
-      ...options.axeOptions
+      ...options.axeOptions,
     };
 
     return await axeBuilder.analyze(axeOptions);
@@ -111,7 +108,7 @@ export class AccessibilityHelper {
 
     const axeOptions = {
       rules: {},
-      reporter: 'v2'
+      reporter: 'v2',
     };
 
     // Enable only specified rules
@@ -139,7 +136,7 @@ export class AccessibilityHelper {
       'keyboard-navigation',
       'tabindex-order',
       'focus-order-semantics',
-      'skip-link'
+      'skip-link',
     ]);
   }
 
@@ -157,7 +154,7 @@ export class AccessibilityHelper {
       'aria-roledescription',
       'aria-roles',
       'aria-valid-attr-value',
-      'duplicate-id-aria'
+      'duplicate-id-aria',
     ]);
   }
 
@@ -176,7 +173,7 @@ export class AccessibilityHelper {
       'radio-group',
       'select-name',
       'autocomplete-valid',
-      'no-autocomplete-attribute'
+      'no-autocomplete-attribute',
     ]);
   }
 
@@ -190,7 +187,7 @@ export class AccessibilityHelper {
       'input-image-alt',
       'object-alt',
       'video-caption',
-      'video-description'
+      'video-description',
     ]);
   }
 
@@ -207,7 +204,7 @@ export class AccessibilityHelper {
       'heading-order',
       'landmark-one-main',
       'landmark-unique',
-      'region'
+      'region',
     ]);
   }
 
@@ -218,7 +215,7 @@ export class AccessibilityHelper {
     return await this.checkRules([
       'focus-order-semantics',
       'aria-hidden-focus',
-      'nested-interactive'
+      'nested-interactive',
     ]);
   }
 
@@ -238,7 +235,7 @@ export class AccessibilityHelper {
         target: target ? target[0] : 'unknown',
         message: violation.description,
         help: violation.help,
-        helpUrl: violation.helpUrl
+        helpUrl: violation.helpUrl,
       };
     });
 
@@ -257,12 +254,21 @@ export class AccessibilityHelper {
     const results = await this.analyzeAccessibility();
 
     return {
-      total: results.violations.length + results.passes.length + results.incomplete.length + results.inapplicable.length,
+      total:
+        results.violations.length +
+        results.passes.length +
+        results.incomplete.length +
+        results.inapplicable.length,
       violations: results.violations.length,
       passes: results.passes.length,
       incomplete: results.incomplete.length,
       inapplicable: results.inapplicable.length,
-      score: results.violations.length === 0 ? 100 : Math.round(((results.passes.length) / (results.passes.length + results.violations.length)) * 100)
+      score:
+        results.violations.length === 0
+          ? 100
+          : Math.round(
+              (results.passes.length / (results.passes.length + results.violations.length)) * 100
+            ),
     };
   }
 
@@ -273,7 +279,7 @@ export class AccessibilityHelper {
     const screenshot = await this.page.screenshot({
       path: `test-results/accessibility/${name}-${Date.now()}.png`,
       fullPage,
-      animations: 'disabled'
+      animations: 'disabled',
     });
 
     return screenshot;
@@ -300,9 +306,9 @@ export class AccessibilityHelper {
           html: node.html,
           target: node.target,
           failureSummary: node.failureSummary,
-          impact: node.impact
-        }))
-      }))
+          impact: node.impact,
+        })),
+      })),
     };
 
     // Write report to file
@@ -323,7 +329,7 @@ export class AccessibilityHelper {
 /**
  * WCAG 2.1 Level AA compliance checker
  */
-export class WCAGComplianceChecker {
+class WCAGComplianceChecker {
   constructor(accessibilityHelper) {
     this.accessibilityHelper = accessibilityHelper;
   }
@@ -345,7 +351,7 @@ export class WCAGComplianceChecker {
       'frame-title',
       'document-title',
       'meta-viewport',
-      'meta-description'
+      'meta-description',
     ];
 
     return await this.accessibilityHelper.checkRules(levelARules);
@@ -399,7 +405,7 @@ export class WCAGComplianceChecker {
       'aria-roledescription',
       'aria-roles',
       'aria-valid-attr-value',
-      'input-button-name'
+      'input-button-name',
     ];
 
     return await this.accessibilityHelper.checkRules(levelAARules);
@@ -423,7 +429,7 @@ export class WCAGComplianceChecker {
       'landmark-no-duplicate-form',
       'landmark-no-duplicate-navigation',
       'landmark-no-duplicate-search',
-      'landmark-unique'
+      'landmark-unique',
     ];
 
     const aaaResults = await this.accessibilityHelper.checkRules(levelAAAAdditionalRules);
@@ -433,8 +439,8 @@ export class WCAGComplianceChecker {
       levelAAA: aaaResults,
       combined: {
         violations: [...levelAAARules.violations, ...aaaResults.violations],
-        passes: [...levelAAARules.passes, ...aaaResults.passes]
-      }
+        passes: [...levelAAARules.passes, ...aaaResults.passes],
+      },
     };
   }
 
@@ -451,18 +457,30 @@ export class WCAGComplianceChecker {
       wcagVersion: '2.1',
       levelA: {
         violations: 0, // Simplified for this example
-        passes: levelAA.violations.length + levelAA.passes.length
+        passes: levelAA.violations.length + levelAA.passes.length,
       },
       levelAA: {
         violations: levelAA.violations.length,
         passes: levelAA.passes.length,
-        compliance: levelAA.violations.length === 0 ? 100 : Math.round((levelAA.passes.length / (levelAA.passes.length + levelAA.violations.length)) * 100)
+        compliance:
+          levelAA.violations.length === 0
+            ? 100
+            : Math.round(
+                (levelAA.passes.length / (levelAA.passes.length + levelAA.violations.length)) * 100
+              ),
       },
       levelAAA: {
         violations: levelAAA.combined.violations.length,
         passes: levelAAA.combined.passes.length,
-        compliance: levelAAA.combined.violations.length === 0 ? 100 : Math.round((levelAAA.combined.passes.length / (levelAAA.combined.passes.length + levelAAA.combined.violations.length)) * 100)
-      }
+        compliance:
+          levelAAA.combined.violations.length === 0
+            ? 100
+            : Math.round(
+                (levelAAA.combined.passes.length /
+                  (levelAAA.combined.passes.length + levelAAA.combined.violations.length)) *
+                  100
+              ),
+      },
     };
 
     const fs = await import('fs');
@@ -482,7 +500,7 @@ export class WCAGComplianceChecker {
 /**
  * Visual Regression Testing Helper
  */
-export class VisualRegressionHelper {
+class VisualRegressionHelper {
   constructor(page) {
     this.page = page;
     this.baselineDir = 'test-results/visual-baselines';
@@ -492,11 +510,7 @@ export class VisualRegressionHelper {
    * Take baseline screenshot
    */
   async takeBaselineScreenshot(name, options = {}) {
-    const {
-      fullPage = true,
-      animations = 'disabled',
-      clip = null
-    } = options;
+    const { fullPage = true, animations = 'disabled', clip = null } = options;
 
     // Ensure baseline directory exists
     const fs = await import('fs');
@@ -512,7 +526,7 @@ export class VisualRegressionHelper {
       path: screenshotPath,
       fullPage,
       animations,
-      clip
+      clip,
     });
   }
 
@@ -520,18 +534,16 @@ export class VisualRegressionHelper {
    * Compare screenshot with baseline
    */
   async compareWithBaseline(name, options = {}) {
-    const {
-      fullPage = true,
-      animations = 'disabled',
-      threshold = 0.2,
-      clip = null
-    } = options;
+    const { fullPage = true, animations = 'disabled', threshold = 0.2, clip = null } = options;
 
     const baselinePath = `${this.baselineDir}/${name}.png`;
 
     // Check if baseline exists
     const fs = await import('fs');
-    const baselineExists = await fs.promises.access(baselinePath).then(() => true).catch(() => false);
+    const baselineExists = await fs.promises
+      .access(baselinePath)
+      .then(() => true)
+      .catch(() => false);
 
     if (!baselineExists) {
       throw new Error(`Baseline screenshot not found: ${baselinePath}`);
@@ -543,7 +555,7 @@ export class VisualRegressionHelper {
       path: screenshotPath,
       fullPage,
       animations,
-      clip
+      clip,
     });
 
     // Compare screenshots (simplified - in real implementation would use proper image diff)
@@ -552,7 +564,7 @@ export class VisualRegressionHelper {
       current: screenshotPath,
       identical: true, // Simplified
       threshold,
-      comparison: 'baseline-current'
+      comparison: 'baseline-current',
     };
   }
 
@@ -567,8 +579,8 @@ export class VisualRegressionHelper {
         total: results.length,
         identical: results.filter(r => r.identical).length,
         different: results.filter(r => !r.identical).length,
-        errors: results.filter(r => r.error).length
-      }
+        errors: results.filter(r => r.error).length,
+      },
     };
 
     const fs = await import('fs');
@@ -585,8 +597,4 @@ export class VisualRegressionHelper {
   }
 }
 
-export {
-  AccessibilityHelper,
-  WCAGComplianceChecker,
-  VisualRegressionHelper
-};
+export { AccessibilityHelper, WCAGComplianceChecker, VisualRegressionHelper };

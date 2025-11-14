@@ -12,20 +12,20 @@ class MessageSearchService {
       keys: [
         {
           name: 'content',
-          weight: 0.7 // Content is most important
+          weight: 0.7, // Content is most important
         },
         {
           name: 'sender',
-          weight: 0.2 // Sender identification
+          weight: 0.2, // Sender identification
         },
         {
           name: 'metadata.file',
-          weight: 0.05 // File attachments
+          weight: 0.05, // File attachments
         },
         {
           name: 'metadata.command',
-          weight: 0.05 // Commands or tool usage
-        }
+          weight: 0.05, // Commands or tool usage
+        },
       ],
       threshold: 0.3, // Fuzzy matching threshold
       includeScore: true,
@@ -34,7 +34,7 @@ class MessageSearchService {
       ignoreLocation: true,
       shouldSort: true,
       findAllMatches: true,
-      useExtendedSearch: true
+      useExtendedSearch: true,
     };
 
     // Service configuration
@@ -55,7 +55,7 @@ class MessageSearchService {
       averageSearchTime: 0,
       totalSearchTime: 0,
       cacheHits: 0,
-      cacheMisses: 0
+      cacheMisses: 0,
     };
 
     // Cleanup interval for cache
@@ -91,7 +91,7 @@ class MessageSearchService {
       return {
         indexed: messagesToIndex.length,
         total: messages.length,
-        truncated: messages.length > this.maxIndexSize
+        truncated: messages.length > this.maxIndexSize,
       };
     } catch (error) {
       console.error('Failed to index messages:', error);
@@ -128,7 +128,7 @@ class MessageSearchService {
 
       return {
         added: processedNewMessages.length,
-        total: messagesToIndex.length
+        total: messagesToIndex.length,
       };
     } catch (error) {
       console.error('Failed to add messages to index:', error);
@@ -145,7 +145,7 @@ class MessageSearchService {
       content: message.content || '',
       sender: message.sender || message.role || 'unknown',
       timestamp: message.timestamp || message.createdAt,
-      type: message.type || 'message'
+      type: message.type || 'message',
     };
 
     // Add metadata for extended search
@@ -178,10 +178,10 @@ class MessageSearchService {
     }
 
     // Add processed content for better matching
-    processed.searchableContent = [
-      processed.content,
-      ...Object.values(metadata)
-    ].filter(Boolean).join(' ').toLowerCase();
+    processed.searchableContent = [processed.content, ...Object.values(metadata)]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
 
     processed.metadata = metadata;
 
@@ -200,7 +200,7 @@ class MessageSearchService {
       enableHighlighting = this.enableHighlighting,
       sortBy = 'relevance', // 'relevance', 'date', 'score'
       sortOrder = 'desc',
-      filters = {}
+      filters = {},
     } = options;
 
     if (!sessionId) {
@@ -213,7 +213,7 @@ class MessageSearchService {
         total: 0,
         query,
         sessionId,
-        took: 0
+        took: 0,
       };
     }
 
@@ -248,45 +248,48 @@ class MessageSearchService {
       }
 
       // Process results
-      const processedResults = results.slice(offset, offset + limit).map(result => {
-        const message = this.messages.get(sessionId).find(msg => msg.id === result.item.id);
+      const processedResults = results
+        .slice(offset, offset + limit)
+        .map(result => {
+          const message = this.messages.get(sessionId).find(msg => msg.id === result.item.id);
 
-        if (!message) return null;
+          if (!message) return null;
 
-        const searchResult = {
-          message: {
-            id: message.id,
-            content: includeContent ? message.content : null,
-            sender: message.sender,
-            timestamp: message.timestamp,
-            type: message.type
-          },
-          score: result.score,
-          matches: result.matches,
-          relevance: this.calculateRelevance(result.score, result.matches)
-        };
+          const searchResult = {
+            message: {
+              id: message.id,
+              content: includeContent ? message.content : null,
+              sender: message.sender,
+              timestamp: message.timestamp,
+              type: message.type,
+            },
+            score: result.score,
+            matches: result.matches,
+            relevance: this.calculateRelevance(result.score, result.matches),
+          };
 
-        // Add metadata if requested
-        if (includeMetadata && message.metadata) {
-          searchResult.message.metadata = message.metadata;
-        }
+          // Add metadata if requested
+          if (includeMetadata && message.metadata) {
+            searchResult.message.metadata = message.metadata;
+          }
 
-        // Add highlighting if enabled
-        if (enableHighlighting && result.matches) {
-          searchResult.highlights = this.generateHighlights(message.content, result.matches);
-        }
+          // Add highlighting if enabled
+          if (enableHighlighting && result.matches) {
+            searchResult.highlights = this.generateHighlights(message.content, result.matches);
+          }
 
-        return searchResult;
-      }).filter(Boolean);
+          return searchResult;
+        })
+        .filter(Boolean);
 
       // Sort results
       processedResults.sort((a, b) => {
         switch (sortBy) {
-          case 'date':
+          case 'date': {
             const dateA = new Date(a.message.timestamp);
             const dateB = new Date(b.message.timestamp);
             return sortOrder === 'desc' ? dateB - dateA : dateA - dateB;
-
+          }
           case 'score':
             return sortOrder === 'desc' ? b.score - a.score : a.score - b.score;
 
@@ -304,7 +307,7 @@ class MessageSearchService {
         sessionId,
         took: searchTime,
         hasMore: results.length > offset + limit,
-        indexSize: this.messages.get(sessionId)?.length || 0
+        indexSize: this.messages.get(sessionId)?.length || 0,
       };
 
       // Cache results
@@ -317,7 +320,6 @@ class MessageSearchService {
       this.updateMetrics(searchTime);
 
       return searchResult;
-
     } catch (error) {
       console.error('Search failed:', error);
       throw error;
@@ -425,7 +427,7 @@ class MessageSearchService {
             startIndex: Math.max(0, start - 50),
             endIndex: Math.min(snippet.length, end - start + 100),
             originalStart: start,
-            originalEnd: end
+            originalEnd: end,
           });
         });
       }
@@ -481,25 +483,32 @@ class MessageSearchService {
    * Get search statistics
    */
   getStats(sessionId = null) {
-    const sessionStats = sessionId ? {
-      indexedMessages: this.messages.get(sessionId)?.length || 0,
-      hasIndex: this.indices.has(sessionId),
-      cacheSize: Array.from(this.cache.keys()).filter(key => key.includes(sessionId)).length
-    } : {
-      totalSessions: this.indices.size,
-      totalMessages: Array.from(this.messages.values()).reduce((sum, msgs) => sum + msgs.length, 0),
-      cacheSize: this.cache.size
-    };
+    const sessionStats = sessionId
+      ? {
+          indexedMessages: this.messages.get(sessionId)?.length || 0,
+          hasIndex: this.indices.has(sessionId),
+          cacheSize: Array.from(this.cache.keys()).filter(key => key.includes(sessionId)).length,
+        }
+      : {
+          totalSessions: this.indices.size,
+          totalMessages: Array.from(this.messages.values()).reduce(
+            (sum, msgs) => sum + msgs.length,
+            0
+          ),
+          cacheSize: this.cache.size,
+        };
 
     return {
       ...sessionStats,
       metrics: { ...this.metrics },
-      averageSearchTime: this.metrics.searchesPerformed > 0
-        ? this.metrics.totalSearchTime / this.metrics.searchesPerformed
-        : 0,
-      cacheHitRate: this.metrics.cacheHits + this.metrics.cacheMisses > 0
-        ? this.metrics.cacheHits / (this.metrics.cacheHits + this.metrics.cacheMisses)
-        : 0
+      averageSearchTime:
+        this.metrics.searchesPerformed > 0
+          ? this.metrics.totalSearchTime / this.metrics.searchesPerformed
+          : 0,
+      cacheHitRate:
+        this.metrics.cacheHits + this.metrics.cacheMisses > 0
+          ? this.metrics.cacheHits / (this.metrics.cacheHits + this.metrics.cacheMisses)
+          : 0,
     };
   }
 
@@ -532,7 +541,7 @@ class MessageSearchService {
   setCache(key, data) {
     this.cache.set(key, {
       data,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
     this.timestamps.set(key, Date.now());
   }

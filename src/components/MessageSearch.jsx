@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, Calendar, User, File, X, ChevronDown, Download, BarChart3 } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  Calendar,
+  User,
+  File,
+  X,
+  ChevronDown,
+  Download,
+  BarChart3,
+} from 'lucide-react';
 import { useMessageSearch } from '../hooks/useMessageSearch';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -18,13 +28,13 @@ const MessageSearch = ({
   ...props
 }) => {
   const { theme } = useTheme();
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     sender: '',
     messageType: '',
     hasAttachment: false,
     dateFrom: '',
-    dateTo: ''
+    dateTo: '',
   });
   const [exportFormat, setExportFormat] = useState('json');
 
@@ -41,16 +51,16 @@ const MessageSearch = ({
     clearSearch,
     searchWithFilters,
     exportResults,
-    getStatistics
+    getStatistics,
   } = useMessageSearch(sessionId, messages, {
     autoIndex: true,
     maxIndexSize: 10000,
     enableHighlighting: true,
-    debounceDelay: 300
+    debounceDelay: 300,
   });
 
   // Handle search input
-  const handleSearchChange = (e) => {
+  const handleSearchChange = e => {
     updateQuery(e.target.value);
   };
 
@@ -75,7 +85,7 @@ const MessageSearch = ({
       messageType: '',
       hasAttachment: false,
       dateFrom: '',
-      dateTo: ''
+      dateTo: '',
     });
   };
 
@@ -84,7 +94,7 @@ const MessageSearch = ({
     const exportedData = exportResults(exportFormat);
     if (exportedData) {
       const blob = new Blob([exportedData], {
-        type: exportFormat === 'json' ? 'application/json' : 'text/plain'
+        type: exportFormat === 'json' ? 'application/json' : 'text/plain',
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -98,7 +108,7 @@ const MessageSearch = ({
   };
 
   // Format timestamp
-  const formatTimestamp = (timestamp) => {
+  const formatTimestamp = timestamp => {
     const date = new Date(timestamp);
     return date.toLocaleString();
   };
@@ -148,11 +158,7 @@ const MessageSearch = ({
           )}
         </div>
 
-        {error && (
-          <div className="mt-2 text-red-500 text-sm">
-            Search error: {error}
-          </div>
-        )}
+        {error && <div className="mt-2 text-red-500 text-sm">Search error: {error}</div>}
 
         {stats && stats.total > 0 && (
           <div className="mt-2 text-gray-500 dark:text-gray-400 text-sm">
@@ -196,7 +202,9 @@ const MessageSearch = ({
         {/* Search Status */}
         <div className="mt-2 flex items-center justify-between text-sm">
           <div className="flex items-center gap-4">
-            <span className={`px-2 py-1 rounded text-xs ${isIndexed ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'}`}>
+            <span
+              className={`px-2 py-1 rounded text-xs ${isIndexed ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'}`}
+            >
               {isIndexed ? 'Indexed' : 'Indexing...'}
             </span>
             {stats && (
@@ -209,12 +217,14 @@ const MessageSearch = ({
           <div className="flex items-center gap-2">
             {showAdvanced && (
               <button
-                onClick={() => setShowAdvanced(!showAdvanced)}
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 flex items-center gap-1"
               >
                 <Filter className="w-4 h-4" />
                 <span className="text-sm">Advanced</span>
-                <ChevronDown className={`w-3 h-3 transform transition-transform ${showAdvanced ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`w-3 h-3 transform transition-transform ${showAdvancedFilters ? 'rotate-180' : ''}`}
+                />
               </button>
             )}
             {results.length > 0 && (
@@ -226,9 +236,9 @@ const MessageSearch = ({
                 <Download className="w-4 h-4" />
                 <select
                   value={exportFormat}
-                  onChange={(e) => setExportFormat(e.target.value)}
+                  onChange={e => setExportFormat(e.target.value)}
                   className="text-sm bg-transparent border-0 focus:ring-0"
-                  onClick={(e) => e.stopPropagation()}
+                  onClick={e => e.stopPropagation()}
                 >
                   <option value="json">JSON</option>
                   <option value="csv">CSV</option>
@@ -263,9 +273,11 @@ const MessageSearch = ({
       </div>
 
       {/* Advanced Search Filters */}
-      {showAdvanced && (
+      {showAdvancedFilters && (
         <div className="mb-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-medium mb-3 text-gray-900 dark:text-white">Advanced Search</h3>
+          <h3 className="text-lg font-medium mb-3 text-gray-900 dark:text-white">
+            Advanced Search
+          </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Sender Filter */}
@@ -277,7 +289,7 @@ const MessageSearch = ({
               <input
                 type="text"
                 value={searchFilters.sender}
-                onChange={(e) => setSearchFilters(prev => ({ ...prev, sender: e.target.value }))}
+                onChange={e => setSearchFilters(prev => ({ ...prev, sender: e.target.value }))}
                 placeholder="Filter by sender..."
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
@@ -291,7 +303,7 @@ const MessageSearch = ({
               </label>
               <select
                 value={searchFilters.messageType}
-                onChange={(e) => setSearchFilters(prev => ({ ...prev, messageType: e.target.value }))}
+                onChange={e => setSearchFilters(prev => ({ ...prev, messageType: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               >
                 <option value="">All types</option>
@@ -308,7 +320,9 @@ const MessageSearch = ({
                 <input
                   type="checkbox"
                   checked={searchFilters.hasAttachment}
-                  onChange={(e) => setSearchFilters(prev => ({ ...prev, hasAttachment: e.target.checked }))}
+                  onChange={e =>
+                    setSearchFilters(prev => ({ ...prev, hasAttachment: e.target.checked }))
+                  }
                   className="mr-2"
                 />
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -326,7 +340,7 @@ const MessageSearch = ({
               <input
                 type="date"
                 value={searchFilters.dateFrom}
-                onChange={(e) => setSearchFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                onChange={e => setSearchFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
             </div>
@@ -339,7 +353,7 @@ const MessageSearch = ({
               <input
                 type="date"
                 value={searchFilters.dateTo}
-                onChange={(e) => setSearchFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                onChange={e => setSearchFilters(prev => ({ ...prev, dateTo: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               />
             </div>
@@ -390,7 +404,7 @@ const MessageSearch = ({
                 <div
                   className="text-gray-700 dark:text-gray-300 leading-relaxed"
                   dangerouslySetInnerHTML={{
-                    __html: highlightContent(result.message.content, result.highlights)
+                    __html: highlightContent(result.message.content, result.highlights),
                   }}
                 />
               )}
@@ -410,7 +424,7 @@ const MessageSearch = ({
       {query && !isSearching && results.length === 0 && !error && (
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <Search className="w-12 h-12 mx-auto mb-3 opacity-50" />
-          <p>No messages found matching "{query}"</p>
+          <p>No messages found matching &quot;{query}&quot;</p>
         </div>
       )}
     </div>

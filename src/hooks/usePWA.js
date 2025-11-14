@@ -1,3 +1,4 @@
+/* global MessageChannel */
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const usePWA = (options = {}) => {
@@ -5,7 +6,7 @@ export const usePWA = (options = {}) => {
     onInstallPrompt = null,
     onUpdateAvailable = null,
     onAppInstalled = null,
-    checkInterval = 60000 // Check for updates every minute
+    checkInterval = 60000, // Check for updates every minute
   } = options;
 
   const [isInstallable, setIsInstallable] = useState(false);
@@ -20,7 +21,7 @@ export const usePWA = (options = {}) => {
   // Check if PWA is installed
   const checkInstalled = useCallback(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isInWebAppiOS = (window.navigator.standalone === true);
+    const isInWebAppiOS = window.navigator.standalone === true;
     const isInWebAppChrome = window.matchMedia('(display-mode: standalone)').matches;
     const isPWAInstalled = isStandalone || isInWebAppiOS || isInWebAppChrome;
 
@@ -29,15 +30,18 @@ export const usePWA = (options = {}) => {
   }, []);
 
   // Handle install prompt
-  const handleBeforeInstallPrompt = useCallback((event) => {
-    event.preventDefault();
-    deferredPrompt.current = event;
-    setIsInstallable(true);
+  const handleBeforeInstallPrompt = useCallback(
+    event => {
+      event.preventDefault();
+      deferredPrompt.current = event;
+      setIsInstallable(true);
 
-    if (onInstallPrompt) {
-      onInstallPrompt(event);
-    }
-  }, [onInstallPrompt]);
+      if (onInstallPrompt) {
+        onInstallPrompt(event);
+      }
+    },
+    [onInstallPrompt]
+  );
 
   // Handle app installed
   const handleAppInstalled = useCallback(() => {
@@ -51,14 +55,17 @@ export const usePWA = (options = {}) => {
   }, [onAppInstalled]);
 
   // Handle service worker update
-  const handleSWUpdate = useCallback((newRegistration) => {
-    setIsUpdateAvailable(true);
-    setRegistration(newRegistration);
+  const handleSWUpdate = useCallback(
+    newRegistration => {
+      setIsUpdateAvailable(true);
+      setRegistration(newRegistration);
 
-    if (onUpdateAvailable) {
-      onUpdateAvailable(newRegistration);
-    }
-  }, [onUpdateAvailable]);
+      if (onUpdateAvailable) {
+        onUpdateAvailable(newRegistration);
+      }
+    },
+    [onUpdateAvailable]
+  );
 
   // Install PWA
   const install = useCallback(async () => {
@@ -118,8 +125,8 @@ export const usePWA = (options = {}) => {
 
     try {
       const messageChannel = new MessageChannel();
-      const versionPromise = new Promise((resolve) => {
-        messageChannel.port1.onmessage = (event) => {
+      const versionPromise = new Promise(resolve => {
+        messageChannel.port1.onmessage = event => {
           resolve(event.data.version);
         };
       });
@@ -133,32 +140,38 @@ export const usePWA = (options = {}) => {
   }, [registration]);
 
   // Cache URLs
-  const cacheUrls = useCallback(async (urls) => {
-    if (!registration) return false;
+  const cacheUrls = useCallback(
+    async urls => {
+      if (!registration) return false;
 
-    try {
-      const messageChannel = new MessageChannel();
-      const resultPromise = new Promise((resolve, reject) => {
-        messageChannel.port1.onmessage = (event) => {
-          if (event.data.success) {
-            resolve(true);
-          } else {
-            reject(new Error(event.data.error));
-          }
-        };
-      });
+      try {
+        const messageChannel = new MessageChannel();
+        const resultPromise = new Promise((resolve, reject) => {
+          messageChannel.port1.onmessage = event => {
+            if (event.data.success) {
+              resolve(true);
+            } else {
+              reject(new Error(event.data.error));
+            }
+          };
+        });
 
-      registration.active.postMessage({
-        type: 'CACHE_URLS',
-        payload: { urls }
-      }, [messageChannel.port2]);
+        registration.active.postMessage(
+          {
+            type: 'CACHE_URLS',
+            payload: { urls },
+          },
+          [messageChannel.port2]
+        );
 
-      return await resultPromise;
-    } catch (error) {
-      console.error('Failed to cache URLs:', error);
-      return false;
-    }
-  }, [registration]);
+        return await resultPromise;
+      } catch (error) {
+        console.error('Failed to cache URLs:', error);
+        return false;
+      }
+    },
+    [registration]
+  );
 
   // Clear cache
   const clearCache = useCallback(async () => {
@@ -167,7 +180,7 @@ export const usePWA = (options = {}) => {
     try {
       const messageChannel = new MessageChannel();
       const resultPromise = new Promise((resolve, reject) => {
-        messageChannel.port1.onmessage = (event) => {
+        messageChannel.port1.onmessage = event => {
           if (event.data.success) {
             resolve(true);
           } else {
@@ -215,7 +228,7 @@ export const usePWA = (options = {}) => {
 
     try {
       const newRegistration = await navigator.serviceWorker.register('/sw.js', {
-        scope: '/'
+        scope: '/',
       });
 
       console.log('Service Worker registered:', newRegistration);
@@ -280,8 +293,8 @@ export const usePWA = (options = {}) => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initialize on mount
-    initialize();
+    // Initialize on mount (deferred to avoid synchronous setState)
+    setTimeout(initialize, 0);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -290,7 +303,14 @@ export const usePWA = (options = {}) => {
       window.removeEventListener('offline', handleOffline);
       cleanup();
     };
-  }, [handleBeforeInstallPrompt, handleAppInstalled, handleOnline, handleOffline, initialize, cleanup]);
+  }, [
+    handleBeforeInstallPrompt,
+    handleAppInstalled,
+    handleOnline,
+    handleOffline,
+    initialize,
+    cleanup,
+  ]);
 
   // Handle service worker controller change (page refresh)
   useEffect(() => {
@@ -335,8 +355,8 @@ export const usePWA = (options = {}) => {
     supportsWakeLock: 'wakeLock' in navigator,
 
     // Browser compatibility
-    isStandalone: checkInstalled(),
-    isPWA: checkInstalled()
+    isStandalone: isInstalled,
+    isPWA: isInstalled,
   };
 };
 

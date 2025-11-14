@@ -5,6 +5,7 @@ This directory contains the CI/CD workflows for the Claude Code UI project.
 ## Current Workflows
 
 ### 1. CI Workflow (`ci.yml`)
+
 - **Triggers**: Push to main, pull requests to main
 - **Jobs**:
   - **Lint**: ESLint and Prettier formatting checks
@@ -15,12 +16,14 @@ This directory contains the CI/CD workflows for the Claude Code UI project.
   - **Cross-browser Testing**: Tests across Node.js versions (18, 20, 22)
 
 ### 2. Docker Workflow (`docker.yml`)
+
 - **Triggers**: Push to main with release tag
 - **Jobs**:
   - **Build and Publish**: Multi-stage Docker builds
   - **Security Scanning**: Container vulnerability scanning
 
 ### 3. Performance Workflow (`performance.yml`)
+
 - **Triggers**: Schedule (daily), manual dispatch
 - **Jobs**:
   - **Performance Tests**: Load testing and performance benchmarks
@@ -28,6 +31,7 @@ This directory contains the CI/CD workflows for the Claude Code UI project.
   - **Lighthouse CI**: Performance and accessibility audits
 
 ### 4. Publish Workflow (`publish.yml`)
+
 - **Triggers**: Push to main with version tag
 - **Jobs**:
   - **NPM Publish**: Automated package publishing
@@ -38,14 +42,15 @@ This directory contains the CI/CD workflows for the Claude Code UI project.
 To enable these workflows, create the following files in `.github/workflows/`:
 
 ### ci.yml
+
 ```yaml
 name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   lint:
@@ -162,6 +167,7 @@ The workflows integrate with our comprehensive testing infrastructure:
 ## Environment Variables
 
 Required secrets for workflows:
+
 - `NPM_TOKEN`: For publishing packages
 - `DOCKER_USERNAME`: Docker Hub username
 - `DOCKER_PASSWORD`: Docker Hub access token
@@ -186,4 +192,5 @@ act -j test
 - **Performance**: Lighthouse CI reports
 - **Security**: Dependabot and npm audit alerts
 
-This setup ensures comprehensive testing, security scanning, and automated deployment for the Claude Code UI project.
+This setup ensures comprehensive testing, security scanning, and automated
+deployment for the Claude Code UI project.

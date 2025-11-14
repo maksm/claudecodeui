@@ -18,31 +18,31 @@ jest.mock('@xterm/xterm', () => ({
     element: {
       style: {},
       addEventListener: jest.fn(),
-      removeEventListener: jest.fn()
+      removeEventListener: jest.fn(),
     },
     rows: 24,
-    cols: 80
-  }))
+    cols: 80,
+  })),
 }));
 
 jest.mock('@xterm/addon-fit', () => ({
   FitAddon: jest.fn().mockImplementation(() => ({
     activate: jest.fn(),
-    fit: jest.fn()
-  }))
+    fit: jest.fn(),
+  })),
 }));
 
 jest.mock('@xterm/addon-clipboard', () => ({
   ClipboardAddon: jest.fn().mockImplementation(() => ({
-    activate: jest.fn()
-  }))
+    activate: jest.fn(),
+  })),
 }));
 
 jest.mock('@xterm/addon-webgl', () => ({
   WebglAddon: jest.fn().mockImplementation(() => ({
     addOnTextureAtlasChange: jest.fn(),
-    dispose: jest.fn()
-  }))
+    dispose: jest.fn(),
+  })),
 }));
 
 // Mock WebSocket
@@ -55,19 +55,19 @@ global.WebSocket = jest.fn(() => ({
   CONNECTING: 0,
   OPEN: 1,
   CLOSING: 2,
-  CLOSED: 3
+  CLOSED: 3,
 }));
 
 describe('Shell Component', () => {
   const mockSelectedProject = {
     id: 'test-project',
     name: 'Test Project',
-    path: '/path/to/project'
+    path: '/path/to/project',
   };
 
   const mockSelectedSession = {
     id: 'session-1',
-    type: 'shell'
+    type: 'shell',
   };
 
   const defaultProps = {
@@ -75,7 +75,7 @@ describe('Shell Component', () => {
     selectedSession: mockSelectedSession,
     isActive: true,
     isPlainShell: false,
-    onProcessComplete: jest.fn()
+    onProcessComplete: jest.fn(),
   };
 
   beforeEach(() => {
@@ -86,7 +86,7 @@ describe('Shell Component', () => {
     global.ResizeObserver = jest.fn().mockImplementation(() => ({
       observe: jest.fn(),
       unobserve: jest.fn(),
-      disconnect: jest.fn()
+      disconnect: jest.fn(),
     }));
 
     // Mock matchMedia
@@ -153,9 +153,7 @@ describe('Shell Component', () => {
     it('establishes WebSocket connection on mount', () => {
       render(<Shell {...defaultProps} />);
 
-      expect(global.WebSocket).toHaveBeenCalledWith(
-        expect.stringContaining('/shell')
-      );
+      expect(global.WebSocket).toHaveBeenCalledWith(expect.stringContaining('/shell'));
     });
 
     it('handles WebSocket connection errors', async () => {
@@ -168,7 +166,7 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       }));
 
       render(<Shell {...defaultProps} />);
@@ -188,7 +186,7 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
@@ -226,7 +224,7 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
@@ -253,8 +251,8 @@ describe('Shell Component', () => {
           fontSize: 12,
           theme: expect.objectContaining({
             background: 'rgba(0, 0, 0, 0.8)',
-            foreground: '#ffffff'
-          })
+            foreground: '#ffffff',
+          }),
         })
       );
     });
@@ -297,7 +295,7 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
@@ -329,7 +327,7 @@ describe('Shell Component', () => {
       expect(mockWebSocket.send).toHaveBeenCalledWith(
         JSON.stringify({
           type: 'shell-input',
-          data: 'ls\n'
+          data: 'ls\n',
         })
       );
     });
@@ -337,10 +335,9 @@ describe('Shell Component', () => {
 
   describe('Session Management', () => {
     it('uses session ID when provided', () => {
-      render(<Shell
-        {...defaultProps}
-        selectedSession={{ id: 'custom-session-123', type: 'shell' }}
-      />);
+      render(
+        <Shell {...defaultProps} selectedSession={{ id: 'custom-session-123', type: 'shell' }} />
+      );
 
       expect(global.WebSocket).toHaveBeenCalledWith(
         expect.stringContaining('sessionId=custom-session-123')
@@ -348,14 +345,9 @@ describe('Shell Component', () => {
     });
 
     it('creates new session when none provided', () => {
-      render(<Shell
-        {...defaultProps}
-        selectedSession={null}
-      />);
+      render(<Shell {...defaultProps} selectedSession={null} />);
 
-      expect(global.WebSocket).toHaveBeenCalledWith(
-        expect.stringContaining('sessionId=')
-      );
+      expect(global.WebSocket).toHaveBeenCalledWith(expect.stringContaining('sessionId='));
     });
 
     it('handles session change', async () => {
@@ -363,10 +355,9 @@ describe('Shell Component', () => {
 
       const initialWebSocket = global.WebSocket.mock.calls[0][0];
 
-      rerender(<Shell
-        {...defaultProps}
-        selectedSession={{ id: 'new-session-456', type: 'shell' }}
-      />);
+      rerender(
+        <Shell {...defaultProps} selectedSession={{ id: 'new-session-456', type: 'shell' }} />
+      );
 
       await waitFor(() => {
         expect(global.WebSocket).toHaveBeenCalledTimes(2);
@@ -389,15 +380,12 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
 
-      render(<Shell
-        {...defaultProps}
-        onProcessComplete={mockOnProcessComplete}
-      />);
+      render(<Shell {...defaultProps} onProcessComplete={mockOnProcessComplete} />);
 
       // Simulate process completion message
       act(() => {
@@ -406,8 +394,8 @@ describe('Shell Component', () => {
             handler({
               data: JSON.stringify({
                 type: 'shell-process-complete',
-                exitCode: 0
-              })
+                exitCode: 0,
+              }),
             });
           }
         });
@@ -427,15 +415,12 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
 
-      render(<Shell
-        {...defaultProps}
-        onProcessComplete={mockOnProcessComplete}
-      />);
+      render(<Shell {...defaultProps} onProcessComplete={mockOnProcessComplete} />);
 
       // Simulate shell abort message
       act(() => {
@@ -443,8 +428,8 @@ describe('Shell Component', () => {
           if (event === 'message') {
             handler({
               data: JSON.stringify({
-                type: 'shell-abort'
-              })
+                type: 'shell-abort',
+              }),
             });
           }
         });
@@ -456,14 +441,9 @@ describe('Shell Component', () => {
 
   describe('Plain Shell Mode', () => {
     it('works in plain shell mode', () => {
-      render(<Shell
-        {...defaultProps}
-        isPlainShell={true}
-      />);
+      render(<Shell {...defaultProps} isPlainShell={true} />);
 
-      expect(global.WebSocket).toHaveBeenCalledWith(
-        expect.stringContaining('plainShell=true')
-      );
+      expect(global.WebSocket).toHaveBeenCalledWith(expect.stringContaining('plainShell=true'));
     });
 
     it('executes initial command when provided', () => {
@@ -476,15 +456,12 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
 
-      render(<Shell
-        {...defaultProps}
-        initialCommand="echo 'Hello World'"
-      />);
+      render(<Shell {...defaultProps} initialCommand="echo 'Hello World'" />);
 
       // Should send initial command after connection
       act(() => {
@@ -498,7 +475,7 @@ describe('Shell Component', () => {
       expect(mockWebSocket.send).toHaveBeenCalledWith(
         JSON.stringify({
           type: 'shell-input',
-          data: "echo 'Hello World'\n"
+          data: "echo 'Hello World'\n",
         })
       );
     });
@@ -537,7 +514,7 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
@@ -568,7 +545,7 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
@@ -591,7 +568,7 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       global.WebSocket.mockImplementation(() => mockWebSocket);
@@ -680,7 +657,7 @@ describe('Shell Component', () => {
         CONNECTING: 0,
         OPEN: 1,
         CLOSING: 2,
-        CLOSED: 3
+        CLOSED: 3,
       };
 
       const { Terminal } = require('@xterm/xterm');
@@ -696,10 +673,10 @@ describe('Shell Component', () => {
         element: {
           style: {},
           addEventListener: jest.fn(),
-          removeEventListener: jest.fn()
+          removeEventListener: jest.fn(),
         },
         rows: 24,
-        cols: 80
+        cols: 80,
       };
 
       Terminal.mockImplementation(() => mockTerminal);

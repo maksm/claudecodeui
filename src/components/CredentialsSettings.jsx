@@ -33,14 +33,14 @@ function CredentialsSettings() {
 
       // Fetch API keys
       const apiKeysRes = await fetch('/api/settings/api-keys', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const apiKeysData = await apiKeysRes.json();
       setApiKeys(apiKeysData.apiKeys || []);
 
       // Fetch GitHub credentials only
       const credentialsRes = await fetch('/api/settings/credentials?type=github_token', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const credentialsData = await credentialsRes.json();
       setGithubCredentials(credentialsData.credentials || []);
@@ -59,10 +59,10 @@ function CredentialsSettings() {
       const res = await fetch('/api/settings/api-keys', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ keyName: newKeyName })
+        body: JSON.stringify({ keyName: newKeyName }),
       });
 
       const data = await res.json();
@@ -77,14 +77,14 @@ function CredentialsSettings() {
     }
   };
 
-  const deleteApiKey = async (keyId) => {
-    if (!confirm('Are you sure you want to delete this API key?')) return;
+  const deleteApiKey = async keyId => {
+    if (!window.confirm('Are you sure you want to delete this API key?')) return;
 
     try {
       const token = localStorage.getItem('auth-token');
       await fetch(`/api/settings/api-keys/${keyId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       fetchData();
     } catch (error) {
@@ -98,10 +98,10 @@ function CredentialsSettings() {
       await fetch(`/api/settings/api-keys/${keyId}/toggle`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isActive: !isActive })
+        body: JSON.stringify({ isActive: !isActive }),
       });
       fetchData();
     } catch (error) {
@@ -117,15 +117,15 @@ function CredentialsSettings() {
       const res = await fetch('/api/settings/credentials', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           credentialName: newGithubName,
           credentialType: 'github_token',
           credentialValue: newGithubToken,
-          description: newGithubDescription
-        })
+          description: newGithubDescription,
+        }),
       });
 
       const data = await res.json();
@@ -141,14 +141,14 @@ function CredentialsSettings() {
     }
   };
 
-  const deleteGithubCredential = async (credentialId) => {
-    if (!confirm('Are you sure you want to delete this GitHub token?')) return;
+  const deleteGithubCredential = async credentialId => {
+    if (!window.confirm('Are you sure you want to delete this GitHub token?')) return;
 
     try {
       const token = localStorage.getItem('auth-token');
       await fetch(`/api/settings/credentials/${credentialId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       fetchData();
     } catch (error) {
@@ -162,10 +162,10 @@ function CredentialsSettings() {
       await fetch(`/api/settings/credentials/${credentialId}/toggle`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isActive: !isActive })
+        body: JSON.stringify({ isActive: !isActive }),
       });
       fetchData();
     } catch (error) {
@@ -190,7 +190,7 @@ function CredentialsSettings() {
         <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
           <h4 className="font-semibold text-yellow-500 mb-2">⚠️ Save Your API Key</h4>
           <p className="text-sm text-muted-foreground mb-3">
-            This is the only time you'll see this key. Store it securely.
+            This is the only time you&apos;ll see this key. Store it securely.
           </p>
           <div className="flex items-center gap-2">
             <code className="flex-1 px-3 py-2 bg-background/50 rounded font-mono text-sm break-all">
@@ -210,7 +210,7 @@ function CredentialsSettings() {
             className="mt-3"
             onClick={() => setNewlyCreatedKey(null)}
           >
-            I've saved it
+            I&apos;ve saved it
           </Button>
         </div>
       )}
@@ -222,10 +222,7 @@ function CredentialsSettings() {
             <Key className="h-5 w-5" />
             <h3 className="text-lg font-semibold">API Keys</h3>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setShowNewKeyForm(!showNewKeyForm)}
-          >
+          <Button size="sm" onClick={() => setShowNewKeyForm(!showNewKeyForm)}>
             <Plus className="h-4 w-4 mr-1" />
             New API Key
           </Button>
@@ -251,7 +248,7 @@ function CredentialsSettings() {
             <Input
               placeholder="API Key Name (e.g., Production Server)"
               value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
+              onChange={e => setNewKeyName(e.target.value)}
               className="mb-2"
             />
             <div className="flex gap-2">
@@ -267,17 +264,15 @@ function CredentialsSettings() {
           {apiKeys.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">No API keys created yet.</p>
           ) : (
-            apiKeys.map((key) => (
-              <div
-                key={key.id}
-                className="flex items-center justify-between p-3 border rounded-lg"
-              >
+            apiKeys.map(key => (
+              <div key={key.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex-1">
                   <div className="font-medium">{key.key_name}</div>
                   <code className="text-xs text-muted-foreground">{key.api_key}</code>
                   <div className="text-xs text-muted-foreground mt-1">
                     Created: {new Date(key.created_at).toLocaleDateString()}
-                    {key.last_used && ` • Last used: ${new Date(key.last_used).toLocaleDateString()}`}
+                    {key.last_used &&
+                      ` • Last used: ${new Date(key.last_used).toLocaleDateString()}`}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -288,11 +283,7 @@ function CredentialsSettings() {
                   >
                     {key.is_active ? 'Active' : 'Inactive'}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteApiKey(key.id)}
-                  >
+                  <Button size="sm" variant="ghost" onClick={() => deleteApiKey(key.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -309,17 +300,15 @@ function CredentialsSettings() {
             <Github className="h-5 w-5" />
             <h3 className="text-lg font-semibold">GitHub Credentials</h3>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setShowNewGithubForm(!showNewGithubForm)}
-          >
+          <Button size="sm" onClick={() => setShowNewGithubForm(!showNewGithubForm)}>
             <Plus className="h-4 w-4 mr-1" />
             Add Token
           </Button>
         </div>
 
         <p className="text-sm text-muted-foreground mb-4">
-          Add GitHub Personal Access Tokens to clone private repositories. You can also pass tokens directly in API requests without storing them.
+          Add GitHub Personal Access Tokens to clone private repositories. You can also pass tokens
+          directly in API requests without storing them.
         </p>
 
         {showNewGithubForm && (
@@ -327,7 +316,7 @@ function CredentialsSettings() {
             <Input
               placeholder="Token Name (e.g., Personal Repos)"
               value={newGithubName}
-              onChange={(e) => setNewGithubName(e.target.value)}
+              onChange={e => setNewGithubName(e.target.value)}
             />
 
             <div className="relative">
@@ -335,7 +324,7 @@ function CredentialsSettings() {
                 type={showToken['new'] ? 'text' : 'password'}
                 placeholder="GitHub Personal Access Token (ghp_...)"
                 value={newGithubToken}
-                onChange={(e) => setNewGithubToken(e.target.value)}
+                onChange={e => setNewGithubToken(e.target.value)}
                 className="pr-10"
               />
               <button
@@ -350,17 +339,20 @@ function CredentialsSettings() {
             <Input
               placeholder="Description (optional)"
               value={newGithubDescription}
-              onChange={(e) => setNewGithubDescription(e.target.value)}
+              onChange={e => setNewGithubDescription(e.target.value)}
             />
 
             <div className="flex gap-2">
               <Button onClick={createGithubCredential}>Add Token</Button>
-              <Button variant="outline" onClick={() => {
-                setShowNewGithubForm(false);
-                setNewGithubName('');
-                setNewGithubToken('');
-                setNewGithubDescription('');
-              }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowNewGithubForm(false);
+                  setNewGithubName('');
+                  setNewGithubToken('');
+                  setNewGithubDescription('');
+                }}
+              >
                 Cancel
               </Button>
             </div>
@@ -380,7 +372,7 @@ function CredentialsSettings() {
           {githubCredentials.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">No GitHub tokens added yet.</p>
           ) : (
-            githubCredentials.map((credential) => (
+            githubCredentials.map(credential => (
               <div
                 key={credential.id}
                 className="flex items-center justify-between p-3 border rounded-lg"

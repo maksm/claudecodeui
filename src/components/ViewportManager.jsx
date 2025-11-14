@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef, useCallback } from 'react';
 import { useVirtualKeyboard } from '../hooks/useVirtualKeyboard';
 import { useResponsiveDesign } from '../hooks/useResponsiveDesign';
 
@@ -26,7 +26,7 @@ const ViewportManagerContext = createContext({
   // Responsive utilities
   isMobile: false,
   isTablet: false,
-  isDesktop: false
+  isDesktop: false,
 });
 
 export const useViewport = () => {
@@ -51,14 +51,14 @@ export const ViewportManagerProvider = ({ children }) => {
     cssSafeAreaHeight,
     cssKeyboardHeight,
     isLandscape,
-    isPortrait
+    isPortrait,
   } = useVirtualKeyboard({
-    onShow: (height) => {
+    onShow: height => {
       console.log(`Keyboard shown with height: ${height}px`);
     },
     onHide: () => {
       console.log('Keyboard hidden');
-    }
+    },
   });
 
   const { deviceInfo, windowSize } = useResponsiveDesign();
@@ -69,26 +69,32 @@ export const ViewportManagerProvider = ({ children }) => {
   const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
 
   // Get viewport CSS properties
-  const getViewportCSS = useCallback(() => ({
-    height: isKeyboardVisible ? `${adjustedViewportHeight}px` : '100vh',
-    minHeight: isKeyboardVisible ? `${adjustedViewportHeight}px` : '100vh',
-    maxHeight: isKeyboardVisible ? `${adjustedViewportHeight}px` : '100vh',
-    width: '100vw',
-    minWidth: '100vw',
-    maxWidth: '100vw',
-    overflow: 'hidden',
-    position: 'relative'
-  }), [isKeyboardVisible, adjustedViewportHeight]);
+  const getViewportCSS = useCallback(
+    () => ({
+      height: isKeyboardVisible ? `${adjustedViewportHeight}px` : '100vh',
+      minHeight: isKeyboardVisible ? `${adjustedViewportHeight}px` : '100vh',
+      maxHeight: isKeyboardVisible ? `${adjustedViewportHeight}px` : '100vh',
+      width: '100vw',
+      minWidth: '100vw',
+      maxWidth: '100vw',
+      overflow: 'hidden',
+      position: 'relative',
+    }),
+    [isKeyboardVisible, adjustedViewportHeight]
+  );
 
   // Get safe area CSS properties
-  const getSafeAreaCSS = useCallback(() => ({
-    paddingTop: cssSafeAreaTop,
-    height: cssSafeAreaHeight,
-    minHeight: cssSafeAreaHeight,
-    maxHeight: cssSafeAreaHeight,
-    boxSizing: 'border-box',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-  }), [cssSafeAreaTop, cssSafeAreaHeight]);
+  const getSafeAreaCSS = useCallback(
+    () => ({
+      paddingTop: cssSafeAreaTop,
+      height: cssSafeAreaHeight,
+      minHeight: cssSafeAreaHeight,
+      maxHeight: cssSafeAreaHeight,
+      boxSizing: 'border-box',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    }),
+    [cssSafeAreaTop, cssSafeAreaHeight]
+  );
 
   // Register input for keyboard tracking
   const registerInput = useCallback((id, element) => {
@@ -97,7 +103,7 @@ export const ViewportManagerProvider = ({ children }) => {
   }, []);
 
   // Unregister input
-  const unregisterInput = useCallback((id) => {
+  const unregisterInput = useCallback(id => {
     setRegisteredInputs(prev => {
       const newSet = new Set(prev);
       newSet.delete(id);
@@ -107,36 +113,42 @@ export const ViewportManagerProvider = ({ children }) => {
   }, []);
 
   // Auto-scroll active input into view
-  const handleInputFocus = useCallback((element) => {
-    if (!element || !isKeyboardVisible) return;
+  const handleInputFocus = useCallback(
+    element => {
+      if (!element || !isKeyboardVisible) return;
 
-    // Add small delay to allow keyboard to fully appear
-    setTimeout(() => {
-      scrollIntoView(element, {
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'nearest'
-      });
-    }, 300);
-  }, [isKeyboardVisible, scrollIntoView]);
+      // Add small delay to allow keyboard to fully appear
+      setTimeout(() => {
+        scrollIntoView(element, {
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'nearest',
+        });
+      }, 300);
+    },
+    [isKeyboardVisible, scrollIntoView]
+  );
 
   // Enhanced scroll into view that handles all inputs
-  const enhancedScrollIntoView = useCallback((element, options = {}) => {
-    scrollIntoView(element, options);
+  const enhancedScrollIntoView = useCallback(
+    (element, options = {}) => {
+      scrollIntoView(element, options);
 
-    // Register element for tracking
-    const elementId = `input-${Date.now()}`;
-    registerInput(elementId, element);
+      // Register element for tracking
+      const elementId = `input-${Date.now()}`;
+      registerInput(elementId, element);
 
-    // Auto cleanup after animation
-    setTimeout(() => {
-      unregisterInput(elementId);
-    }, 1000);
-  }, [scrollIntoView, registerInput, unregisterInput]);
+      // Auto cleanup after animation
+      setTimeout(() => {
+        unregisterInput(elementId);
+      }, 1000);
+    },
+    [scrollIntoView, registerInput, unregisterInput]
+  );
 
   // Handle global focus events
   useEffect(() => {
-    const handleGlobalFocus = (event) => {
+    const handleGlobalFocus = event => {
       const target = event.target;
       if (
         target.tagName === 'INPUT' ||
@@ -198,7 +210,7 @@ export const ViewportManagerProvider = ({ children }) => {
     deviceInfo.isTablet,
     deviceInfo.isDesktop,
     isLandscape,
-    isPortrait
+    isPortrait,
   ]);
 
   const value = {
@@ -231,13 +243,11 @@ export const ViewportManagerProvider = ({ children }) => {
 
     // Additional utilities
     visualViewport,
-    registeredInputs: Array.from(registeredInputs)
+    registeredInputs: Array.from(registeredInputs),
   };
 
   return (
-    <ViewportManagerContext.Provider value={value}>
-      {children}
-    </ViewportManagerContext.Provider>
+    <ViewportManagerContext.Provider value={value}>{children}</ViewportManagerContext.Provider>
   );
 };
 
@@ -250,12 +260,7 @@ export const ViewportAware = ({
   safeArea = true,
   ...props
 }) => {
-  const {
-    getViewportCSS,
-    getSafeAreaCSS,
-    isKeyboardVisible,
-    isMobile
-  } = useViewport();
+  const { getViewportCSS, getSafeAreaCSS, isKeyboardVisible, isMobile } = useViewport();
 
   const combinedStyles = React.useMemo(() => {
     let styles = {};
@@ -283,11 +288,7 @@ export const ViewportAware = ({
   }, [isKeyboardVisible, isMobile, adjustForKeyboard, safeArea, className]);
 
   return (
-    <div
-      className={combinedClassName}
-      style={combinedStyles}
-      {...props}
-    >
+    <div className={combinedClassName} style={combinedStyles} {...props}>
       {children}
     </div>
   );

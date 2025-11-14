@@ -8,7 +8,7 @@ export function useWebSocket() {
 
   useEffect(() => {
     connect();
-    
+
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -17,6 +17,7 @@ export function useWebSocket() {
         ws.close();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Keep dependency array but add proper cleanup
 
   const connect = async () => {
@@ -52,7 +53,7 @@ export function useWebSocket() {
         setWs(websocket);
       };
 
-      websocket.onmessage = (event) => {
+      websocket.onmessage = event => {
         try {
           const data = JSON.parse(event.data);
           setMessages(prev => [...prev, data]);
@@ -64,23 +65,22 @@ export function useWebSocket() {
       websocket.onclose = () => {
         setIsConnected(false);
         setWs(null);
-        
+
         // Attempt to reconnect after 3 seconds
         reconnectTimeoutRef.current = setTimeout(() => {
           connect();
         }, 3000);
       };
 
-      websocket.onerror = (error) => {
+      websocket.onerror = error => {
         console.error('WebSocket error:', error);
       };
-
     } catch (error) {
       console.error('Error creating WebSocket connection:', error);
     }
   };
 
-  const sendMessage = (message) => {
+  const sendMessage = message => {
     if (ws && isConnected) {
       ws.send(JSON.stringify(message));
     } else {
@@ -92,6 +92,6 @@ export function useWebSocket() {
     ws,
     sendMessage,
     messages,
-    isConnected
+    isConnected,
   };
 }

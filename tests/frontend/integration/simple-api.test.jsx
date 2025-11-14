@@ -22,8 +22,8 @@ const SimpleApiComponent = () => {
         },
         body: JSON.stringify({
           username: 'testuser',
-          password: 'password123'
-        })
+          password: 'password123',
+        }),
       });
       const data = await response.json();
       if (data.success) {
@@ -76,21 +76,15 @@ const SimpleApiComponent = () => {
 
   return (
     <div data-testid="simple-api-component">
-      <div data-testid="user-info">
-        {user ? `Logged in as: ${user.username}` : 'Not logged in'}
-      </div>
+      <div data-testid="user-info">{user ? `Logged in as: ${user.username}` : 'Not logged in'}</div>
 
       <div data-testid="projects-info">
         {projects.length > 0 ? `${projects.length} projects loaded` : 'No projects loaded'}
       </div>
 
-      <div data-testid="loading-info">
-        {loading ? 'Loading...' : 'Not loading'}
-      </div>
+      <div data-testid="loading-info">{loading ? 'Loading...' : 'Not loading'}</div>
 
-      <div data-testid="error-info">
-        {error || 'No error'}
-      </div>
+      <div data-testid="error-info">{error || 'No error'}</div>
 
       <button data-testid="login-button" onClick={handleLogin}>
         Login
@@ -161,9 +155,9 @@ describe('Simple API Integration Tests with MSW', () => {
               name: 'Special Test Project',
               path: '/special/path',
               description: 'A special test project',
-              lastModified: new Date().toISOString()
-            }
-          ]
+              lastModified: new Date().toISOString(),
+            },
+          ],
         });
       })
     );

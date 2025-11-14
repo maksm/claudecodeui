@@ -1,3 +1,4 @@
+/* global CSS, getComputedStyle */
 import { useState, useEffect, useCallback } from 'react';
 
 // Breakpoint definitions
@@ -7,7 +8,7 @@ const BREAKPOINTS = {
   md: 768,
   lg: 1024,
   xl: 1280,
-  xxl: 1536
+  xxl: 1536,
 };
 
 // Default responsive config
@@ -16,7 +17,7 @@ const defaultConfig = {
   touchOptimized: true,
   enableHapticFeedback: true,
   enableGestures: true,
-  breakpoints: BREAKPOINTS
+  breakpoints: BREAKPOINTS,
 };
 
 export const useResponsiveDesign = (config = {}) => {
@@ -25,8 +26,12 @@ export const useResponsiveDesign = (config = {}) => {
   const [windowSize, setWindowSize] = useState({
     width: typeof window !== 'undefined' ? window.innerWidth : 1024,
     height: typeof window !== 'undefined' ? window.innerHeight : 768,
-    orientation: typeof window !== 'undefined' ?
-      (window.innerHeight > window.innerWidth ? 'portrait' : 'landscape') : 'landscape'
+    orientation:
+      typeof window !== 'undefined'
+        ? window.innerHeight > window.innerWidth
+          ? 'portrait'
+          : 'landscape'
+        : 'landscape',
   });
 
   const [deviceInfo, setDeviceInfo] = useState({
@@ -36,13 +41,13 @@ export const useResponsiveDesign = (config = {}) => {
     isTouch: false,
     hasNotch: false,
     pixelRatio: 1,
-    viewportHeight: '100vh'
+    viewportHeight: '100vh',
   });
 
   const [breakpoint, setBreakpoint] = useState('lg');
 
   // Get current breakpoint based on width
-  const getCurrentBreakpoint = useCallback((width) => {
+  const getCurrentBreakpoint = useCallback(width => {
     if (width >= BREAKPOINTS.xl) return 'xl';
     if (width >= BREAKPOINTS.lg) return 'lg';
     if (width >= BREAKPOINTS.md) return 'md';
@@ -52,7 +57,9 @@ export const useResponsiveDesign = (config = {}) => {
 
   // Check if device is mobile
   const isMobileDevice = useCallback(() => {
-    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+      navigator.userAgent
+    );
   }, []);
 
   // Check if device supports touch
@@ -62,8 +69,11 @@ export const useResponsiveDesign = (config = {}) => {
 
   // Check for device notch (iPhone X+ and similar)
   const hasDeviceNotch = useCallback(() => {
-    return CSS.supports('padding-top', 'env(safe-area-inset-top)') &&
-           window.innerWidth >= 375 && window.innerHeight >= 812;
+    return (
+      CSS.supports('padding-top', 'env(safe-area-inset-top)') &&
+      window.innerWidth >= 375 &&
+      window.innerHeight >= 812
+    );
   }, []);
 
   // Get effective viewport height (accounting for mobile browser UI)
@@ -110,7 +120,7 @@ export const useResponsiveDesign = (config = {}) => {
     setWindowSize({
       width,
       height,
-      orientation: height > width ? 'portrait' : 'landscape'
+      orientation: height > width ? 'portrait' : 'landscape',
     });
 
     setDeviceInfo({
@@ -120,7 +130,7 @@ export const useResponsiveDesign = (config = {}) => {
       isTouch: isTouchDevice(),
       hasNotch: hasDeviceNotch(),
       pixelRatio: window.devicePixelRatio || 1,
-      viewportHeight: getEffectiveViewportHeight()
+      viewportHeight: getEffectiveViewportHeight(),
     });
 
     setBreakpoint(currentBreakpoint);
@@ -128,6 +138,7 @@ export const useResponsiveDesign = (config = {}) => {
 
   // Handle window resize
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     updateDimensions();
 
     let resizeTimer;
@@ -147,25 +158,37 @@ export const useResponsiveDesign = (config = {}) => {
   }, [updateDimensions]);
 
   // Responsive utilities
-  const up = useCallback((targetBreakpoint) => {
-    const targetWidth = BREAKPOINTS[targetBreakpoint];
-    return windowSize.width >= targetWidth;
-  }, [windowSize.width]);
+  const up = useCallback(
+    targetBreakpoint => {
+      const targetWidth = BREAKPOINTS[targetBreakpoint];
+      return windowSize.width >= targetWidth;
+    },
+    [windowSize.width]
+  );
 
-  const down = useCallback((targetBreakpoint) => {
-    const targetWidth = BREAKPOINTS[targetBreakpoint];
-    return windowSize.width < targetWidth;
-  }, [windowSize.width]);
+  const down = useCallback(
+    targetBreakpoint => {
+      const targetWidth = BREAKPOINTS[targetBreakpoint];
+      return windowSize.width < targetWidth;
+    },
+    [windowSize.width]
+  );
 
-  const between = useCallback((minBreakpoint, maxBreakpoint) => {
-    const minWidth = BREAKPOINTS[minBreakpoint];
-    const maxWidth = BREAKPOINTS[maxBreakpoint];
-    return windowSize.width >= minWidth && windowSize.width < maxWidth;
-  }, [windowSize.width]);
+  const between = useCallback(
+    (minBreakpoint, maxBreakpoint) => {
+      const minWidth = BREAKPOINTS[minBreakpoint];
+      const maxWidth = BREAKPOINTS[maxBreakpoint];
+      return windowSize.width >= minWidth && windowSize.width < maxWidth;
+    },
+    [windowSize.width]
+  );
 
-  const only = useCallback((targetBreakpoint) => {
-    return breakpoint === targetBreakpoint;
-  }, [breakpoint]);
+  const only = useCallback(
+    targetBreakpoint => {
+      return breakpoint === targetBreakpoint;
+    },
+    [breakpoint]
+  );
 
   // Touch target utilities
   const getTouchTargetSize = useCallback(() => {
@@ -191,42 +214,48 @@ export const useResponsiveDesign = (config = {}) => {
       top: parseInt(style.getPropertyValue('env(safe-area-inset-top)') || 0),
       right: parseInt(style.getPropertyValue('env(safe-area-inset-right)') || 0),
       bottom: parseInt(style.getPropertyValue('env(safe-area-inset-bottom)') || 0),
-      left: parseInt(style.getPropertyValue('env(safe-area-inset-left)') || 0)
+      left: parseInt(style.getPropertyValue('env(safe-area-inset-left)') || 0),
     };
   }, [deviceInfo.hasNotch]);
 
   // CSS class generator
-  const getResponsiveClasses = useCallback((baseClass, modifiers = {}) => {
-    const classes = [baseClass];
+  const getResponsiveClasses = useCallback(
+    (baseClass, modifiers = {}) => {
+      const classes = [baseClass];
 
-    // Add breakpoint-specific classes
-    Object.entries(modifiers).forEach(([breakpoint, condition]) => {
-      if (condition) {
-        classes.push(`${baseClass}:${breakpoint}`);
-      }
-    });
+      // Add breakpoint-specific classes
+      Object.entries(modifiers).forEach(([breakpoint, condition]) => {
+        if (condition) {
+          classes.push(`${baseClass}:${breakpoint}`);
+        }
+      });
 
-    // Add device-specific classes
-    if (deviceInfo.isMobile) classes.push(`${baseClass}:mobile`);
-    if (deviceInfo.isTablet) classes.push(`${baseClass}:tablet`);
-    if (deviceInfo.isDesktop) classes.push(`${baseClass}:desktop`);
-    if (deviceInfo.isTouch) classes.push(`${baseClass}:touch`);
+      // Add device-specific classes
+      if (deviceInfo.isMobile) classes.push(`${baseClass}:mobile`);
+      if (deviceInfo.isTablet) classes.push(`${baseClass}:tablet`);
+      if (deviceInfo.isDesktop) classes.push(`${baseClass}:desktop`);
+      if (deviceInfo.isTouch) classes.push(`${baseClass}:touch`);
 
-    return classes.join(' ');
-  }, [deviceInfo]);
+      return classes.join(' ');
+    },
+    [deviceInfo]
+  );
 
   // Haptic feedback utility
-  const triggerHaptic = useCallback((pattern = 50) => {
-    if (!mergedConfig.enableHapticFeedback || !deviceInfo.isTouch) return;
+  const triggerHaptic = useCallback(
+    (pattern = 50) => {
+      if (!mergedConfig.enableHapticFeedback || !deviceInfo.isTouch) return;
 
-    try {
-      if ('vibrate' in navigator) {
-        navigator.vibrate(pattern);
+      try {
+        if ('vibrate' in navigator) {
+          navigator.vibrate(pattern);
+        }
+      } catch (error) {
+        // Silently ignore vibration errors
       }
-    } catch (error) {
-      // Silently ignore vibration errors
-    }
-  }, [mergedConfig.enableHapticFeedback, deviceInfo.isTouch]);
+    },
+    [mergedConfig.enableHapticFeedback, deviceInfo.isTouch]
+  );
 
   return {
     // Current state
@@ -254,7 +283,7 @@ export const useResponsiveDesign = (config = {}) => {
     triggerHaptic,
 
     // Configuration
-    config: mergedConfig
+    config: mergedConfig,
   };
 };
 

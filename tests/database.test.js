@@ -24,9 +24,16 @@ describe('Database Operations and Schema', () => {
     });
 
     test('should have correct users table structure', () => {
-      const schema = db.prepare("PRAGMA table_info(users)").all();
+      const schema = db.prepare('PRAGMA table_info(users)').all();
 
-      const requiredColumns = ['id', 'username', 'email', 'password_hash', 'created_at', 'updated_at'];
+      const requiredColumns = [
+        'id',
+        'username',
+        'email',
+        'password_hash',
+        'created_at',
+        'updated_at',
+      ];
       const columnNames = schema.map(col => col.name);
 
       requiredColumns.forEach(column => {
@@ -44,7 +51,7 @@ describe('Database Operations and Schema', () => {
     });
 
     test('should have correct api_keys table structure', () => {
-      const schema = db.prepare("PRAGMA table_info(api_keys)").all();
+      const schema = db.prepare('PRAGMA table_info(api_keys)').all();
 
       const requiredColumns = ['id', 'user_id', 'key_name', 'api_key', 'created_at'];
       const columnNames = schema.map(col => col.name);
@@ -62,9 +69,16 @@ describe('Database Operations and Schema', () => {
     });
 
     test('should have correct user_credentials table structure', () => {
-      const schema = db.prepare("PRAGMA table_info(user_credentials)").all();
+      const schema = db.prepare('PRAGMA table_info(user_credentials)').all();
 
-      const requiredColumns = ['id', 'user_id', 'service_name', 'credential_data', 'created_at', 'updated_at'];
+      const requiredColumns = [
+        'id',
+        'user_id',
+        'service_name',
+        'credential_data',
+        'created_at',
+        'updated_at',
+      ];
       const columnNames = schema.map(col => col.name);
 
       requiredColumns.forEach(column => {
@@ -79,7 +93,7 @@ describe('Database Operations and Schema', () => {
     });
 
     test('should enable foreign keys', () => {
-      const result = db.prepare("PRAGMA foreign_keys").get();
+      const result = db.prepare('PRAGMA foreign_keys').get();
       expect(result.foreign_keys).toBe(1);
     });
   });
@@ -162,7 +176,9 @@ describe('Database Operations and Schema', () => {
       });
 
       test('should read API key by key value', () => {
-        const apiKey = db.prepare('SELECT * FROM api_keys WHERE api_key = ?').get('test-api-key-12345');
+        const apiKey = db
+          .prepare('SELECT * FROM api_keys WHERE api_key = ?')
+          .get('test-api-key-12345');
 
         expect(apiKey).toBeDefined();
         expect(apiKey.key_name).toBe('test-key');
@@ -196,21 +212,18 @@ describe('Database Operations and Schema', () => {
       test('should create new user credential', () => {
         const credentialData = JSON.stringify({
           accessToken: 'ghp_1234567890',
-          refreshToken: 'ref_1234567890'
+          refreshToken: 'ref_1234567890',
         });
 
         const insertCredential = db.prepare(`
           INSERT INTO user_credentials (user_id, service_name, credential_data) VALUES (?, ?, ?)
         `);
 
-        const result = insertCredential.run(
-          testData.userId,
-          'github',
-          credentialData
-        );
+        const result = insertCredential.run(testData.userId, 'github', credentialData);
         expect(result.changes).toBe(1);
 
-        const credential = db.prepare('SELECT * FROM user_credentials WHERE service_name = ?')
+        const credential = db
+          .prepare('SELECT * FROM user_credentials WHERE service_name = ?')
           .get('github');
         expect(credential).toBeDefined();
         expect(credential.service_name).toBe('github');
@@ -220,11 +233,14 @@ describe('Database Operations and Schema', () => {
       test('should read user credentials by service', () => {
         // First create a credential
         const credentialData = JSON.stringify({ token: 'gitlab-token-123' });
-        db.prepare(`
+        db.prepare(
+          `
           INSERT INTO user_credentials (user_id, service_name, credential_data) VALUES (?, ?, ?)
-        `).run(testData.userId, 'gitlab', credentialData);
+        `
+        ).run(testData.userId, 'gitlab', credentialData);
 
-        const credential = db.prepare('SELECT * FROM user_credentials WHERE service_name = ? AND user_id = ?')
+        const credential = db
+          .prepare('SELECT * FROM user_credentials WHERE service_name = ? AND user_id = ?')
           .get('gitlab', testData.userId);
 
         expect(credential).toBeDefined();
@@ -235,12 +251,19 @@ describe('Database Operations and Schema', () => {
       test('should update user credentials', () => {
         // First create a credential
         const credentialData = JSON.stringify({ token: 'old-token' });
-        const insertResult = db.prepare(`
+        const insertResult = db
+          .prepare(
+            `
           INSERT INTO user_credentials (user_id, service_name, credential_data) VALUES (?, ?, ?)
-        `).run(testData.userId, 'bitbucket', credentialData);
+        `
+          )
+          .run(testData.userId, 'bitbucket', credentialData);
 
         // Update it
-        const newCredentialData = JSON.stringify({ token: 'new-token', refreshToken: 'refresh-123' });
+        const newCredentialData = JSON.stringify({
+          token: 'new-token',
+          refreshToken: 'refresh-123',
+        });
         const updateCredential = db.prepare(`
           UPDATE user_credentials SET credential_data = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?
         `);
@@ -248,7 +271,8 @@ describe('Database Operations and Schema', () => {
         const result = updateCredential.run(newCredentialData, insertResult.lastInsertRowid);
         expect(result.changes).toBe(1);
 
-        const credential = db.prepare('SELECT * FROM user_credentials WHERE id = ?')
+        const credential = db
+          .prepare('SELECT * FROM user_credentials WHERE id = ?')
           .get(insertResult.lastInsertRowid);
         const parsedData = JSON.parse(credential.credential_data);
         expect(parsedData.token).toBe('new-token');
@@ -367,14 +391,18 @@ describe('Database Operations and Schema', () => {
     test('should handle complex joins efficiently', () => {
       const startTime = Date.now();
 
-      const result = db.prepare(`
+      const result = db
+        .prepare(
+          `
         SELECT u.username, COUNT(ak.id) as key_count
         FROM users u
         LEFT JOIN api_keys ak ON u.id = ak.user_id
         WHERE u.id <= 50
         GROUP BY u.id, u.username
         ORDER BY u.id
-      `).all();
+      `
+        )
+        .all();
 
       expect(result).toHaveLength(50);
       result.forEach(row => {

@@ -27,7 +27,7 @@ const FORBIDDEN_PATHS = [
   '/lib64',
   '/opt',
   '/tmp',
-  '/run'
+  '/run',
 ];
 
 /**
@@ -45,25 +45,25 @@ async function validateWorkspacePath(requestedPath) {
     if (FORBIDDEN_PATHS.includes(normalizedPath) || normalizedPath === '/') {
       return {
         valid: false,
-        error: 'Cannot use system-critical directories as workspace locations'
+        error: 'Cannot use system-critical directories as workspace locations',
       };
     }
 
     // Additional check for paths starting with forbidden directories
     for (const forbidden of FORBIDDEN_PATHS) {
-      if (normalizedPath === forbidden ||
-          normalizedPath.startsWith(forbidden + path.sep)) {
+      if (normalizedPath === forbidden || normalizedPath.startsWith(forbidden + path.sep)) {
         // Exception: /var/tmp and similar user-accessible paths might be allowed
         // but /var itself and most /var subdirectories should be blocked
-        if (forbidden === '/var' &&
-            (normalizedPath.startsWith('/var/tmp') ||
-             normalizedPath.startsWith('/var/folders'))) {
+        if (
+          forbidden === '/var' &&
+          (normalizedPath.startsWith('/var/tmp') || normalizedPath.startsWith('/var/folders'))
+        ) {
           continue; // Allow these specific cases
         }
 
         return {
           valid: false,
-          error: `Cannot create workspace in system directory: ${forbidden}`
+          error: `Cannot create workspace in system directory: ${forbidden}`,
         };
       }
     }
@@ -101,11 +101,13 @@ async function validateWorkspacePath(requestedPath) {
     const resolvedWorkspaceRoot = await fs.realpath(WORKSPACES_ROOT);
 
     // Ensure the resolved path is contained within the allowed workspace root
-    if (!realPath.startsWith(resolvedWorkspaceRoot + path.sep) &&
-        realPath !== resolvedWorkspaceRoot) {
+    if (
+      !realPath.startsWith(resolvedWorkspaceRoot + path.sep) &&
+      realPath !== resolvedWorkspaceRoot
+    ) {
       return {
         valid: false,
-        error: `Workspace path must be within the allowed workspace root: ${WORKSPACES_ROOT}`
+        error: `Workspace path must be within the allowed workspace root: ${WORKSPACES_ROOT}`,
       };
     }
 
@@ -120,11 +122,13 @@ async function validateWorkspacePath(requestedPath) {
         const resolvedTarget = path.resolve(path.dirname(absolutePath), linkTarget);
         const realTarget = await fs.realpath(resolvedTarget);
 
-        if (!realTarget.startsWith(resolvedWorkspaceRoot + path.sep) &&
-            realTarget !== resolvedWorkspaceRoot) {
+        if (
+          !realTarget.startsWith(resolvedWorkspaceRoot + path.sep) &&
+          realTarget !== resolvedWorkspaceRoot
+        ) {
           return {
             valid: false,
-            error: 'Symlink target is outside the allowed workspace root'
+            error: 'Symlink target is outside the allowed workspace root',
           };
         }
       }
@@ -137,13 +141,12 @@ async function validateWorkspacePath(requestedPath) {
 
     return {
       valid: true,
-      resolvedPath: realPath
+      resolvedPath: realPath,
     };
-
   } catch (error) {
     return {
       valid: false,
-      error: `Path validation failed: ${error.message}`
+      error: `Path validation failed: ${error.message}`,
     };
   }
 }
@@ -161,7 +164,13 @@ async function validateWorkspacePath(requestedPath) {
  */
 router.post('/create-workspace', async (req, res) => {
   try {
-    const { workspaceType, path: workspacePath, githubUrl, githubTokenId, newGithubToken } = req.body;
+    const {
+      workspaceType,
+      path: workspacePath,
+      githubUrl,
+      githubTokenId,
+      newGithubToken,
+    } = req.body;
 
     // Validate required fields
     if (!workspaceType || !workspacePath) {
@@ -177,7 +186,7 @@ router.post('/create-workspace', async (req, res) => {
     if (!validation.valid) {
       return res.status(400).json({
         error: 'Invalid workspace path',
-        details: validation.error
+        details: validation.error,
       });
     }
 
@@ -206,7 +215,7 @@ router.post('/create-workspace', async (req, res) => {
       return res.json({
         success: true,
         project,
-        message: 'Existing workspace added successfully'
+        message: 'Existing workspace added successfully',
       });
     }
 
@@ -216,7 +225,8 @@ router.post('/create-workspace', async (req, res) => {
       try {
         await fs.access(absolutePath);
         return res.status(400).json({
-          error: 'Path already exists. Please choose a different path or use "existing workspace" option.'
+          error:
+            'Path already exists. Please choose a different path or use "existing workspace" option.',
         });
       } catch (error) {
         if (error.code !== 'ENOENT') {
@@ -269,15 +279,14 @@ router.post('/create-workspace', async (req, res) => {
         project,
         message: githubUrl
           ? 'New workspace created and repository cloned successfully'
-          : 'New workspace created successfully'
+          : 'New workspace created successfully',
       });
     }
-
   } catch (error) {
     console.error('Error creating workspace:', error);
     res.status(500).json({
       error: error.message || 'Failed to create workspace',
-      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
     });
   }
 });
@@ -298,7 +307,7 @@ async function getGithubTokenById(tokenId, userId) {
   if (credential) {
     return {
       ...credential,
-      github_token: credential.credential_value
+      github_token: credential.credential_value,
     };
   }
 
@@ -329,29 +338,32 @@ function cloneGitHubRepository(githubUrl, destinationPath, githubToken = null) {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        GIT_TERMINAL_PROMPT: '0' // Disable git password prompts
-      }
+        GIT_TERMINAL_PROMPT: '0', // Disable git password prompts
+      },
     });
 
     let stdout = '';
     let stderr = '';
 
-    gitProcess.stdout.on('data', (data) => {
+    gitProcess.stdout.on('data', data => {
       stdout += data.toString();
     });
 
-    gitProcess.stderr.on('data', (data) => {
+    gitProcess.stderr.on('data', data => {
       stderr += data.toString();
     });
 
-    gitProcess.on('close', (code) => {
+    gitProcess.on('close', code => {
       if (code === 0) {
         resolve({ stdout, stderr });
       } else {
         // Parse git error messages to provide helpful feedback
         let errorMessage = 'Git clone failed';
 
-        if (stderr.includes('Authentication failed') || stderr.includes('could not read Username')) {
+        if (
+          stderr.includes('Authentication failed') ||
+          stderr.includes('could not read Username')
+        ) {
           errorMessage = 'Authentication failed. Please check your GitHub token.';
         } else if (stderr.includes('Repository not found')) {
           errorMessage = 'Repository not found. Please check the URL and ensure you have access.';
@@ -365,7 +377,7 @@ function cloneGitHubRepository(githubUrl, destinationPath, githubToken = null) {
       }
     });
 
-    gitProcess.on('error', (error) => {
+    gitProcess.on('error', error => {
       if (error.code === 'ENOENT') {
         reject(new Error('Git is not installed or not in PATH'));
       } else {

@@ -13,7 +13,7 @@ jest.mock('../../../src/contexts/TasksSettingsContext');
 jest.mock('../../../src/utils/api');
 
 jest.mock('../../../src/components/ui/scroll-area', () => ({
-  ScrollArea: ({ children }) => <div data-testid="scroll-area">{children}</div>
+  ScrollArea: ({ children }) => <div data-testid="scroll-area">{children}</div>,
 }));
 
 jest.mock('../../../src/components/ui/button', () => ({
@@ -29,7 +29,7 @@ jest.mock('../../../src/components/ui/button', () => ({
     >
       {children}
     </button>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ui/input', () => ({
@@ -42,7 +42,7 @@ jest.mock('../../../src/components/ui/input', () => ({
       {...props}
       data-testid={props['data-testid'] || 'input'}
     />
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ui/badge', () => ({
@@ -55,7 +55,7 @@ jest.mock('../../../src/components/ui/badge', () => ({
     >
       {children}
     </span>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/StandaloneShell', () => ({
@@ -64,15 +64,15 @@ jest.mock('../../../src/components/StandaloneShell', () => ({
       <div data-testid="command">{command}</div>
       <button onClick={() => onComplete('done')}>Complete</button>
     </div>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/ClaudeLogo', () => ({
-  default: ({ className }) => <div data-testid="claude-logo" className={className} />
+  default: ({ className }) => <div data-testid="claude-logo" className={className} />,
 }));
 
 jest.mock('../../../src/components/CursorLogo', () => ({
-  default: ({ className }) => <div data-testid="cursor-logo" className={className} />
+  default: ({ className }) => <div data-testid="cursor-logo" className={className} />,
 }));
 
 jest.mock('../../../src/components/CredentialsSettings', () => ({
@@ -80,7 +80,7 @@ jest.mock('../../../src/components/CredentialsSettings', () => ({
     <div data-testid="credentials-settings">
       <button onClick={onClose}>Close</button>
     </div>
-  )
+  ),
 }));
 
 describe('Settings Component', () => {
@@ -93,9 +93,9 @@ describe('Settings Component', () => {
     onClose: mockOnClose,
     projects: [
       { id: '1', name: 'Project 1', path: '/path/to/project1' },
-      { id: '2', name: 'Project 2', path: '/path/to/project2' }
+      { id: '2', name: 'Project 2', path: '/path/to/project2' },
     ],
-    initialTab: 'tools'
+    initialTab: 'tools',
   };
 
   beforeEach(() => {
@@ -105,7 +105,7 @@ describe('Settings Component', () => {
     // Mock theme context
     useTheme.mockReturnValue({
       isDarkMode: false,
-      toggleDarkMode: mockToggleDarkMode
+      toggleDarkMode: mockToggleDarkMode,
     });
 
     // Mock tasks settings context
@@ -115,15 +115,15 @@ describe('Settings Component', () => {
       isTaskMasterInstalled: true,
       isTaskMasterReady: true,
       installationStatus: 'installed',
-      isCheckingInstallation: false
+      isCheckingInstallation: false,
     });
 
     // Mock API responses
     api.mockResolvedValue({
       data: {
         allowedTools: ['Edit', 'Read'],
-        disallowedTools: ['Bash', 'Write']
-      }
+        disallowedTools: ['Bash', 'Write'],
+      },
     });
   });
 
@@ -192,7 +192,7 @@ describe('Settings Component', () => {
     it('displays current theme state', () => {
       useTheme.mockReturnValue({
         isDarkMode: true,
-        toggleDarkMode: mockToggleDarkMode
+        toggleDarkMode: mockToggleDarkMode,
       });
 
       render(<Settings {...defaultProps} />);
@@ -222,7 +222,7 @@ describe('Settings Component', () => {
     beforeEach(() => {
       useTasksSettings.mockReturnValue({
         ...useTasksSettings(),
-        tasksEnabled: true
+        tasksEnabled: true,
       });
     });
 
@@ -251,7 +251,7 @@ describe('Settings Component', () => {
         expect.objectContaining({
           method: 'POST',
           url: '/api/settings/allowed-tools',
-          data: { tool: 'NewTool' }
+          data: { tool: 'NewTool' },
         })
       );
     });
@@ -272,7 +272,7 @@ describe('Settings Component', () => {
         expect.objectContaining({
           method: 'POST',
           url: '/api/settings/disallowed-tools',
-          data: { tool: 'DangerousTool' }
+          data: { tool: 'DangerousTool' },
         })
       );
     });
@@ -291,7 +291,7 @@ describe('Settings Component', () => {
       expect(api).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'DELETE',
-          url: '/api/settings/allowed-tools/Edit'
+          url: '/api/settings/allowed-tools/Edit',
         })
       );
     });
@@ -309,7 +309,7 @@ describe('Settings Component', () => {
         expect.objectContaining({
           method: 'POST',
           url: '/api/settings/skip-permissions',
-          data: { enabled: true }
+          data: { enabled: true },
         })
       );
     });
@@ -336,7 +336,7 @@ describe('Settings Component', () => {
         expect.objectContaining({
           method: 'POST',
           url: '/api/settings/project-sort-order',
-          data: { sortOrder: 'modified' }
+          data: { sortOrder: 'modified' },
         })
       );
     });
@@ -350,7 +350,7 @@ describe('Settings Component', () => {
         isTaskMasterInstalled: true,
         isTaskMasterReady: true,
         installationStatus: 'installed',
-        isCheckingInstallation: false
+        isCheckingInstallation: false,
       });
 
       render(<Settings {...defaultProps} />);
@@ -366,7 +366,7 @@ describe('Settings Component', () => {
         isTaskMasterInstalled: false,
         isTaskMasterReady: false,
         installationStatus: 'not_installed',
-        isCheckingInstallation: false
+        isCheckingInstallation: false,
       });
 
       render(<Settings {...defaultProps} />);
@@ -383,7 +383,7 @@ describe('Settings Component', () => {
         isTaskMasterInstalled: true,
         isTaskMasterReady: true,
         installationStatus: 'installed',
-        isCheckingInstallation: false
+        isCheckingInstallation: false,
       });
 
       render(<Settings {...defaultProps} />);
@@ -401,7 +401,7 @@ describe('Settings Component', () => {
         isTaskMasterInstalled: false,
         isTaskMasterReady: false,
         installationStatus: 'unknown',
-        isCheckingInstallation: true
+        isCheckingInstallation: true,
       });
 
       render(<Settings {...defaultProps} />);
@@ -496,8 +496,8 @@ describe('Settings Component', () => {
       const user = userEvent.setup();
       render(<Settings {...defaultProps} />);
 
-      const backdrop = screen.getByTestId('settings-backdrop') ||
-                      screen.getByRole('dialog').parentElement;
+      const backdrop =
+        screen.getByTestId('settings-backdrop') || screen.getByRole('dialog').parentElement;
       await user.click(backdrop);
 
       expect(mockOnClose).toHaveBeenCalled();
@@ -657,7 +657,7 @@ describe('Settings Component', () => {
         expect(api).toHaveBeenCalledWith(
           expect.objectContaining({
             method: 'GET',
-            url: '/api/settings'
+            url: '/api/settings',
           })
         );
       });
@@ -675,7 +675,7 @@ describe('Settings Component', () => {
       expect(api).toHaveBeenCalledWith(
         expect.objectContaining({
           method: 'POST',
-          url: '/api/settings/skip-permissions'
+          url: '/api/settings/skip-permissions',
         })
       );
     });
