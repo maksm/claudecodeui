@@ -7,14 +7,14 @@ export const createTestUser = (overrides = {}) => ({
   username: 'e2e-test-user',
   password: 'test-password-123',
   email: 'e2e-test@example.com',
-  ...overrides
+  ...overrides,
 });
 
 export const createTestProject = (overrides = {}) => ({
   name: 'E2E Test Project',
   path: '/home/maks/e2e-test-project',
   description: 'A project for E2E testing',
-  ...overrides
+  ...overrides,
 });
 
 export const createTestTask = (overrides = {}) => ({
@@ -22,7 +22,7 @@ export const createTestTask = (overrides = {}) => ({
   description: 'A task for E2E testing',
   priority: 'medium',
   status: 'pending',
-  ...overrides
+  ...overrides,
 });
 
 // Authentication helpers
@@ -37,7 +37,7 @@ export const loginAsUser = async (page, user = testData.users.valid) => {
   return loginPage;
 };
 
-export const loginAsAdmin = async (page) => {
+export const loginAsAdmin = async page => {
   const { LoginPage } = await import('../pages/LoginPage.js');
   const loginPage = new LoginPage(page);
 
@@ -48,7 +48,7 @@ export const loginAsAdmin = async (page) => {
   return loginPage;
 };
 
-export const completeSetup = async (page) => {
+export const completeSetup = async page => {
   const { LoginPage } = await import('../pages/LoginPage.js');
   const loginPage = new LoginPage(page);
 
@@ -61,7 +61,7 @@ export const completeSetup = async (page) => {
 };
 
 // Page navigation helpers
-export const navigateToDashboard = async (page) => {
+export const navigateToDashboard = async page => {
   const { DashboardPage } = await import('../pages/DashboardPage.js');
   const dashboardPage = new DashboardPage(page);
 
@@ -71,7 +71,7 @@ export const navigateToDashboard = async (page) => {
   return dashboardPage;
 };
 
-export const navigateToChat = async (page) => {
+export const navigateToChat = async page => {
   const { ChatInterfacePage } = await import('../pages/ChatInterfacePage.js');
   const chatPage = new ChatInterfacePage(page);
 
@@ -168,7 +168,7 @@ export const expectFileUploaded = async (page, fileName) => {
 };
 
 // Settings helpers
-export const toggleTheme = async (page) => {
+export const toggleTheme = async page => {
   const themeToggle = '[data-testid="theme-toggle"]';
   await page.click(themeToggle);
 };
@@ -198,7 +198,7 @@ export const expectPageLoadUnder = async (page, url, maxLoadTime) => {
 };
 
 // Accessibility helpers
-export const checkAccessibility = async (page) => {
+export const checkAccessibility = async page => {
   const violations = await page.accessibility.snapshot();
 
   // Basic accessibility checks
@@ -226,9 +226,7 @@ export const expectSuccessToast = async (page, expectedMessage) => {
 
 // Network helpers
 export const waitForAPIResponse = async (page, endpoint) => {
-  return await page.waitForResponse(response =>
-    response.url().includes(endpoint)
-  );
+  return await page.waitForResponse(response => response.url().includes(endpoint));
 };
 
 export const mockAPIResponse = async (page, endpoint, responseData) => {
@@ -236,25 +234,27 @@ export const mockAPIResponse = async (page, endpoint, responseData) => {
     route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(responseData)
+      body: JSON.stringify(responseData),
     });
   });
 };
 
 // Mobile helpers
-export const isMobile = async (page) => {
+export const isMobile = async page => {
   const viewport = page.viewportSize();
   return viewport.width < 768;
 };
 
-export const expectMobileLayout = async (page) => {
+export const expectMobileLayout = async page => {
   const mobileMenu = page.locator('[data-testid="mobile-menu"]');
   await expect(mobileMenu).toBeVisible();
 };
 
 // Data generation helpers
 export const generateRandomString = (length = 10) => {
-  return Math.random().toString(36).substring(2, 2 + length);
+  return Math.random()
+    .toString(36)
+    .substring(2, 2 + length);
 };
 
 export const generateRandomEmail = () => {
@@ -266,7 +266,7 @@ export const generateRandomProjectName = () => {
 };
 
 // Cleanup helpers
-export const cleanupTestData = async (page) => {
+export const cleanupTestData = async page => {
   // Logout if logged in
   const logoutButton = page.locator('[data-testid="logout-button"]');
   if (await logoutButton.isVisible()) {
@@ -275,8 +275,13 @@ export const cleanupTestData = async (page) => {
 
   // Clear any local storage or session data
   await page.evaluate(() => {
-    localStorage.clear();
-    sessionStorage.clear();
+    try {
+      localStorage.clear();
+      sessionStorage.clear();
+    } catch (error) {
+      // Ignore localStorage access errors (common in test environments)
+      console.log('localStorage access skipped:', error.message);
+    }
   });
 };
 
@@ -297,7 +302,7 @@ export const createAuthenticatedTest = (testFn, user = testData.users.valid) => 
   };
 };
 
-export const createAdminTest = (testFn) => {
+export const createAdminTest = testFn => {
   return createAuthenticatedTest(testFn, testData.users.platform);
 };
 
@@ -345,5 +350,5 @@ export default {
   createAuthenticatedTest,
   createAdminTest,
   testWithUser,
-  testWithAdmin
+  testWithAdmin,
 };
