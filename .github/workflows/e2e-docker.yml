@@ -18,6 +18,7 @@ jobs:
     outputs:
       image-tag: ${{ steps.meta.outputs.version }}
       image-digest: ${{ steps.build.outputs.digest }}
+      testing-image-tag: ${{ steps.meta.outputs.version }}-testing
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,9 +49,23 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          target: production # Build production image for deployment
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker testing image
+        id: build-testing
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: testing # Build testing image with Playwright
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}-testing
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -73,7 +88,7 @@ jobs:
             -e CI=true \
             -e PLAYWRIGHT_BROWSER=${{ matrix.browser }} \
             -v ${{ github.workspace }}:/app \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-docker.outputs.image-tag }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-docker.outputs.testing-image-tag }} \
             npm run test:e2e -- --project=${{ matrix.browser }}
 
       - name: Upload test results
@@ -97,7 +112,7 @@ jobs:
           docker run --rm \
             -e CI=true \
             -v ${{ github.workspace }}:/app \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-docker.outputs.image-tag }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-docker.outputs.testing-image-tag }} \
             npm run test:e2e:visual --reporter=html
 
       - name: Upload visual test results
@@ -121,7 +136,7 @@ jobs:
           docker run --rm \
             -e CI=true \
             -v ${{ github.workspace }}:/app \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-docker.outputs.image-tag }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-docker.outputs.testing-image-tag }} \
             npm run test:e2e:accessibility
 
       - name: Upload accessibility test results
@@ -145,7 +160,7 @@ jobs:
           docker run --rm \
             -e CI=true \
             -v ${{ github.workspace }}:/app \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-docker.outputs.image-tag }} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build-docker.outputs.testing-image-tag }} \
             npm run test:e2e:performance --reporter=junit
 
       - name: Upload performance test results

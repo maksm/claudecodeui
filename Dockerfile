@@ -19,7 +19,7 @@ COPY . .
 RUN npm run build
 
 # Production stage
-FROM node:20-alpine
+FROM node:20-alpine AS production
 
 WORKDIR /app
 
@@ -43,3 +43,26 @@ ENV PORT=3001
 
 # Run the server
 CMD ["node", "server/index.js"]
+
+# Testing stage
+FROM node:20-alpine AS testing
+
+WORKDIR /app
+
+# Install all dependencies including Playwright browsers
+RUN apk add --no-cache python3 make g++ nmap chromium
+
+# Install all dependencies (including dev deps for testing)
+COPY package*.json ./
+RUN npm ci && npx playwright install chromium firefox webkit && npx playwright install-deps
+
+# Copy built assets and server code
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/server ./server
+
+# Set environment variables for testing
+ENV NODE_ENV=test
+ENV PORT=3001
+
+# Default to running tests in CI
+CMD ["npm", "run", "test:e2e"]
