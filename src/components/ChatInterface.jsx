@@ -1705,6 +1705,9 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
   const [cursorModel, setCursorModel] = useState(() => {
     return localStorage.getItem('cursor-model') || 'gpt-5';
   });
+  const [claudeBackend, setClaudeBackend] = useState(() => {
+    return localStorage.getItem('claude-backend') || 'claude';
+  });
   // Load permission mode for the current session
   useEffect(() => {
     if (selectedSession?.id) {
@@ -3852,7 +3855,6 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
       });
     } else {
       // Send Claude command with backend selection (claude or zai)
-      const claudeBackend = localStorage.getItem('claude-backend') || 'claude';
       sendMessage({
         type: 'claude-command',
         command: input,
@@ -4303,10 +4305,30 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
                     <option value="opus-4.1">Opus 4.1</option>
                   </select>
                 </div>
-                
+
+                {/* Backend Selection for Claude - Always reserve space to prevent jumping */}
+                <div className={`mb-6 transition-opacity duration-200 ${provider === 'claude' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    {provider === 'claude' ? 'Select Backend' : '\u00A0'}
+                  </label>
+                  <select
+                    value={claudeBackend}
+                    onChange={(e) => {
+                      const newBackend = e.target.value;
+                      setClaudeBackend(newBackend);
+                      localStorage.setItem('claude-backend', newBackend);
+                    }}
+                    className="pl-4 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[180px]"
+                    disabled={provider !== 'claude'}
+                  >
+                    <option value="claude">Claude Subscription</option>
+                    <option value="zai">Zai</option>
+                  </select>
+                </div>
+
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {provider === 'claude' 
-                    ? 'Ready to use Claude AI. Start typing your message below.'
+                  {provider === 'claude'
+                    ? `Ready to use Claude AI with ${claudeBackend === 'zai' ? 'Zai' : 'Claude Subscription'}. Start typing your message below.`
                     : provider === 'cursor'
                     ? `Ready to use Cursor with ${cursorModel}. Start typing your message below.`
                     : 'Select a provider above to begin'
