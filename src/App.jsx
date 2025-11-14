@@ -32,6 +32,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { TaskMasterProvider } from './contexts/TaskMasterContext';
 import { TasksSettingsProvider } from './contexts/TasksSettingsContext';
 import { WebSocketProvider, useWebSocketContext } from './contexts/WebSocketContext';
+import { SessionManagerProvider, useSessionManager } from './contexts/SessionManagerContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import useLocalStorage from './hooks/useLocalStorage';
@@ -63,15 +64,20 @@ function AppContent() {
   const [autoScrollToBottom, setAutoScrollToBottom] = useLocalStorage('autoScrollToBottom', true);
   const [sendByCtrlEnter, setSendByCtrlEnter] = useLocalStorage('sendByCtrlEnter', false);
   const [sidebarVisible, setSidebarVisible] = useLocalStorage('sidebarVisible', true);
-  // Session Protection System: Track sessions with active conversations to prevent
-  // automatic project updates from interrupting ongoing chats. When a user sends
-  // a message, the session is marked as "active" and project updates are paused
-  // until the conversation completes or is aborted.
-  const [activeSessions, setActiveSessions] = useState(new Set()); // Track sessions with active conversations
 
-  // Processing Sessions: Track which sessions are currently thinking/processing
-  // This allows us to restore the "Thinking..." banner when switching back to a processing session
-  const [processingSessions, setProcessingSessions] = useState(new Set());
+  // Session Management System: Use SessionManager for per-project session isolation
+  const {
+    getGlobalActiveSessions,
+    getGlobalProcessingSessions,
+    addActiveSession,
+    removeActiveSession,
+    addProcessingSession,
+    removeProcessingSession,
+    hasActiveSessionInProject,
+    isSessionActive,
+    isSessionProcessing,
+    clearProjectSessions
+  } = useSessionManager();
 
   // External Message Update Trigger: Incremented when external CLI modifies current session's JSONL
   // Triggers ChatInterface to reload messages without switching sessions
@@ -170,7 +176,9 @@ function AppContent() {
     if (messages.length > 0) {
       const latestMessage = messages[messages.length - 1];
 
-      if (latestMessage.type === 'projects_updated') {
+      if (latestMessage.type === 'projects_updated' || latestMessage.type === 'projects_list_updated') {
+        console.log(`[App] Received ${latestMessage.type} update, targeted: ${latestMessage.targeted}, hasActiveSession: ${getGlobalActiveSessions().size > 0}`);
+        console.log(`[App] Updated projects count: ${latestMessage.projects?.length || 0}`);
 
         // External Session Update Detection: Check if the changed file is the current session's JSONL
         // If so, and the session is not active, trigger a message reload in ChatInterface
@@ -183,9 +191,9 @@ function AppContent() {
 
             // Check if this is the currently-selected session
             if (changedSessionId === selectedSession.id) {
-              const isSessionActive = activeSessions.has(selectedSession.id);
+              const sessionIsActive = selectedProject ? isSessionActive(selectedProject.name, selectedSession.id) : false;
 
-              if (!isSessionActive) {
+              if (!sessionIsActive) {
                 // Session is not active - safe to reload messages
                 setExternalMessageUpdate(prev => prev + 1);
               }
@@ -193,27 +201,56 @@ function AppContent() {
           }
         }
 
-        // Session Protection Logic: Allow additions but prevent changes during active conversations
-        // This allows new sessions/projects to appear in sidebar while protecting active chat messages
-        // We check for two types of active sessions:
-        // 1. Existing sessions: selectedSession.id exists in activeSessions
-        // 2. New sessions: temporary "new-session-*" identifiers in activeSessions (before real session ID is received)
-        const hasActiveSession = (selectedSession && activeSessions.has(selectedSession.id)) ||
-                                 (activeSessions.size > 0 && Array.from(activeSessions).some(id => id.startsWith('new-session-')));
+        // For targeted updates, only process if they affect our current project
+        if (latestMessage.type === 'projects_updated' && latestMessage.targeted) {
+          // This is a targeted update - backend already filtered it to be project-specific
+          // We still want to process it but with different rules
+          console.log('📁 Processing targeted project update');
 
-        if (hasActiveSession) {
-          // Allow updates but be selective: permit additions, prevent changes to existing items
-          const updatedProjects = latestMessage.projects;
-          const currentProjects = projects;
+          // Apply less strict session protection for targeted updates since they're project-specific
+          const globalActiveSessions = getGlobalActiveSessions();
+          const hasActiveSession = (selectedSession && globalActiveSessions.has(selectedSession.id)) ||
+                                   (globalActiveSessions.size > 0 && Array.from(globalActiveSessions).some(id => id.startsWith('new-session-')));
 
-          // Check if this is purely additive (new sessions/projects) vs modification of existing ones
-          const isAdditiveUpdate = isUpdateAdditive(currentProjects, updatedProjects, selectedProject, selectedSession);
+          if (hasActiveSession && selectedSession) {
+            // Only skip if the update would affect the active session itself
+            // Allow sidebar updates for other parts of the project
+            const updatedProjects = latestMessage.projects;
+            const currentProjects = projects;
+            const isAdditiveUpdate = isUpdateAdditive(currentProjects, updatedProjects, selectedProject, selectedSession);
 
-          if (!isAdditiveUpdate) {
-            // Skip updates that would modify existing selected session/project
-            return;
+            if (!isAdditiveUpdate) {
+              console.log('🛡️ Skipping targeted update that would affect active session');
+              return;
+            }
           }
-          // Continue with additive updates below
+        } else {
+          // Original session protection logic for global updates (projects_list_updated)
+          // Session Protection Logic: Allow additions but prevent changes during active conversations
+          // This allows new sessions/projects to appear in sidebar while protecting active chat messages
+          // We check for two types of active sessions:
+          // 1. Existing sessions: selectedSession.id exists in activeSessions
+          // 2. New sessions: temporary "new-session-*" identifiers in activeSessions (before real session ID is received)
+          const globalActiveSessions = getGlobalActiveSessions();
+          const hasActiveSession = (selectedSession && globalActiveSessions.has(selectedSession.id)) ||
+                                   (globalActiveSessions.size > 0 && Array.from(globalActiveSessions).some(id => id.startsWith('new-session-')));
+
+          if (hasActiveSession) {
+            // Allow updates but be selective: permit additions, prevent changes to existing items
+            const updatedProjects = latestMessage.projects;
+            const currentProjects = projects;
+
+            // Check if this is purely additive (new sessions/projects) vs modification of existing ones
+            const isAdditiveUpdate = isUpdateAdditive(currentProjects, updatedProjects, selectedProject, selectedSession);
+
+            if (!isAdditiveUpdate) {
+              console.log('[App] Skipping non-additive update during active session');
+              // Skip updates that would modify existing selected session/project
+              return;
+            }
+            console.log('[App] Processing additive update during active session');
+            // Continue with additive updates below
+          }
         }
 
         // Update projects state with the new data from WebSocket
@@ -242,7 +279,7 @@ function AppContent() {
         }
       }
     }
-  }, [messages, selectedProject, selectedSession, activeSessions]);
+  }, [messages, selectedProject, selectedSession, getGlobalActiveSessions()]);
 
   const fetchProjects = async () => {
     try {
@@ -488,60 +525,51 @@ function AppContent() {
   // markSessionAsActive: Called when user sends a message to mark session as protected
   // This includes both real session IDs and temporary "new-session-*" identifiers
   const markSessionAsActive = useCallback((sessionId) => {
-    if (sessionId) {
-      setActiveSessions(prev => new Set([...prev, sessionId]));
+    if (sessionId && selectedProject) {
+      addActiveSession(selectedProject.name, sessionId);
     }
-  }, []);
+  }, [addActiveSession, selectedProject]);
 
   // markSessionAsInactive: Called when conversation completes/aborts to re-enable project updates
   const markSessionAsInactive = useCallback((sessionId) => {
-    if (sessionId) {
-      setActiveSessions(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(sessionId);
-        return newSet;
-      });
+    if (sessionId && selectedProject) {
+      removeActiveSession(selectedProject.name, sessionId);
     }
-  }, []);
+  }, [removeActiveSession, selectedProject]);
 
   // Processing Session Functions: Track which sessions are currently thinking/processing
 
   // markSessionAsProcessing: Called when Claude starts thinking/processing
   const markSessionAsProcessing = useCallback((sessionId) => {
-    if (sessionId) {
-      setProcessingSessions(prev => new Set([...prev, sessionId]));
+    if (sessionId && selectedProject) {
+      addProcessingSession(selectedProject.name, sessionId);
     }
-  }, []);
+  }, [addProcessingSession, selectedProject]);
 
   // markSessionAsNotProcessing: Called when Claude finishes thinking/processing
   const markSessionAsNotProcessing = useCallback((sessionId) => {
-    if (sessionId) {
-      setProcessingSessions(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(sessionId);
-        return newSet;
-      });
+    if (sessionId && selectedProject) {
+      removeProcessingSession(selectedProject.name, sessionId);
     }
-  }, []);
+  }, [removeProcessingSession, selectedProject]);
 
   // replaceTemporarySession: Called when WebSocket provides real session ID for new sessions
   // Removes temporary "new-session-*" identifiers and adds the real session ID
   // This maintains protection continuity during the transition from temporary to real session
   const replaceTemporarySession = useCallback((realSessionId) => {
-    if (realSessionId) {
-      setActiveSessions(prev => {
-        const newSet = new Set();
-        // Keep all non-temporary sessions and add the real session ID
-        for (const sessionId of prev) {
-          if (!sessionId.startsWith('new-session-')) {
-            newSet.add(sessionId);
-          }
-        }
-        newSet.add(realSessionId);
-        return newSet;
-      });
+    if (realSessionId && selectedProject) {
+      // Get current global active sessions to find temporary sessions for this project
+      const globalActiveSessions = getGlobalActiveSessions();
+      const tempSessionId = Array.from(globalActiveSessions).find(id => id.startsWith('new-session-'));
+
+      if (tempSessionId) {
+        // Remove the temporary session and add the real session for this project
+        removeActiveSession(selectedProject.name, tempSessionId);
+        addActiveSession(selectedProject.name, realSessionId);
+        console.log(`[App] Replaced temporary session ${tempSessionId} with real session ${realSessionId} for project ${selectedProject.name}`);
+      }
     }
-  }, []);
+  }, [getGlobalActiveSessions, removeActiveSession, addActiveSession, selectedProject]);
 
   // Version Upgrade Modal Component
   const VersionUpgradeModal = () => {
@@ -888,7 +916,7 @@ function AppContent() {
           onSessionInactive={markSessionAsInactive}
           onSessionProcessing={markSessionAsProcessing}
           onSessionNotProcessing={markSessionAsNotProcessing}
-          processingSessions={processingSessions}
+          processingSessions={getGlobalProcessingSessions()}
           onReplaceTemporarySession={replaceTemporarySession}
           onNavigateToSession={(sessionId) => navigate(`/session/${sessionId}`)}
           onShowSettings={() => setShowSettings(true)}
@@ -943,6 +971,14 @@ function AppContent() {
 }
 
 // Root App component with router
+function AppContentWithSessionManager() {
+  return (
+    <SessionManagerProvider>
+      <AppContent />
+    </SessionManagerProvider>
+  );
+}
+
 function App() {
   return (
     <ThemeProvider>
@@ -958,8 +994,8 @@ function App() {
                   }}
                 >
                   <Routes>
-                    <Route path="/" element={<AppContent />} />
-                    <Route path="/session/:sessionId" element={<AppContent />} />
+                    <Route path="/" element={<AppContentWithSessionManager />} />
+                    <Route path="/session/:sessionId" element={<AppContentWithSessionManager />} />
                   </Routes>
                 </Router>
               </ProtectedRoute>

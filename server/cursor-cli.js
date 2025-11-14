@@ -114,6 +114,7 @@ async function spawnCursor(command, options = {}, ws) {
                 // Send system info to frontend
                 ws.send(JSON.stringify({
                   type: 'cursor-system',
+                  sessionId: capturedSessionId, // Add session ID for proper frontend filtering
                   data: response
                 }));
               }
@@ -123,6 +124,7 @@ async function spawnCursor(command, options = {}, ws) {
               // Forward user message
               ws.send(JSON.stringify({
                 type: 'cursor-user',
+                sessionId: capturedSessionId, // Add session ID for proper frontend filtering
                 data: response
               }));
               break;
@@ -136,6 +138,7 @@ async function spawnCursor(command, options = {}, ws) {
                 // Send as Claude-compatible format for frontend
                 ws.send(JSON.stringify({
                   type: 'claude-response',
+                  sessionId: capturedSessionId, // Add session ID for proper frontend filtering
                   data: {
                     type: 'content_block_delta',
                     delta: {
@@ -155,6 +158,7 @@ async function spawnCursor(command, options = {}, ws) {
               if (messageBuffer) {
                 ws.send(JSON.stringify({
                   type: 'claude-response',
+                  sessionId: capturedSessionId, // Add session ID for proper frontend filtering
                   data: {
                     type: 'content_block_stop'
                   }

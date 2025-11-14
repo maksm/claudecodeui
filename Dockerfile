@@ -28,7 +28,7 @@ RUN apk add --no-cache python3 make g++
 
 # Install production dependencies only
 COPY package*.json ./
-RUN npm ci --only=production && apk del python3 make g++
+RUN npm ci --only=production --ignore-scripts && apk del python3 make g++
 
 # Copy built assets and server code
 COPY --from=builder /app/dist ./dist

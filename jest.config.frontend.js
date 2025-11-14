@@ -2,7 +2,8 @@
 export default {
   preset: null,
   testEnvironment: 'jsdom',
-  setupFilesAfterEnv: ['<rootDir>/tests/frontend/setup.js', '<rootDir>/tests/frontend/setup-msw.js'],
+  setupFiles: ['<rootDir>/tests/frontend/polyfills.js'],
+  setupFilesAfterEnv: ['<rootDir>/tests/frontend/setup.js'],
   moduleNameMapper: {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(gif|ttf|eot|svg|png|jpg|jpeg)$': '<rootDir>/tests/frontend/__mocks__/fileMock.js'
@@ -35,11 +36,12 @@ export default {
     }
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(axios|@codemirror|@emotion|@mui|@lezer|@react|w3c-keyname)/)'
+    'node_modules/(?!(axios|@codemirror|@emotion|@mui|@lezer|@react|w3c-keyname|@xterm)/)'
   ],
   globals: {
     'ts-jest': {
       useESM: true
     }
-  }
+  },
+  extensionsToTreatAsEsm: ['.jsx']
 };

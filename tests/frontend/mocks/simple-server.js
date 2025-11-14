@@ -3,6 +3,9 @@ import { setupServer } from 'msw/node';
 import { http } from 'msw';
 import { jest } from '@jest/globals';
 
+// Re-export http for tests
+export { http };
+
 // Mock handlers for API endpoints using MSW v2 syntax
 export const handlers = [
   // Authentication endpoints

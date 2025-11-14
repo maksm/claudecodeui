@@ -2,7 +2,8 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
 import { jest } from '@jest/globals';
-import { server, rest, createMockWebSocket, getLastWebSocket } from '../mocks/server.js';
+import { server, http, createMockWebSocket, getLastWebSocket } from '../mocks/server.js';
+import { delay } from 'msw';
 
 // Test component that makes API calls
 const ApiTestComponent = () => {
@@ -274,15 +275,12 @@ describe('API Integration Tests with MSW', () => {
   test('can override MSW handlers for specific tests', async () => {
     // Override the login handler for this specific test
     server.use(
-      rest.post('/api/auth/login', (req, res, ctx) => {
-        return res(
-          ctx.status(200),
-          ctx.json({
-            success: true,
-            user: { id: 999, username: 'special-user', email: 'special@example.com' },
-            token: 'special-token'
-          })
-        );
+      http.post('/api/auth/login', async () => {
+        return Response.json({
+          success: true,
+          user: { id: 999, username: 'special-user', email: 'special@example.com' },
+          token: 'special-token'
+        });
       })
     );
 
@@ -298,14 +296,11 @@ describe('API Integration Tests with MSW', () => {
 
   test('can simulate 404 errors', async () => {
     server.use(
-      rest.get('/api/projects', (req, res, ctx) => {
-        return res(
-          ctx.status(404),
-          ctx.json({
-            success: false,
-            error: 'Projects endpoint not found'
-          })
-        );
+      http.get('/api/projects', async () => {
+        return Response.json({
+          success: false,
+          error: 'Projects endpoint not found'
+        }, { status: 404 });
       })
     );
 
@@ -321,16 +316,13 @@ describe('API Integration Tests with MSW', () => {
 
   test('can simulate delayed responses', async () => {
     server.use(
-      rest.post('/api/auth/login', (req, res, ctx) => {
-        return res(
-          ctx.delay(100), // 100ms delay
-          ctx.status(200),
-          ctx.json({
-            success: true,
-            user: { id: 1, username: 'testuser', email: 'test@example.com' },
-            token: 'mock-jwt-token'
-          })
-        );
+      http.post('/api/auth/login', async () => {
+        await delay(100); // 100ms delay
+        return Response.json({
+          success: true,
+          user: { id: 1, username: 'testuser', email: 'test@example.com' },
+          token: 'mock-jwt-token'
+        });
       })
     );
 

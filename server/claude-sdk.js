@@ -382,9 +382,13 @@ async function queryClaudeSDK(command, options = {}, ws) {
     // Process streaming messages
     console.log('🔄 Starting async generator loop for session:', capturedSessionId || 'NEW');
     for await (const message of queryInstance) {
+      // DEBUG: Log message details
+      console.log(`[SDK DEBUG] Message: type=${message.type}, session_id=${message.session_id}, capturedSessionId=${capturedSessionId}`);
+
       // Capture session ID from first message only
       if (message.session_id && !capturedSessionId) {
     capturedSessionId = message.session_id;
+    console.log(`[SDK DEBUG] Captured session ID: ${capturedSessionId}`);
     addSession(capturedSessionId, queryInstance, tempImagePaths, tempDir);
 
     // Set session ID on writer
@@ -406,8 +410,10 @@ async function queryClaudeSDK(command, options = {}, ws) {
 
       // Transform and send message to WebSocket
       const transformedMessage = transformMessage(message);
+      console.log(`[SDK DEBUG] Sending message with sessionId: ${capturedSessionId}`);
       ws.send(JSON.stringify({
     type: 'claude-response',
+    sessionId: capturedSessionId, // Add session ID for proper frontend filtering
     data: transformedMessage
       }));
 
@@ -418,6 +424,7 @@ async function queryClaudeSDK(command, options = {}, ws) {
       console.log('📊 Token budget from modelUsage:', tokenBudget);
       ws.send(JSON.stringify({
         type: 'token-budget',
+        sessionId: capturedSessionId, // Add session ID for proper frontend filtering
         data: tokenBudget
       }));
     }

@@ -1,7 +1,8 @@
 // ThemeContext tests
 import React from 'react';
-import { render, screen, fireEvent } from '../utils/test-utils';
-import { jest } from '@jest/globals';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { ThemeProvider, useTheme } from '../../../src/contexts/ThemeContext';
 
 // Test component to consume the context
@@ -47,16 +48,24 @@ describe('ThemeContext', () => {
     });
 
     // Mock matchMedia
-    matchMediaMock = jest.fn().mockImplementation(query => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      dispatchEvent: jest.fn(),
-    }));
+    matchMediaMock = jest.fn().mockImplementation(query => {
+      const mediaQuery = {
+        matches: query === '(prefers-color-scheme: dark)' ? false : false,
+        media: query,
+        onchange: null,
+        addListener: jest.fn(),
+        removeListener: jest.fn(),
+        addEventListener: jest.fn(),
+        removeEventListener: jest.fn(),
+        dispatchEvent: jest.fn(),
+      };
+
+      // Ensure addEventListener is a function
+      mediaQuery.addEventListener = jest.fn();
+      mediaQuery.removeEventListener = jest.fn();
+
+      return mediaQuery;
+    });
     Object.defineProperty(window, 'matchMedia', {
       value: matchMediaMock,
       writable: true

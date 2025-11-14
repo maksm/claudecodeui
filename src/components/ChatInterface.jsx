@@ -2894,14 +2894,36 @@ function ChatInterface({ selectedProject, selectedSession, ws, sendMessage, mess
 
       // Filter messages by session ID to prevent cross-session interference
       // Skip filtering for global messages that apply to all sessions
-      const globalMessageTypes = ['projects_updated', 'taskmaster-project-updated', 'session-created', 'claude-complete'];
+      const globalMessageTypes = ['projects_list_updated', 'taskmaster-project-updated', 'session-created', 'claude-complete'];
+      const projectSpecificMessageTypes = ['projects_updated'];
+
       const isGlobalMessage = globalMessageTypes.includes(latestMessage.type);
+      const isProjectSpecificMessage = projectSpecificMessageTypes.includes(latestMessage.type);
+
+      // DEBUG: Log message details to identify what's leaking
+      if (!isGlobalMessage && latestMessage.type !== 'system') {
+        console.log(`[DEBUG] Message: type=${latestMessage.type}, sessionId=${latestMessage.sessionId}, currentSessionId=${currentSessionId}, hasSessionId=${!!latestMessage.sessionId}`);
+      }
 
       // For new sessions (currentSessionId is null), allow messages through
       if (!isGlobalMessage && latestMessage.sessionId && currentSessionId && latestMessage.sessionId !== currentSessionId) {
         // Message is for a different session, ignore it
         console.log('⏭️ Skipping message for different session:', latestMessage.sessionId, 'current:', currentSessionId);
         return;
+      }
+
+      // Additional check: If we have a current session but message has no sessionId, it might be leaked
+      if (!isGlobalMessage && !latestMessage.sessionId && currentSessionId) {
+        console.log('⚠️ WARNING: Message without sessionId during active session:', latestMessage.type);
+        // Don't filter for now, but log it to see what types are leaking
+      }
+
+      // Filter project-specific updates to only affect relevant sessions
+      if (isProjectSpecificMessage && latestMessage.targeted && currentProjectName) {
+        // This is a targeted project update - only process if it affects our current project
+        // The backend ensures we only get updates for projects we're connected to
+        // But we should double-check on the frontend for safety
+        console.log('📁 Processing targeted project update for:', currentProjectName);
       }
 
       switch (latestMessage.type) {

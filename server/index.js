@@ -75,7 +75,12 @@ import { validateApiKey, authenticateToken, authenticateWebSocket } from './midd
 
 // File system watcher for projects folder
 let projectsWatcher = null;
-const connectedClients = new Set();
+// Track all chat WebSocket connections for global updates
+const allChatClients = new Set(); // All connected chat clients
+// Session-specific client management for project updates
+const projectClientMap = new Map(); // Map<projectName, Set<client>>
+// Track which project each client is actively working on
+const clientProjectMap = new Map(); // Map<client, {projectName, sessionId}>
 
 // Setup file system watcher for Claude projects folder using chokidar
 async function setupProjectsWatcher() {
@@ -121,18 +126,44 @@ async function setupProjectsWatcher() {
                     // Get updated projects list
                     const updatedProjects = await getProjects();
 
-                    // Notify all connected clients about the project changes
+                    // Notify only clients working on the affected project about the project changes
                     const updateMessage = JSON.stringify({
                         type: 'projects_updated',
                         projects: updatedProjects,
                         timestamp: new Date().toISOString(),
                         changeType: eventType,
-                        changedFile: path.relative(claudeProjectsPath, filePath)
+                        changedFile: path.relative(claudeProjectsPath, filePath),
+                        targeted: true // Flag to indicate this is a targeted update
                     });
 
-                    connectedClients.forEach(client => {
+                    // Find which project was affected and only notify clients working on that project
+                    for (const [projectName, clients] of projectClientMap) {
+                        // Check if this project is in the updated projects list
+                        if (updatedProjects.some(p => p.name === projectName)) {
+                            clients.forEach(client => {
+                                if (client.readyState === WebSocket.OPEN) {
+                                    client.send(updateMessage);
+                                }
+                            });
+                        }
+                    }
+
+                    // Also send global project list updates to all clients (but without session disruption)
+                    const globalUpdateMessage = JSON.stringify({
+                        type: 'projects_list_updated',
+                        projects: updatedProjects,
+                        timestamp: new Date().toISOString(),
+                        changeType: eventType,
+                        changedFile: path.relative(claudeProjectsPath, filePath),
+                        targeted: false // This is a global update but shouldn't disrupt sessions
+                    });
+
+                    // Send global updates to ALL connected clients
+                    // This ensures new clients get project updates even before they're registered to a specific project
+                    console.log(`[Backend] Sending global update to ${allChatClients.size} clients: ${eventType} - ${path.relative(claudeProjectsPath, filePath)}`);
+                    allChatClients.forEach(client => {
                         if (client.readyState === WebSocket.OPEN) {
-                            client.send(updateMessage);
+                            client.send(globalUpdateMessage);
                         }
                     });
 
@@ -144,11 +175,26 @@ async function setupProjectsWatcher() {
 
         // Set up event listeners
         projectsWatcher
-            .on('add', (filePath) => debouncedUpdate('add', filePath))
-            .on('change', (filePath) => debouncedUpdate('change', filePath))
-            .on('unlink', (filePath) => debouncedUpdate('unlink', filePath))
-            .on('addDir', (dirPath) => debouncedUpdate('addDir', dirPath))
-            .on('unlinkDir', (dirPath) => debouncedUpdate('unlinkDir', dirPath))
+            .on('add', (filePath) => {
+                console.log(`[Watcher] File added: ${filePath}`);
+                debouncedUpdate('add', filePath);
+            })
+            .on('change', (filePath) => {
+                console.log(`[Watcher] File changed: ${filePath}`);
+                debouncedUpdate('change', filePath);
+            })
+            .on('unlink', (filePath) => {
+                console.log(`[Watcher] File removed: ${filePath}`);
+                debouncedUpdate('unlink', filePath);
+            })
+            .on('addDir', (dirPath) => {
+                console.log(`[Watcher] Directory added: ${dirPath}`);
+                debouncedUpdate('addDir', dirPath);
+            })
+            .on('unlinkDir', (dirPath) => {
+                console.log(`[Watcher] Directory removed: ${dirPath}`);
+                debouncedUpdate('unlinkDir', dirPath);
+            })
             .on('error', (error) => {
                 console.error('[ERROR] Chokidar watcher error:', error);
             })
@@ -814,12 +860,44 @@ wss.on('connection', (ws, request) => {
 function handleChatConnection(ws) {
     console.log('[INFO] Chat WebSocket connected');
 
-    // Add to connected clients for project updates
-    connectedClients.add(ws);
+    // Add to all chat clients for global updates
+    allChatClients.add(ws);
+
+    // Note: Clients will be added to project-specific maps when they send their first command
+    // This ensures we know which project and session they're working with
 
     ws.on('message', async (message) => {
         try {
             const data = JSON.parse(message);
+
+            // Register client for project-specific updates if this is a command with project context
+            if (data.type === 'claude-command' || data.type === 'cursor-command') {
+                const projectName = data.options?.projectName;
+                const sessionId = data.options?.sessionId;
+
+                if (projectName && sessionId) {
+                    // Clean up previous registration if any
+                    const previousClientInfo = clientProjectMap.get(ws);
+                    if (previousClientInfo) {
+                        const previousClients = projectClientMap.get(previousClientInfo.projectName);
+                        if (previousClients) {
+                            previousClients.delete(ws);
+                            if (previousClients.size === 0) {
+                                projectClientMap.delete(previousClientInfo.projectName);
+                            }
+                        }
+                    }
+
+                    // Register client for this project
+                    if (!projectClientMap.has(projectName)) {
+                        projectClientMap.set(projectName, new Set());
+                    }
+                    projectClientMap.get(projectName).add(ws);
+                    clientProjectMap.set(ws, { projectName, sessionId });
+
+                    console.log(`[INFO] Client registered for project: ${projectName}, session: ${sessionId}`);
+                }
+            }
 
             if (data.type === 'claude-command') {
 
@@ -900,8 +978,23 @@ function handleChatConnection(ws) {
 
     ws.on('close', () => {
         console.log('🔌 Chat client disconnected');
-        // Remove from connected clients
-        connectedClients.delete(ws);
+
+        // Remove from all chat clients tracking
+        allChatClients.delete(ws);
+
+        // Clean up client from project-specific maps
+        const clientInfo = clientProjectMap.get(ws);
+        if (clientInfo) {
+            const projectClients = projectClientMap.get(clientInfo.projectName);
+            if (projectClients) {
+                projectClients.delete(ws);
+                if (projectClients.size === 0) {
+                    projectClientMap.delete(clientInfo.projectName);
+                }
+            }
+            clientProjectMap.delete(ws);
+            console.log(`[INFO] Client unregistered from project: ${clientInfo.projectName}`);
+        }
     });
 }
 
