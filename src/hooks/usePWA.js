@@ -293,9 +293,8 @@ export const usePWA = (options = {}) => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Initialize on mount
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    initialize();
+    // Initialize on mount (deferred to avoid synchronous setState)
+    setTimeout(initialize, 0);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

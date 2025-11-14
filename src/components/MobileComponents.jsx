@@ -347,8 +347,8 @@ export const MobileBottomSheet = ({
 
   useEffect(() => {
     if (isOpen) {
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      snapToHeight(defaultSnap);
+      // Defer setState to avoid synchronous setState warning
+      setTimeout(() => snapToHeight(defaultSnap), 0);
     }
   }, [isOpen, defaultSnap]);
 

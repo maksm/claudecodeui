@@ -80,7 +80,6 @@ function unescapeWithMathProtection(text) {
 
   // Restore math formulas
   processedText = processedText.replace(
-    // eslint-disable-next-line no-useless-escape
     new RegExp(`${PLACEHOLDER_PREFIX}(\\d+)${PLACEHOLDER_SUFFIX}`, 'g'),
     (match, index) => {
       return mathBlocks[parseInt(index)];
@@ -113,7 +112,7 @@ const Markdown = ({ children, className }) => {
 function formatUsageLimitText(text) {
   try {
     if (typeof text !== 'string') return text;
-    // eslint-disable-next-line no-useless-escape
+
     return text.replace(/Claude AI usage limit reached\|(\d{10,13})/g, (match, ts) => {
       let timestampMs = parseInt(ts, 10);
       if (!Number.isFinite(timestampMs)) return match;
@@ -4026,7 +4025,7 @@ function ChatInterface({
           // Handle Cursor raw terminal output; strip ANSI and ignore empty control-only payloads
           try {
             const raw = String(latestMessage.data ?? '');
-            // eslint-disable-next-line no-control-regex
+
             const cleaned = raw
               // eslint-disable-next-line no-control-regex
               .replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '')
