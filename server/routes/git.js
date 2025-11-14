@@ -1111,4 +1111,102 @@ router.post('/delete-untracked', async (req, res) => {
   }
 });
 
+// Check for open pull request for the current branch
+router.get('/check-pr', async (req, res) => {
+  const { project } = req.query;
+
+  if (!project) {
+    return res.status(400).json({ error: 'Project name is required' });
+  }
+
+  try {
+    const projectPath = await getActualProjectPath(project);
+    await validateGitRepository(projectPath);
+
+    // Get current branch
+    const { stdout: currentBranch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
+      cwd: projectPath,
+    });
+    const branch = currentBranch.trim();
+
+    // Try using GitHub CLI first
+    try {
+      // Check if gh CLI is available
+      await execAsync('which gh');
+
+      // Check for open PRs for this branch
+      const { stdout: prOutput } = await execAsync(
+        `gh pr list --state open --head "${branch}" --json url --jq '.[0].url'`,
+        { cwd: projectPath }
+      );
+
+      const prUrl = prOutput.trim();
+      if (prUrl) {
+        return res.json({
+          hasPR: true,
+          prUrl,
+          method: 'github-cli',
+        });
+      }
+    } catch (ghError) {
+      // GitHub CLI not available or no PR found, try fallback method
+      console.log('GitHub CLI method failed, trying fallback:', ghError.message);
+    }
+
+    // Fallback: Try to construct PR URL from git remote
+    try {
+      const { stdout: remoteUrl } = await execAsync('git config --get remote.origin.url', {
+        cwd: projectPath,
+      });
+
+      const url = remoteUrl.trim();
+      if (url) {
+        // Parse GitHub URL (supports both HTTPS and SSH formats)
+        let repoOwner, repoName;
+
+        if (url.startsWith('https://github.com/')) {
+          // HTTPS format: https://github.com/owner/repo.git
+          const match = url.match(/https:\/\/github\.com\/([^/]+)\/(.+?)(\.git)?$/);
+          if (match) {
+            repoOwner = match[1];
+            repoName = match[2].replace(/\.git$/, '');
+          }
+        } else if (url.startsWith('git@github.com:')) {
+          // SSH format: git@github.com:owner/repo.git
+          const match = url.match(/git@github\.com:([^/]+)\/(.+?)(\.git)?$/);
+          if (match) {
+            repoOwner = match[1];
+            repoName = match[2].replace(/\.git$/, '');
+          }
+        }
+
+        if (repoOwner && repoName) {
+          // Construct GitHub PR search URL
+          const searchUrl = `https://github.com/${repoOwner}/${repoName}/pulls?q=is%3Aopen+is%3Apr+head%3A${encodeURIComponent(branch)}`;
+
+          return res.json({
+            hasPR: false,
+            prUrl: null,
+            searchUrl,
+            method: 'url-fallback',
+            message: 'GitHub CLI not available, cannot confirm PR existence',
+          });
+        }
+      }
+    } catch (remoteError) {
+      console.log('Failed to get remote URL:', remoteError.message);
+    }
+
+    // No PR found and no remote configured
+    res.json({
+      hasPR: false,
+      prUrl: null,
+      method: 'none',
+    });
+  } catch (error) {
+    console.error('Git check-pr error:', error);
+    res.json({ error: error.message });
+  }
+});
+
 export default router;

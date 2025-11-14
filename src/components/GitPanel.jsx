@@ -20,6 +20,7 @@ import {
   Trash2,
   AlertTriangle,
   Upload,
+  GitPullRequest,
 } from 'lucide-react';
 import { MicButton } from './MicButton.jsx';
 import { authenticatedFetch } from '../utils/api';
@@ -53,6 +54,9 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isCommitAreaCollapsed, setIsCommitAreaCollapsed] = useState(isMobile); // Collapsed by default on mobile
   const [confirmAction, setConfirmAction] = useState(null); // { type: 'discard|commit|pull|push', file?: string, message?: string }
+  const [hasPR, setHasPR] = useState(false);
+  const [prUrl, setPrUrl] = useState(null);
+  const [isCheckingPR, setIsCheckingPR] = useState(false);
   const textareaRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -82,6 +86,13 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
       }
     }
   }, [selectedProject, activeView]);
+
+  // Check for PR when remote status changes
+  useEffect(() => {
+    if (remoteStatus?.hasUpstream) {
+      checkForPR();
+    }
+  }, [remoteStatus?.hasUpstream, remoteStatus?.branch]);
 
   // Handle click outside dropdown
   useEffect(() => {
@@ -302,6 +313,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
         // Refresh status after successful push
         fetchGitStatus();
         fetchRemoteStatus();
+        checkForPR(); // Check for PR after pushing
       } else {
         console.error('Push failed:', data.error);
         // TODO: Show user-friendly error message
@@ -330,6 +342,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
         // Refresh status after successful publish
         fetchGitStatus();
         fetchRemoteStatus();
+        checkForPR(); // Check for PR after publishing
       } else {
         console.error('Publish failed:', data.error);
         // TODO: Show user-friendly error message
@@ -338,6 +351,41 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
       console.error('Error publishing branch:', error);
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const checkForPR = async () => {
+    if (!selectedProject || !remoteStatus?.hasUpstream) {
+      // No remote tracking, no need to check for PR
+      setHasPR(false);
+      setPrUrl(null);
+      return;
+    }
+
+    setIsCheckingPR(true);
+    try {
+      const response = await authenticatedFetch(
+        `/api/git/check-pr?project=${encodeURIComponent(selectedProject.name)}`
+      );
+
+      const data = await response.json();
+      if (data.error) {
+        console.error('Error checking for PR:', data.error);
+        setHasPR(false);
+        setPrUrl(null);
+      } else if (data.hasPR && data.prUrl) {
+        setHasPR(true);
+        setPrUrl(data.prUrl);
+      } else {
+        setHasPR(false);
+        setPrUrl(null);
+      }
+    } catch (error) {
+      console.error('Error checking for PR:', error);
+      setHasPR(false);
+      setPrUrl(null);
+    } finally {
+      setIsCheckingPR(false);
     }
   };
 
@@ -976,6 +1024,21 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
                     >
                       <Upload className={`w-3 h-3 ${isPushing ? 'animate-pulse' : ''}`} />
                       <span>{isPushing ? 'Pushing...' : `Push ${remoteStatus.ahead}`}</span>
+                    </button>
+                  )}
+
+                  {/* View PR button - show when there's an open PR for current branch */}
+                  {hasPR && prUrl && (
+                    <button
+                      onClick={() => window.open(prUrl, '_blank')}
+                      disabled={isCheckingPR}
+                      className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
+                      title="View pull request on GitHub"
+                    >
+                      <GitPullRequest
+                        className={`w-3 h-3 ${isCheckingPR ? 'animate-pulse' : ''}`}
+                      />
+                      <span>View PR</span>
                     </button>
                   )}
 
