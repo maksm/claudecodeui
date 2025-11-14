@@ -1027,21 +1027,6 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
                     </button>
                   )}
 
-                  {/* View PR button - show when there's an open PR for current branch */}
-                  {hasPR && prUrl && (
-                    <button
-                      onClick={() => window.open(prUrl, '_blank')}
-                      disabled={isCheckingPR}
-                      className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
-                      title="View pull request on GitHub"
-                    >
-                      <GitPullRequest
-                        className={`w-3 h-3 ${isCheckingPR ? 'animate-pulse' : ''}`}
-                      />
-                      <span>View PR</span>
-                    </button>
-                  )}
-
                   {/* Fetch button - show when ahead only or when diverged (secondary action) */}
                   {(remoteStatus.ahead > 0 ||
                     (remoteStatus.behind > 0 && remoteStatus.ahead > 0)) && (
@@ -1056,6 +1041,19 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
                     </button>
                   )}
                 </>
+              )}
+
+              {/* View PR button - show when there's an open PR for current branch (always visible when branch has upstream) */}
+              {remoteStatus?.hasUpstream && hasPR && prUrl && (
+                <button
+                  onClick={() => window.open(prUrl, '_blank')}
+                  disabled={isCheckingPR}
+                  className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
+                  title="View pull request on GitHub"
+                >
+                  <GitPullRequest className={`w-3 h-3 ${isCheckingPR ? 'animate-pulse' : ''}`} />
+                  <span>View PR</span>
+                </button>
               )}
             </>
           )}
