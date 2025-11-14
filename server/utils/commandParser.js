@@ -22,7 +22,7 @@ const BASH_COMMAND_ALLOWLIST = [
   'cat',
   'grep',
   'find',
-  'task-master'
+  'task-master',
 ];
 
 /**
@@ -36,7 +36,7 @@ export function parseCommand(content) {
     return {
       data: parsed.data || {},
       content: parsed.content || '',
-      raw: content
+      raw: content,
     };
   } catch (error) {
     throw new Error(`Failed to parse command: ${error.message}`);
@@ -55,7 +55,7 @@ export function replaceArguments(content, args) {
   let result = content;
 
   // Convert args to array if it's a string
-  const argsArray = Array.isArray(args) ? args : (args ? [args] : []);
+  const argsArray = Array.isArray(args) ? args : args ? [args] : [];
 
   // Replace $ARGUMENTS with all arguments joined by space
   const allArgs = argsArray.join(' ');
@@ -81,11 +81,7 @@ export function isPathSafe(filePath, basePath) {
   const resolvedPath = path.resolve(basePath, filePath);
   const resolvedBase = path.resolve(basePath);
   const relative = path.relative(resolvedBase, resolvedPath);
-  return (
-    relative !== '' &&
-    !relative.startsWith('..') &&
-    !path.isAbsolute(relative)
-  );
+  return relative !== '' && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
 /**
@@ -130,7 +126,10 @@ export async function processFileIncludes(content, basePath, depth = 0) {
       const processedContent = await processFileIncludes(fileContent, basePath, depth + 1);
 
       // Replace the @filename with the file content
-      result = result.replace(fullMatch, fullMatch.startsWith(' ') ? ' ' + processedContent : processedContent);
+      result = result.replace(
+        fullMatch,
+        fullMatch.startsWith(' ') ? ' ' + processedContent : processedContent
+      );
     } catch (error) {
       if (error.code === 'ENOENT') {
         throw new Error(`File not found: ${filename}`);
@@ -157,16 +156,14 @@ export function validateCommand(commandString) {
   const parsed = parseShellCommand(trimmedCommand);
 
   // Check for shell operators or control structures
-  const hasOperators = parsed.some(token =>
-    typeof token === 'object' && token.op
-  );
+  const hasOperators = parsed.some(token => typeof token === 'object' && token.op);
 
   if (hasOperators) {
     return {
       allowed: false,
       command: '',
       args: [],
-      error: 'Shell operators (&&, ||, |, ;, etc.) are not allowed'
+      error: 'Shell operators (&&, ||, |, ;, etc.) are not allowed',
     };
   }
 
@@ -190,7 +187,7 @@ export function validateCommand(commandString) {
       allowed: false,
       command: commandName,
       args,
-      error: `Command '${commandName}' is not in the allowlist`
+      error: `Command '${commandName}' is not in the allowlist`,
     };
   }
 
@@ -202,7 +199,7 @@ export function validateCommand(commandString) {
         allowed: false,
         command: commandName,
         args,
-        error: `Argument contains dangerous characters: ${arg}`
+        error: `Argument contains dangerous characters: ${arg}`,
       };
     }
   }
@@ -233,10 +230,12 @@ export function sanitizeOutput(output) {
   return [...output]
     .filter(ch => {
       const code = ch.charCodeAt(0);
-      return code === 9  // \t
-          || code === 10 // \n
-          || code === 13 // \r
-          || (code >= 32 && code !== 127);
+      return (
+        code === 9 || // \t
+        code === 10 || // \n
+        code === 13 || // \r
+        (code >= 32 && code !== 127)
+      );
     })
     .join('');
 }
@@ -275,17 +274,13 @@ export async function processBashCommands(content, options = {}) {
 
     try {
       // Execute without shell using execFile with parsed args
-      const { stdout, stderr } = await execFileAsync(
-        validation.command,
-        validation.args,
-        {
-          cwd,
-          timeout,
-          maxBuffer: 1024 * 1024, // 1MB max output
-          shell: false, // IMPORTANT: No shell interpretation
-          env: { ...process.env, PATH: process.env.PATH } // Inherit PATH for finding commands
-        }
-      );
+      const { stdout, stderr } = await execFileAsync(validation.command, validation.args, {
+        cwd,
+        timeout,
+        maxBuffer: 1024 * 1024, // 1MB max output
+        shell: false, // IMPORTANT: No shell interpretation
+        env: { ...process.env, PATH: process.env.PATH }, // Inherit PATH for finding commands
+      });
 
       const output = sanitizeOutput(stdout || stderr || '');
 

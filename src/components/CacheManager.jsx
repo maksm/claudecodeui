@@ -1,5 +1,19 @@
 import React, { useState } from 'react';
-import { Database, Zap, BarChart3, Download, Upload, Trash2, RefreshCw, Settings, Clock, HardDrive, TrendingUp, Play, Pause } from 'lucide-react';
+import {
+  Database,
+  Zap,
+  BarChart3,
+  Download,
+  Upload,
+  Trash2,
+  RefreshCw,
+  Settings,
+  Clock,
+  HardDrive,
+  TrendingUp,
+  Play,
+  Pause,
+} from 'lucide-react';
 import { useSessionCache, useCacheMonitor, useSessionPreloader } from '../hooks/useSessionCache';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -24,10 +38,11 @@ const CacheManager = ({
   // Use cache hooks
   const sessionCache = useSessionCache({
     maxCacheSize: 100,
-    enableBackgroundLoading: true
+    enableBackgroundLoading: true,
   });
 
-  const { stats, getCacheHealth, formatCacheSize, cacheHitRate, memoryUsage, backgroundLoading } = useCacheMonitor(3000);
+  const { stats, getCacheHealth, formatCacheSize, cacheHitRate, memoryUsage, backgroundLoading } =
+    useCacheMonitor(3000);
 
   const { preloadAdjacent, warmCache, getPreloadStatus } = useSessionPreloader(
     sessionIds,
@@ -69,7 +84,7 @@ const CacheManager = ({
     try {
       const exportData = sessionCache.exportCache();
       const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-        type: 'application/json'
+        type: 'application/json',
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -88,11 +103,11 @@ const CacheManager = ({
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.json';
-    input.onchange = (event) => {
+    input.onchange = event => {
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (e) => {
+        reader.onload = e => {
           try {
             const importData = JSON.parse(e.target.result);
             sessionCache.importCache(importData);
@@ -108,24 +123,34 @@ const CacheManager = ({
   };
 
   // Get health color
-  const getHealthColor = (health) => {
+  const getHealthColor = health => {
     switch (health) {
-      case 'excellent': return 'text-green-600 dark:text-green-400';
-      case 'good': return 'text-blue-600 dark:text-blue-400';
-      case 'fair': return 'text-yellow-600 dark:text-yellow-400';
-      case 'poor': return 'text-red-600 dark:text-red-400';
-      default: return 'text-gray-600 dark:text-gray-400';
+      case 'excellent':
+        return 'text-green-600 dark:text-green-400';
+      case 'good':
+        return 'text-blue-600 dark:text-blue-400';
+      case 'fair':
+        return 'text-yellow-600 dark:text-yellow-400';
+      case 'poor':
+        return 'text-red-600 dark:text-red-400';
+      default:
+        return 'text-gray-600 dark:text-gray-400';
     }
   };
 
   // Get health background
-  const getHealthBackground = (health) => {
+  const getHealthBackground = health => {
     switch (health) {
-      case 'excellent': return 'bg-green-100 dark:bg-green-900/20 border-green-300 dark:border-green-700';
-      case 'good': return 'bg-blue-100 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700';
-      case 'fair': return 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700';
-      case 'poor': return 'bg-red-100 dark:bg-red-900/20 border-red-300 dark:border-red-700';
-      default: return 'bg-gray-100 dark:bg-gray-900/20 border-gray-300 dark:border-gray-700';
+      case 'excellent':
+        return 'bg-green-100 dark:bg-green-900/20 border-green-300 dark:border-green-700';
+      case 'good':
+        return 'bg-blue-100 dark:bg-blue-900/20 border-blue-300 dark:border-blue-700';
+      case 'fair':
+        return 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700';
+      case 'poor':
+        return 'bg-red-100 dark:bg-red-900/20 border-red-300 dark:border-red-700';
+      default:
+        return 'bg-gray-100 dark:bg-gray-900/20 border-gray-300 dark:border-gray-700';
     }
   };
 
@@ -271,7 +296,9 @@ const CacheManager = ({
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Memory Usage</span>
                 <span className="text-gray-900 dark:text-white">
-                  {stats?.memoryUsagePercentage ? `${Math.round(stats.memoryUsagePercentage)}%` : 'N/A'}
+                  {stats?.memoryUsagePercentage
+                    ? `${Math.round(stats.memoryUsagePercentage)}%`
+                    : 'N/A'}
                 </span>
               </div>
             </div>
@@ -373,7 +400,9 @@ const CacheManager = ({
                         <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
-                            {metadata?.cachedAt ? new Date(metadata.cachedAt).toLocaleTimeString() : 'Unknown'}
+                            {metadata?.cachedAt
+                              ? new Date(metadata.cachedAt).toLocaleTimeString()
+                              : 'Unknown'}
                           </span>
                           <span className="flex items-center gap-1">
                             <HardDrive className="w-3 h-3" />

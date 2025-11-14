@@ -27,14 +27,14 @@ function ApiKeysSettings() {
 
       // Fetch API keys
       const apiKeysRes = await fetch('/api/settings/api-keys', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const apiKeysData = await apiKeysRes.json();
       setApiKeys(apiKeysData.apiKeys || []);
 
       // Fetch GitHub tokens
       const githubRes = await fetch('/api/settings/credentials?type=github_token', {
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       const githubData = await githubRes.json();
       setGithubTokens(githubData.credentials || []);
@@ -53,10 +53,10 @@ function ApiKeysSettings() {
       const res = await fetch('/api/settings/api-keys', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ keyName: newKeyName })
+        body: JSON.stringify({ keyName: newKeyName }),
       });
 
       const data = await res.json();
@@ -71,14 +71,14 @@ function ApiKeysSettings() {
     }
   };
 
-  const deleteApiKey = async (keyId) => {
+  const deleteApiKey = async keyId => {
     if (!window.confirm('Are you sure you want to delete this API key?')) return;
 
     try {
       const token = localStorage.getItem('auth-token');
       await fetch(`/api/settings/api-keys/${keyId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       fetchData();
     } catch (error) {
@@ -92,10 +92,10 @@ function ApiKeysSettings() {
       await fetch(`/api/settings/api-keys/${keyId}/toggle`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isActive: !isActive })
+        body: JSON.stringify({ isActive: !isActive }),
       });
       fetchData();
     } catch (error) {
@@ -111,14 +111,14 @@ function ApiKeysSettings() {
       const res = await fetch('/api/settings/credentials', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           credentialName: newTokenName,
           credentialType: 'github_token',
-          credentialValue: newGithubToken
-        })
+          credentialValue: newGithubToken,
+        }),
       });
 
       const data = await res.json();
@@ -133,14 +133,14 @@ function ApiKeysSettings() {
     }
   };
 
-  const deleteGithubToken = async (tokenId) => {
+  const deleteGithubToken = async tokenId => {
     if (!window.confirm('Are you sure you want to delete this GitHub token?')) return;
 
     try {
       const token = localStorage.getItem('auth-token');
       await fetch(`/api/settings/credentials/${tokenId}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
       });
       fetchData();
     } catch (error) {
@@ -154,10 +154,10 @@ function ApiKeysSettings() {
       await fetch(`/api/settings/credentials/${tokenId}/toggle`, {
         method: 'PATCH',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ isActive: !isActive })
+        body: JSON.stringify({ isActive: !isActive }),
       });
       fetchData();
     } catch (error) {
@@ -214,10 +214,7 @@ function ApiKeysSettings() {
             <Key className="h-5 w-5" />
             <h3 className="text-lg font-semibold">API Keys</h3>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setShowNewKeyForm(!showNewKeyForm)}
-          >
+          <Button size="sm" onClick={() => setShowNewKeyForm(!showNewKeyForm)}>
             <Plus className="h-4 w-4 mr-1" />
             New API Key
           </Button>
@@ -232,7 +229,7 @@ function ApiKeysSettings() {
             <Input
               placeholder="API Key Name (e.g., Production Server)"
               value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
+              onChange={e => setNewKeyName(e.target.value)}
               className="mb-2"
             />
             <div className="flex gap-2">
@@ -248,17 +245,15 @@ function ApiKeysSettings() {
           {apiKeys.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">No API keys created yet.</p>
           ) : (
-            apiKeys.map((key) => (
-              <div
-                key={key.id}
-                className="flex items-center justify-between p-3 border rounded-lg"
-              >
+            apiKeys.map(key => (
+              <div key={key.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex-1">
                   <div className="font-medium">{key.key_name}</div>
                   <code className="text-xs text-muted-foreground">{key.api_key}</code>
                   <div className="text-xs text-muted-foreground mt-1">
                     Created: {new Date(key.created_at).toLocaleDateString()}
-                    {key.last_used && ` • Last used: ${new Date(key.last_used).toLocaleDateString()}`}
+                    {key.last_used &&
+                      ` • Last used: ${new Date(key.last_used).toLocaleDateString()}`}
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -269,11 +264,7 @@ function ApiKeysSettings() {
                   >
                     {key.is_active ? 'Active' : 'Inactive'}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteApiKey(key.id)}
-                  >
+                  <Button size="sm" variant="ghost" onClick={() => deleteApiKey(key.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -290,10 +281,7 @@ function ApiKeysSettings() {
             <Github className="h-5 w-5" />
             <h3 className="text-lg font-semibold">GitHub Tokens</h3>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setShowNewTokenForm(!showNewTokenForm)}
-          >
+          <Button size="sm" onClick={() => setShowNewTokenForm(!showNewTokenForm)}>
             <Plus className="h-4 w-4 mr-1" />
             Add Token
           </Button>
@@ -308,7 +296,7 @@ function ApiKeysSettings() {
             <Input
               placeholder="Token Name (e.g., Personal Repos)"
               value={newTokenName}
-              onChange={(e) => setNewTokenName(e.target.value)}
+              onChange={e => setNewTokenName(e.target.value)}
               className="mb-2"
             />
             <div className="relative">
@@ -316,7 +304,7 @@ function ApiKeysSettings() {
                 type={showToken['new'] ? 'text' : 'password'}
                 placeholder="GitHub Personal Access Token (ghp_...)"
                 value={newGithubToken}
-                onChange={(e) => setNewGithubToken(e.target.value)}
+                onChange={e => setNewGithubToken(e.target.value)}
                 className="mb-2 pr-10"
               />
               <button
@@ -329,11 +317,14 @@ function ApiKeysSettings() {
             </div>
             <div className="flex gap-2">
               <Button onClick={createGithubToken}>Add Token</Button>
-              <Button variant="outline" onClick={() => {
-                setShowNewTokenForm(false);
-                setNewTokenName('');
-                setNewGithubToken('');
-              }}>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowNewTokenForm(false);
+                  setNewTokenName('');
+                  setNewGithubToken('');
+                }}
+              >
                 Cancel
               </Button>
             </div>
@@ -344,7 +335,7 @@ function ApiKeysSettings() {
           {githubTokens.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">No GitHub tokens added yet.</p>
           ) : (
-            githubTokens.map((token) => (
+            githubTokens.map(token => (
               <div
                 key={token.id}
                 className="flex items-center justify-between p-3 border rounded-lg"
@@ -363,11 +354,7 @@ function ApiKeysSettings() {
                   >
                     {token.is_active ? 'Active' : 'Inactive'}
                   </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => deleteGithubToken(token.id)}
-                  >
+                  <Button size="sm" variant="ghost" onClick={() => deleteGithubToken(token.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
@@ -381,7 +368,8 @@ function ApiKeysSettings() {
       <div className="p-4 bg-muted/50 rounded-lg">
         <h4 className="font-semibold mb-2">External API Documentation</h4>
         <p className="text-sm text-muted-foreground mb-3">
-          Learn how to use the external API to trigger Claude/Cursor sessions from your applications.
+          Learn how to use the external API to trigger Claude/Cursor sessions from your
+          applications.
         </p>
         <a
           href="/EXTERNAL_API.md"

@@ -2,13 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 export const useVirtualKeyboard = (options = {}) => {
-  const {
-    onShow = null,
-    onHide = null,
-    onChange = null,
-    offset = 0,
-    delay = 100
-  } = options;
+  const { onShow = null, onHide = null, onChange = null, offset = 0, delay = 100 } = options;
 
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const [keyboardHeight, setKeyboardHeight] = useState(0);
@@ -19,7 +13,7 @@ export const useVirtualKeyboard = (options = {}) => {
     height: 0,
     width: 0,
     offsetTop: 0,
-    offsetLeft: 0
+    offsetLeft: 0,
   });
 
   const initialViewportHeight = useRef(0);
@@ -67,7 +61,7 @@ export const useVirtualKeyboard = (options = {}) => {
         height: vv.height,
         width: vv.width,
         offsetTop: vv.offsetTop,
-        offsetLeft: vv.offsetLeft
+        offsetLeft: vv.offsetLeft,
       });
     }
   }, [supportsVisualViewportAPI]);
@@ -127,7 +121,13 @@ export const useVirtualKeyboard = (options = {}) => {
         handleKeyboardHide();
       }
     }, delay);
-  }, [getInitialViewportHeight, updateVisualViewport, handleKeyboardShow, handleKeyboardHide, delay]);
+  }, [
+    getInitialViewportHeight,
+    updateVisualViewport,
+    handleKeyboardShow,
+    handleKeyboardHide,
+    delay,
+  ]);
 
   // Handle Visual Viewport API changes
   const handleVisualViewportResize = useCallback(() => {
@@ -136,54 +136,71 @@ export const useVirtualKeyboard = (options = {}) => {
   }, [updateVisualViewport, handleViewportResize]);
 
   // Focus handling for inputs
-  const handleFocusIn = useCallback((event) => {
-    const target = event.target;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
-      // Small delay to allow keyboard to appear
-      setTimeout(() => {
-        handleKeyboardShow();
-      }, 300);
-    }
-  }, [handleKeyboardShow]);
+  const handleFocusIn = useCallback(
+    event => {
+      const target = event.target;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.contentEditable === 'true'
+      ) {
+        // Small delay to allow keyboard to appear
+        setTimeout(() => {
+          handleKeyboardShow();
+        }, 300);
+      }
+    },
+    [handleKeyboardShow]
+  );
 
-  const handleFocusOut = useCallback((event) => {
-    const target = event.target;
-    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.contentEditable === 'true') {
-      // Small delay to allow keyboard to disappear
-      setTimeout(() => {
-        handleKeyboardHide();
-      }, 100);
-    }
-  }, [handleKeyboardHide]);
+  const handleFocusOut = useCallback(
+    event => {
+      const target = event.target;
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.contentEditable === 'true'
+      ) {
+        // Small delay to allow keyboard to disappear
+        setTimeout(() => {
+          handleKeyboardHide();
+        }, 100);
+      }
+    },
+    [handleKeyboardHide]
+  );
 
   // Scroll active element into view
-  const scrollIntoView = useCallback((element, options = {}) => {
-    if (!element || typeof window === 'undefined') return;
+  const scrollIntoView = useCallback(
+    (element, options = {}) => {
+      if (!element || typeof window === 'undefined') return;
 
-    const defaultOptions = {
-      behavior: 'smooth',
-      block: 'center',
-      inline: 'nearest'
-    };
+      const defaultOptions = {
+        behavior: 'smooth',
+        block: 'center',
+        inline: 'nearest',
+      };
 
-    const mergedOptions = { ...defaultOptions, ...options };
+      const mergedOptions = { ...defaultOptions, ...options };
 
-    // Add keyboard height offset if keyboard is visible
-    if (isKeyboardVisible && keyboardHeight > 0) {
-      const rect = element.getBoundingClientRect();
-      const offset = keyboardHeight - offset;
+      // Add keyboard height offset if keyboard is visible
+      if (isKeyboardVisible && keyboardHeight > 0) {
+        const rect = element.getBoundingClientRect();
+        const offset = keyboardHeight - offset;
 
-      if (rect.bottom + offset > window.innerHeight) {
-        window.scrollBy({
-          top: offset,
-          left: 0,
-          behavior: mergedOptions.behavior
-        });
+        if (rect.bottom + offset > window.innerHeight) {
+          window.scrollBy({
+            top: offset,
+            left: 0,
+            behavior: mergedOptions.behavior,
+          });
+        }
+      } else {
+        element.scrollIntoView(mergedOptions);
       }
-    } else {
-      element.scrollIntoView(mergedOptions);
-    }
-  }, [isKeyboardVisible, keyboardHeight, offset]);
+    },
+    [isKeyboardVisible, keyboardHeight, offset]
+  );
 
   // Get adjusted viewport height
   const getAdjustedViewportHeight = useCallback(() => {
@@ -269,7 +286,7 @@ export const useVirtualKeyboard = (options = {}) => {
     handleVisualViewportResize,
     handleFocusIn,
     handleFocusOut,
-    supportsVisualViewportAPI
+    supportsVisualViewportAPI,
   ]);
 
   // Orientation change handler
@@ -312,7 +329,7 @@ export const useVirtualKeyboard = (options = {}) => {
     // CSS-safe values
     cssSafeAreaTop: `${visualViewport.offsetTop}px`,
     cssSafeAreaHeight: isKeyboardVisible ? `${visualViewport.height}px` : '100vh',
-    cssKeyboardHeight: `${keyboardHeight}px`
+    cssKeyboardHeight: `${keyboardHeight}px`,
   };
 };
 

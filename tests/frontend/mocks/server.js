@@ -18,14 +18,17 @@ export const handlers = [
       return Response.json({
         success: true,
         user: { id: 1, username: 'testuser', email: 'test@example.com' },
-        token: 'mock-jwt-token'
+        token: 'mock-jwt-token',
       });
     }
 
-    return Response.json({
-      success: false,
-      error: 'Invalid credentials'
-    }, { status: 401 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Invalid credentials',
+      },
+      { status: 401 }
+    );
   }),
 
   http.post('/api/auth/register', async ({ request }) => {
@@ -33,17 +36,23 @@ export const handlers = [
     const { username, email, password } = body || {};
 
     if (username && email && password) {
-      return Response.json({
-        success: true,
-        user: { id: 2, username, email },
-        token: 'mock-jwt-token-new'
-      }, { status: 201 });
+      return Response.json(
+        {
+          success: true,
+          user: { id: 2, username, email },
+          token: 'mock-jwt-token-new',
+        },
+        { status: 201 }
+      );
     }
 
-    return Response.json({
-      success: false,
-      error: 'Missing required fields'
-    }, { status: 400 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Missing required fields',
+      },
+      { status: 400 }
+    );
   }),
 
   http.get('/api/auth/me', ({ request }) => {
@@ -52,14 +61,17 @@ export const handlers = [
     if (authHeader === 'Bearer mock-jwt-token') {
       return Response.json({
         success: true,
-        user: { id: 1, username: 'testuser', email: 'test@example.com' }
+        user: { id: 1, username: 'testuser', email: 'test@example.com' },
       });
     }
 
-    return Response.json({
-      success: false,
-      error: 'Invalid token'
-    }, { status: 401 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Invalid token',
+      },
+      { status: 401 }
+    );
   }),
 
   http.get('/api/auth/user', ({ request }) => {
@@ -68,27 +80,30 @@ export const handlers = [
     if (authHeader === 'Bearer mock-jwt-token') {
       return Response.json({
         success: true,
-        user: { id: 1, username: 'testuser', email: 'test@example.com' }
+        user: { id: 1, username: 'testuser', email: 'test@example.com' },
       });
     }
 
-    return Response.json({
-      success: false,
-      error: 'Invalid token'
-    }, { status: 401 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Invalid token',
+      },
+      { status: 401 }
+    );
   }),
 
   http.get('/api/auth/status', () => {
     return Response.json({
       success: true,
-      needsSetup: false
+      needsSetup: false,
     });
   }),
 
   http.post('/api/auth/logout', () => {
     return Response.json({
       success: true,
-      message: 'Logged out successfully'
+      message: 'Logged out successfully',
     });
   }),
 
@@ -102,16 +117,16 @@ export const handlers = [
           name: 'Test Project',
           path: '/home/user/test-project',
           description: 'A test project',
-          lastModified: new Date().toISOString()
+          lastModified: new Date().toISOString(),
         },
         {
           id: 2,
           name: 'Another Project',
           path: '/home/user/another-project',
           description: 'Another test project',
-          lastModified: new Date().toISOString()
-        }
-      ]
+          lastModified: new Date().toISOString(),
+        },
+      ],
     });
   }),
 
@@ -120,22 +135,28 @@ export const handlers = [
     const { name, path, description } = body;
 
     if (name && path) {
-      return Response.json({
-        success: true,
-        project: {
-          id: 3,
-          name,
-          path,
-          description: description || '',
-          lastModified: new Date().toISOString()
-        }
-      }, { status: 201 });
+      return Response.json(
+        {
+          success: true,
+          project: {
+            id: 3,
+            name,
+            path,
+            description: description || '',
+            lastModified: new Date().toISOString(),
+          },
+        },
+        { status: 201 }
+      );
     }
 
-    return Response.json({
-      success: false,
-      error: 'Name and path are required'
-    }, { status: 400 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Name and path are required',
+      },
+      { status: 400 }
+    );
   }),
 
   http.get('/api/projects/:id', ({ params }) => {
@@ -149,15 +170,18 @@ export const handlers = [
           name: 'Test Project',
           path: '/home/user/test-project',
           description: 'A test project',
-          lastModified: new Date().toISOString()
-        }
+          lastModified: new Date().toISOString(),
+        },
       });
     }
 
-    return Response.json({
-      success: false,
-      error: 'Project not found'
-    }, { status: 404 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Project not found',
+      },
+      { status: 404 }
+    );
   }),
 
   // Git endpoints
@@ -169,14 +193,17 @@ export const handlers = [
       return Response.json({
         success: true,
         status: ' M modified.txt\n?? new.txt\n',
-        branch: 'main'
+        branch: 'main',
       });
     }
 
-    return Response.json({
-      success: false,
-      error: 'Project parameter is required'
-    }, { status: 400 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Project parameter is required',
+      },
+      { status: 400 }
+    );
   }),
 
   http.get('/api/git/log', ({ request }) => {
@@ -191,22 +218,25 @@ export const handlers = [
             hash: 'abc123',
             message: 'Latest commit',
             author: 'Test User',
-            date: new Date().toISOString()
+            date: new Date().toISOString(),
           },
           {
             hash: 'def456',
             message: 'Previous commit',
             author: 'Test User',
-            date: new Date(Date.now() - 86400000).toISOString()
-          }
-        ]
+            date: new Date(Date.now() - 86400000).toISOString(),
+          },
+        ],
       });
     }
 
-    return Response.json({
-      success: false,
-      error: 'Project parameter is required'
-    }, { status: 400 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Project parameter is required',
+      },
+      { status: 400 }
+    );
   }),
 
   // Settings endpoints
@@ -218,8 +248,8 @@ export const handlers = [
         fontSize: 14,
         autoSave: true,
         lineNumbers: true,
-        wordWrap: true
-      }
+        wordWrap: true,
+      },
     });
   }),
 
@@ -228,7 +258,7 @@ export const handlers = [
 
     return Response.json({
       success: true,
-      settings: { ...settings }
+      settings: { ...settings },
     });
   }),
 
@@ -236,7 +266,7 @@ export const handlers = [
   http.get('/api/files/*', () => {
     return Response.json({
       success: true,
-      content: 'Mock file content for testing'
+      content: 'Mock file content for testing',
     });
   }),
 
@@ -245,7 +275,7 @@ export const handlers = [
 
     return Response.json({
       success: true,
-      message: 'File saved successfully'
+      message: 'File saved successfully',
     });
   }),
 
@@ -258,28 +288,34 @@ export const handlers = [
       success: true,
       response: `Mock Claude response to: ${message}`,
       sessionId,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }),
 
   // Error simulation endpoints
   http.get('/api/error/500', () => {
-    return Response.json({
-      success: false,
-      error: 'Internal server error'
-    }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Internal server error',
+      },
+      { status: 500 }
+    );
   }),
 
   http.get('/api/error/404', () => {
-    return Response.json({
-      success: false,
-      error: 'Not found'
-    }, { status: 404 });
+    return Response.json(
+      {
+        success: false,
+        error: 'Not found',
+      },
+      { status: 404 }
+    );
   }),
 
   http.get('/api/error/network', () => {
     return Response.error();
-  })
+  }),
 ];
 
 // Create MSW server
@@ -298,10 +334,8 @@ export const mockWebSocket = {
       removeEventListener: jest.fn(),
 
       // Simulate receiving messages
-      simulateMessage: (data) => {
-        const messageHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'message'
-        );
+      simulateMessage: data => {
+        const messageHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'message');
         if (messageHandler) {
           messageHandler[1]({ data: JSON.stringify(data) });
         }
@@ -309,9 +343,7 @@ export const mockWebSocket = {
 
       // Simulate connection open
       simulateOpen: () => {
-        const openHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'open'
-        );
+        const openHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'open');
         if (openHandler) {
           openHandler[1]({ type: 'open' });
         }
@@ -319,28 +351,24 @@ export const mockWebSocket = {
 
       // Simulate connection close
       simulateClose: () => {
-        const closeHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'close'
-        );
+        const closeHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'close');
         if (closeHandler) {
           closeHandler[1]({ type: 'close' });
         }
       },
 
       // Simulate connection error
-      simulateError: (error) => {
-        const errorHandler = ws.addEventListener.mock.calls.find(
-          call => call[0] === 'error'
-        );
+      simulateError: error => {
+        const errorHandler = ws.addEventListener.mock.calls.find(call => call[0] === 'error');
         if (errorHandler) {
           errorHandler[1]({ type: 'error', error });
         }
-      }
+      },
     };
 
     mockWebSocket.instances.push(ws);
     return ws;
-  })
+  }),
 };
 
 // Setup global WebSocket mock
@@ -363,7 +391,7 @@ export const createMockUser = (overrides = {}) => ({
   id: 1,
   username: 'testuser',
   email: 'test@example.com',
-  ...overrides
+  ...overrides,
 });
 
 export const createMockProject = (overrides = {}) => ({
@@ -372,7 +400,7 @@ export const createMockProject = (overrides = {}) => ({
   path: '/home/user/test-project',
   description: 'A test project',
   lastModified: new Date().toISOString(),
-  ...overrides
+  ...overrides,
 });
 
 export const createMockGitCommit = (overrides = {}) => ({
@@ -380,7 +408,7 @@ export const createMockGitCommit = (overrides = {}) => ({
   message: 'Test commit',
   author: 'Test User',
   date: new Date().toISOString(),
-  ...overrides
+  ...overrides,
 });
 
 export const createMockSettings = (overrides = {}) => ({
@@ -389,5 +417,5 @@ export const createMockSettings = (overrides = {}) => ({
   autoSave: true,
   lineNumbers: true,
   wordWrap: true,
-  ...overrides
+  ...overrides,
 });

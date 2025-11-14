@@ -51,7 +51,7 @@ export class DashboardPage extends BasePage {
 
   async clickProject(projectName) {
     const projectCard = this.page.locator(this.projectCard).filter({
-      has: this.page.locator(`text=${projectName}`)
+      has: this.page.locator(`text=${projectName}`),
     });
     await this.clickElement(projectCard);
     await this.waitForPageLoad();
@@ -69,7 +69,7 @@ export class DashboardPage extends BasePage {
   async expectProjectsToContain(projectNames) {
     for (const name of projectNames) {
       const projectCard = this.page.locator(this.projectCard).filter({
-        has: this.page.locator(`text=${name}`)
+        has: this.page.locator(`text=${name}`),
       });
       await expect(projectCard).toBeVisible();
     }
@@ -78,7 +78,7 @@ export class DashboardPage extends BasePage {
   async expectProjectsNotToContain(projectNames) {
     for (const name of projectNames) {
       const projectCard = this.page.locator(this.projectCard).filter({
-        has: this.page.locator(`text=${name}`)
+        has: this.page.locator(`text=${name}`),
       });
       await expect(projectCard).not.toBeVisible();
     }

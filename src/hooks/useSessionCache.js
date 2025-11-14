@@ -12,7 +12,7 @@ export const useSessionCache = (options = {}) => {
     defaultTTL = 300000, // 5 minutes
     enableBackgroundLoading = true,
     preloadStrategy = 'adjacent',
-    preloadDistance = 2
+    preloadDistance = 2,
   } = options;
 
   // Cache service instance
@@ -26,7 +26,7 @@ export const useSessionCache = (options = {}) => {
       defaultTTL,
       enableBackgroundLoading,
       preloadStrategy,
-      preloadDistance
+      preloadDistance,
     });
   }
 
@@ -39,7 +39,9 @@ export const useSessionCache = (options = {}) => {
     const updateStats = () => {
       const currentStats = cacheService.current.getStats();
       setStats(currentStats);
-      setIsBackgroundLoading(currentStats.backgroundLoadQueue > 0 || currentStats.loadingPromises > 0);
+      setIsBackgroundLoading(
+        currentStats.backgroundLoadQueue > 0 || currentStats.loadingPromises > 0
+      );
     };
 
     updateStats();
@@ -66,7 +68,7 @@ export const useSessionCache = (options = {}) => {
     const customLoader = loader || options.loader;
     const result = await cacheService.current.get(sessionId, {
       ...options,
-      customLoader
+      customLoader,
     });
 
     return result;
@@ -83,12 +85,12 @@ export const useSessionCache = (options = {}) => {
   }, []);
 
   // Check if session exists in cache
-  const hasSession = useCallback((sessionId) => {
+  const hasSession = useCallback(sessionId => {
     return cacheService.current ? cacheService.current.has(sessionId) : false;
   }, []);
 
   // Remove session from cache
-  const removeSession = useCallback((sessionId) => {
+  const removeSession = useCallback(sessionId => {
     return cacheService.current ? cacheService.current.delete(sessionId) : false;
   }, []);
 
@@ -136,7 +138,7 @@ export const useSessionCache = (options = {}) => {
   }, []);
 
   // Get session metadata
-  const getSessionMetadata = useCallback((sessionId) => {
+  const getSessionMetadata = useCallback(sessionId => {
     return cacheService.current ? cacheService.current.getSessionMetadata(sessionId) : null;
   }, []);
 
@@ -148,7 +150,7 @@ export const useSessionCache = (options = {}) => {
   }, []);
 
   // Invalidate session
-  const invalidateSession = useCallback((sessionId) => {
+  const invalidateSession = useCallback(sessionId => {
     if (cacheService.current) {
       cacheService.current.invalidate(sessionId);
     }
@@ -202,7 +204,7 @@ export const useSessionCache = (options = {}) => {
     cacheSize: stats?.cacheSize || 0,
     hitRate: stats?.hitRate || 0,
     memoryUsage: stats?.totalMemoryUsage || 0,
-    backgroundLoadQueue: stats?.backgroundLoadQueue || 0
+    backgroundLoadQueue: stats?.backgroundLoadQueue || 0,
   };
 };
 
@@ -214,7 +216,7 @@ export const useCachedSession = (sessionId, loader, options = {}) => {
     autoLoad = true,
     staleWhileRevalidate = true,
     refreshInterval = null,
-    refreshOnWindowFocus = false
+    refreshOnWindowFocus = false,
   } = options;
 
   const sessionCache = useSessionCache();
@@ -242,7 +244,6 @@ export const useCachedSession = (sessionId, loader, options = {}) => {
         setSession(result.data);
         setLastUpdated(result.fromCache ? result.cachedAt : Date.now());
       }
-
     } catch (err) {
       setError(err.message);
     } finally {
@@ -261,7 +262,6 @@ export const useCachedSession = (sessionId, loader, options = {}) => {
       const data = await sessionCache.refreshSession(sessionId, loader);
       setSession(data);
       setLastUpdated(Date.now());
-
     } catch (err) {
       setError(err.message);
     } finally {
@@ -270,13 +270,16 @@ export const useCachedSession = (sessionId, loader, options = {}) => {
   }, [sessionId, loader, sessionCache]);
 
   // Update session in cache
-  const updateSession = useCallback((newData) => {
-    if (sessionId) {
-      sessionCache.setSession(sessionId, newData);
-      setSession(newData);
-      setLastUpdated(Date.now());
-    }
-  }, [sessionId, sessionCache]);
+  const updateSession = useCallback(
+    newData => {
+      if (sessionId) {
+        sessionCache.setSession(sessionId, newData);
+        setSession(newData);
+        setLastUpdated(Date.now());
+      }
+    },
+    [sessionId, sessionCache]
+  );
 
   // Auto-load on mount
   useEffect(() => {
@@ -325,7 +328,7 @@ export const useCachedSession = (sessionId, loader, options = {}) => {
     refresh,
     updateSession,
     isFromCache: metadata?.cachedAt ? true : false,
-    isStale: metadata?.isStale || false
+    isStale: metadata?.isStale || false,
   };
 };
 
@@ -360,7 +363,7 @@ export const useCacheMonitor = (interval = 2000) => {
     return 'excellent';
   }, [stats]);
 
-  const formatCacheSize = useCallback((bytes) => {
+  const formatCacheSize = useCallback(bytes => {
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -375,7 +378,7 @@ export const useCacheMonitor = (interval = 2000) => {
     cacheHitRate: stats?.hitRate || 0,
     cacheSize: stats?.cacheSize || 0,
     memoryUsage: stats?.totalMemoryUsage || 0,
-    backgroundLoading: stats?.backgroundLoadQueue > 0 || stats?.loadingPromises > 0
+    backgroundLoading: stats?.backgroundLoadQueue > 0 || stats?.loadingPromises > 0,
   };
 };
 
@@ -414,23 +417,29 @@ export const useSessionPreloader = (sessionIds, currentSessionId, loader) => {
   }, [sessionIds, currentSessionId, loader, sessionCache, getAdjacentSessionIds]);
 
   // Warm cache with prioritized sessions
-  const warmCache = useCallback(async (prioritySessions = []) => {
-    if (!sessionIds || !loader) return;
+  const warmCache = useCallback(
+    async (prioritySessions = []) => {
+      if (!sessionIds || !loader) return;
 
-    await sessionCache.warmCache(sessionIds, loader, prioritySessions);
-  }, [sessionIds, loader, sessionCache]);
+      await sessionCache.warmCache(sessionIds, loader, prioritySessions);
+    },
+    [sessionIds, loader, sessionCache]
+  );
 
   // Check preload status for a session
-  const getPreloadStatus = useCallback((sessionId) => {
-    return preloadStatus[sessionId] || 'not-preloaded';
-  }, [preloadStatus]);
+  const getPreloadStatus = useCallback(
+    sessionId => {
+      return preloadStatus[sessionId] || 'not-preloaded';
+    },
+    [preloadStatus]
+  );
 
   return {
     preloadAdjacent,
     warmCache,
     getPreloadStatus,
     getAdjacentSessionIds,
-    preloadStatus
+    preloadStatus,
   };
 };
 

@@ -9,7 +9,7 @@ const testFiles = [
   'tests/frontend/components/FileTree.test.jsx',
   'tests/frontend/components/Shell.test.jsx',
   'tests/frontend/components/Settings.test.jsx',
-  'tests/frontend/components/Sidebar.test.jsx'
+  'tests/frontend/components/Sidebar.test.jsx',
 ];
 
 testFiles.forEach(filePath => {

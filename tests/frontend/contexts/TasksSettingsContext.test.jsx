@@ -2,7 +2,10 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, act, renderHook } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import { TasksSettingsProvider, useTasksSettings } from '../../../src/contexts/TasksSettingsContext.jsx';
+import {
+  TasksSettingsProvider,
+  useTasksSettings,
+} from '../../../src/contexts/TasksSettingsContext.jsx';
 import { api } from '../../../src/utils/api';
 
 // Mock dependencies
@@ -10,7 +13,7 @@ jest.mock('../../../src/utils/api');
 
 // Mock AuthContext
 jest.mock('../../../src/contexts/AuthContext', () => ({
-  useAuth: jest.fn()
+  useAuth: jest.fn(),
 }));
 
 // Test component to use the tasks settings context
@@ -22,7 +25,7 @@ const TestComponent = () => {
     isTaskMasterInstalled,
     isTaskMasterReady,
     installationStatus,
-    isCheckingInstallation
+    isCheckingInstallation,
   } = useTasksSettings();
 
   return (
@@ -31,7 +34,9 @@ const TestComponent = () => {
       <div data-testid="is-installed">{isTaskMasterInstalled?.toString() || 'null'}</div>
       <div data-testid="is-ready">{isTaskMasterReady?.toString() || 'null'}</div>
       <div data-testid="checking-installation">{isCheckingInstallation.toString()}</div>
-      <div data-testid="installation-status">{installationStatus ? JSON.stringify(installationStatus) : 'null'}</div>
+      <div data-testid="installation-status">
+        {installationStatus ? JSON.stringify(installationStatus) : 'null'}
+      </div>
 
       <button onClick={() => setTasksEnabled(true)} data-testid="enable-tasks">
         Enable Tasks
@@ -54,7 +59,7 @@ const renderWithTasksSettingsProvider = (authProps = {}) => {
     user: { username: 'testuser' },
     token: 'test-token',
     isLoading: false,
-    ...authProps
+    ...authProps,
   });
 
   return render(
@@ -120,12 +125,12 @@ describe('TasksSettingsContext', () => {
     it('checks installation status when user is authenticated', async () => {
       const mockInstallationStatus = {
         installation: { isInstalled: true },
-        isReady: true
+        isReady: true,
       };
 
       api.get = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockInstallationStatus)
+        json: jest.fn().mockResolvedValue(mockInstallationStatus),
       });
 
       renderWithTasksSettingsProvider();
@@ -154,7 +159,7 @@ describe('TasksSettingsContext', () => {
     it('sets installation status to false when API returns non-200', async () => {
       api.get = jest.fn().mockResolvedValue({
         ok: false,
-        status: 500
+        status: 500,
       });
 
       renderWithTasksSettingsProvider();
@@ -169,12 +174,12 @@ describe('TasksSettingsContext', () => {
       localStorage.removeItem('tasks-enabled');
       const mockStatus = {
         installation: { isInstalled: false },
-        isReady: false
+        isReady: false,
       };
 
       api.get = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockStatus)
+        json: jest.fn().mockResolvedValue(mockStatus),
       });
 
       renderWithTasksSettingsProvider();
@@ -188,12 +193,12 @@ describe('TasksSettingsContext', () => {
       localStorage.setItem('tasks-enabled', 'true');
       const mockStatus = {
         installation: { isInstalled: false },
-        isReady: false
+        isReady: false,
       };
 
       api.get = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockStatus)
+        json: jest.fn().mockResolvedValue(mockStatus),
       });
 
       renderWithTasksSettingsProvider();
@@ -266,7 +271,7 @@ describe('TasksSettingsContext', () => {
     it('calls installation status endpoint with correct URL', async () => {
       api.get = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue({ isReady: true })
+        json: jest.fn().mockResolvedValue({ isReady: true }),
       });
 
       renderWithTasksSettingsProvider();
@@ -281,15 +286,15 @@ describe('TasksSettingsContext', () => {
         installation: {
           isInstalled: true,
           version: '2.1.0',
-          path: '/usr/local/bin/taskmaster'
+          path: '/usr/local/bin/taskmaster',
         },
         isReady: true,
-        features: ['auto-detect', 'smart-tasks']
+        features: ['auto-detect', 'smart-tasks'],
       };
 
       api.get = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockResponse)
+        json: jest.fn().mockResolvedValue(mockResponse),
       });
 
       renderWithTasksSettingsProvider();
@@ -304,12 +309,12 @@ describe('TasksSettingsContext', () => {
     it('handles installation status with missing installation info', async () => {
       const mockResponse = {
         isReady: false,
-        features: []
+        features: [],
       };
 
       api.get = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue(mockResponse)
+        json: jest.fn().mockResolvedValue(mockResponse),
       });
 
       renderWithTasksSettingsProvider();
@@ -323,7 +328,7 @@ describe('TasksSettingsContext', () => {
     it('handles malformed installation status response', async () => {
       api.get = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue({ invalid: 'response' })
+        json: jest.fn().mockResolvedValue({ invalid: 'response' }),
       });
 
       renderWithTasksSettingsProvider();
@@ -350,7 +355,7 @@ describe('TasksSettingsContext', () => {
   describe('Context Value', () => {
     it('provides all required context properties', () => {
       const { result } = renderHook(() => useTasksSettings(), {
-        wrapper: ({ children }) => <TasksSettingsProvider>{children}</TasksSettingsProvider>
+        wrapper: ({ children }) => <TasksSettingsProvider>{children}</TasksSettingsProvider>,
       });
 
       expect(result.current).toMatchObject({
@@ -360,17 +365,17 @@ describe('TasksSettingsContext', () => {
         isTaskMasterInstalled: expect.any(Boolean),
         isTaskMasterReady: expect.any(Boolean),
         installationStatus: expect.any(Object),
-        isCheckingInstallation: expect.any(Boolean)
+        isCheckingInstallation: expect.any(Boolean),
       });
     });
 
     it('provides stable functions', () => {
       const { result: result1 } = renderHook(() => useTasksSettings(), {
-        wrapper: ({ children }) => <TasksSettingsProvider>{children}</TasksSettingsProvider>
+        wrapper: ({ children }) => <TasksSettingsProvider>{children}</TasksSettingsProvider>,
       });
 
       const { result: result2 } = renderHook(() => useTasksSettings(), {
-        wrapper: ({ children }) => <TasksSettingsProvider>{children}</TasksSettingsProvider>
+        wrapper: ({ children }) => <TasksSettingsProvider>{children}</TasksSettingsProvider>,
       });
 
       // Functions should be stable across renders
@@ -456,7 +461,7 @@ describe('TasksSettingsContext', () => {
     it('does not make unnecessary API calls when already loaded', async () => {
       api.get = jest.fn().mockResolvedValue({
         ok: true,
-        json: jest.fn().mockResolvedValue({ isReady: true })
+        json: jest.fn().mockResolvedValue({ isReady: true }),
       });
 
       const { rerender } = renderWithTasksSettingsProvider();

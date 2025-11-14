@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Activity, AlertTriangle, BarChart3, Trash2, RefreshCw, X, Memory, Zap, TrendingUp, Clock, Users, Package } from 'lucide-react';
+import {
+  Activity,
+  AlertTriangle,
+  BarChart3,
+  Trash2,
+  RefreshCw,
+  X,
+  Memory,
+  Zap,
+  TrendingUp,
+  Clock,
+  Users,
+  Package,
+} from 'lucide-react';
 import { useMemoryDevTools, useMemoryMonitor } from '../hooks/useMemoryManager';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -17,10 +30,11 @@ const MemoryMonitor = ({
   ...props
 }) => {
   const { theme } = useTheme();
-  const { isOpen, setIsOpen, stats, refreshStats, performCleanup, checkLeaks, isDevelopment } = useMemoryDevTools();
+  const { isOpen, setIsOpen, stats, refreshStats, performCleanup, checkLeaks, isDevelopment } =
+    useMemoryDevTools();
   const { memoryStatus, memoryUsagePercentage, issues, forceCleanup } = useMemoryMonitor({
     interval: 2000,
-    autoStart: isOpen
+    autoStart: isOpen,
   });
 
   // Auto-open in development if requested
@@ -36,7 +50,7 @@ const MemoryMonitor = ({
   }
 
   // Format bytes to human readable
-  const formatBytes = (bytes) => {
+  const formatBytes = bytes => {
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -45,51 +59,64 @@ const MemoryMonitor = ({
   };
 
   // Get status color
-  const getStatusColor = (status) => {
+  const getStatusColor = status => {
     switch (status) {
-      case 'critical': return 'text-red-600 dark:text-red-400';
-      case 'warning': return 'text-orange-600 dark:text-orange-400';
-      case 'caution': return 'text-yellow-600 dark:text-yellow-400';
-      default: return 'text-green-600 dark:text-green-400';
+      case 'critical':
+        return 'text-red-600 dark:text-red-400';
+      case 'warning':
+        return 'text-orange-600 dark:text-orange-400';
+      case 'caution':
+        return 'text-yellow-600 dark:text-yellow-400';
+      default:
+        return 'text-green-600 dark:text-green-400';
     }
   };
 
   // Get status background
-  const getStatusBackground = (status) => {
+  const getStatusBackground = status => {
     switch (status) {
-      case 'critical': return 'bg-red-100 dark:bg-red-900/20 border-red-300 dark:border-red-700';
-      case 'warning': return 'bg-orange-100 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700';
-      case 'caution': return 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700';
-      default: return 'bg-green-100 dark:bg-green-900/20 border-green-300 dark:border-green-700';
+      case 'critical':
+        return 'bg-red-100 dark:bg-red-900/20 border-red-300 dark:border-red-700';
+      case 'warning':
+        return 'bg-orange-100 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700';
+      case 'caution':
+        return 'bg-yellow-100 dark:bg-yellow-900/20 border-yellow-300 dark:border-yellow-700';
+      default:
+        return 'bg-green-100 dark:bg-green-900/20 border-green-300 dark:border-green-700';
     }
   };
 
   // Position classes
   const getPositionClasses = () => {
     switch (position) {
-      case 'top-left': return 'top-4 left-4';
-      case 'top-right': return 'top-4 right-4';
-      case 'bottom-left': return 'bottom-4 left-4';
+      case 'top-left':
+        return 'top-4 left-4';
+      case 'top-right':
+        return 'top-4 right-4';
+      case 'bottom-left':
+        return 'bottom-4 left-4';
       case 'bottom-right':
-      default: return 'bottom-4 right-4';
+      default:
+        return 'bottom-4 right-4';
     }
   };
 
   if (compact) {
     return (
-      <div className={`memory-monitor-compact ${getPositionClasses()} fixed z-50 ${className}`} {...props}>
+      <div
+        className={`memory-monitor-compact ${getPositionClasses()} fixed z-50 ${className}`}
+        {...props}
+      >
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${
-            getStatusBackground(memoryStatus)
-          } hover:shadow-lg`}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all ${getStatusBackground(
+            memoryStatus
+          )} hover:shadow-lg`}
           title={`Memory: ${Math.round(memoryUsagePercentage)}% (${formatBytes(stats?.memoryUsage || 0)})`}
         >
           <Memory className="w-4 h-4" />
           <span className="text-sm font-medium">{Math.round(memoryUsagePercentage)}%</span>
-          {issues.length > 0 && (
-            <AlertTriangle className="w-3 h-3 text-red-500" />
-          )}
+          {issues.length > 0 && <AlertTriangle className="w-3 h-3 text-red-500" />}
         </button>
       </div>
     );
@@ -101,15 +128,13 @@ const MemoryMonitor = ({
       {showToggle && (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all mb-2 ${
-            getStatusBackground(memoryStatus)
-          } hover:shadow-lg`}
+          className={`flex items-center gap-2 px-3 py-2 rounded-lg border transition-all mb-2 ${getStatusBackground(
+            memoryStatus
+          )} hover:shadow-lg`}
         >
           <Activity className="w-4 h-4" />
           <span className="text-sm font-medium">{Math.round(memoryUsagePercentage)}%</span>
-          {issues.length > 0 && (
-            <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-          )}
+          {issues.length > 0 && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />}
         </button>
       )}
 
@@ -146,7 +171,9 @@ const MemoryMonitor = ({
           </div>
 
           {/* Memory Status */}
-          <div className={`p-4 border-b border-gray-200 dark:border-gray-700 ${getStatusBackground(memoryStatus)}`}>
+          <div
+            className={`p-4 border-b border-gray-200 dark:border-gray-700 ${getStatusBackground(memoryStatus)}`}
+          >
             <div className="flex items-center justify-between mb-2">
               <span className={`text-sm font-medium capitalize ${getStatusColor(memoryStatus)}`}>
                 {memoryStatus} Memory Usage
@@ -158,9 +185,13 @@ const MemoryMonitor = ({
             <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
               <div
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  memoryStatus === 'critical' ? 'bg-red-500' :
-                  memoryStatus === 'warning' ? 'bg-orange-500' :
-                  memoryStatus === 'caution' ? 'bg-yellow-500' : 'bg-green-500'
+                  memoryStatus === 'critical'
+                    ? 'bg-red-500'
+                    : memoryStatus === 'warning'
+                      ? 'bg-orange-500'
+                      : memoryStatus === 'caution'
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500'
                 }`}
                 style={{ width: `${Math.min(memoryUsagePercentage, 100)}%` }}
               />
@@ -223,9 +254,11 @@ const MemoryMonitor = ({
                   <div
                     key={index}
                     className={`p-2 rounded text-sm ${
-                      issue.severity === 'critical' ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200' :
-                      issue.severity === 'high' ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200' :
-                      'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200'
+                      issue.severity === 'critical'
+                        ? 'bg-red-50 dark:bg-red-900/20 text-red-800 dark:text-red-200'
+                        : issue.severity === 'high'
+                          ? 'bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-200'
+                          : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-200'
                     }`}
                   >
                     <div className="font-medium capitalize">{issue.type.replace('_', ' ')}</div>
@@ -265,7 +298,9 @@ const MemoryMonitor = ({
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-600 dark:text-gray-400">Component Unmounts</span>
-                <span className="text-gray-900 dark:text-white">{stats?.componentUnmounts || 0}</span>
+                <span className="text-gray-900 dark:text-white">
+                  {stats?.componentUnmounts || 0}
+                </span>
               </div>
             </div>
           </div>
@@ -282,7 +317,9 @@ const MemoryMonitor = ({
             <button
               onClick={() => {
                 const leaks = checkLeaks();
-                alert(`Found ${leaks.length} potential memory leaks:\n\n${leaks.map(l => `• ${l.message}`).join('\n')}`);
+                alert(
+                  `Found ${leaks.length} potential memory leaks:\n\n${leaks.map(l => `• ${l.message}`).join('\n')}`
+                );
               }}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white rounded hover:bg-orange-700 text-sm"
             >

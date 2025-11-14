@@ -28,55 +28,61 @@ const PullToRefresh = ({
   const pullAnimation = useSpring({
     height: pullDistance,
     opacity: pullDistance > 0 ? 1 : 0,
-    config: { tension: 300, friction: 30 }
+    config: { tension: 300, friction: 30 },
   });
 
   // Animation for refresh spinner
   const spinnerAnimation = useSpring({
     transform: isRefreshing ? 'rotate(360deg)' : 'rotate(0deg)',
-    config: { duration: isRefreshing ? 1000 : 0 }
+    config: { duration: isRefreshing ? 1000 : 0 },
   });
 
   // Handle touch start
-  const handleTouchStart = useCallback((e) => {
-    if (disabled || !isMobile || !isTouchDevice) return;
+  const handleTouchStart = useCallback(
+    e => {
+      if (disabled || !isMobile || !isTouchDevice) return;
 
-    const touch = e.touches[0];
-    startY.current = touch.clientY;
+      const touch = e.touches[0];
+      startY.current = touch.clientY;
 
-    // Only allow pull-to-refresh if at top of scrollable content
-    if (contentRef.current) {
-      const scrollTop = contentRef.current.scrollTop;
-      if (scrollTop > 0) return;
-    }
+      // Only allow pull-to-refresh if at top of scrollable content
+      if (contentRef.current) {
+        const scrollTop = contentRef.current.scrollTop;
+        if (scrollTop > 0) return;
+      }
 
-    setIsPulling(true);
-    setCanRefresh(false);
-  }, [disabled, isMobile, isTouchDevice]);
+      setIsPulling(true);
+      setCanRefresh(false);
+    },
+    [disabled, isMobile, isTouchDevice]
+  );
 
   // Handle touch move
-  const handleTouchMove = useCallback((e) => {
-    if (!isPulling || disabled) return;
+  const handleTouchMove = useCallback(
+    e => {
+      if (!isPulling || disabled) return;
 
-    const touch = e.touches[0];
-    const currentY = touch.clientY;
-    const deltaY = currentY - startY.current;
+      const touch = e.touches[0];
+      const currentY = touch.clientY;
+      const deltaY = currentY - startY.current;
 
-    // Only pull down (positive delta)
-    if (deltaY <= 0) return;
+      // Only pull down (positive delta)
+      if (deltaY <= 0) return;
 
-    // Calculate pull distance with resistance
-    const resistance = 0.5;
-    const calculatedPull = Math.min(deltaY * resistance, maxPull);
+      // Calculate pull distance with resistance
+      const resistance = 0.5;
+      const calculatedPull = Math.min(deltaY * resistance, maxPull);
 
-    setPullDistance(calculatedPull);
-    setCanRefresh(calculatedPull >= threshold);
+      setPullDistance(calculatedPull);
+      setCanRefresh(calculatedPull >= threshold);
 
-    // Haptic feedback at threshold
-    if (calculatedPull >= threshold && !canRefresh) {
-      triggerHaptic(50);
-    }
-  }, [isPulling, disabled, threshold, maxPull, canRefresh, triggerHaptic]);
+      // Haptic feedback at threshold
+      if (calculatedPull >= threshold && !canRefresh) {
+        triggerHaptic(50);
+      }
+    },
+    [isPulling, disabled, threshold, maxPull, canRefresh, triggerHaptic]
+  );
 
   // Handle touch end
   const handleTouchEnd = useCallback(async () => {
@@ -105,59 +111,62 @@ const PullToRefresh = ({
   }, [isPulling, canRefresh, isRefreshing, disabled, onRefresh, triggerHaptic]);
 
   // Handle mouse events for desktop testing
-  const handleMouseDown = useCallback((e) => {
-    if (disabled || !isMobile) return;
+  const handleMouseDown = useCallback(
+    e => {
+      if (disabled || !isMobile) return;
 
-    startY.current = e.clientY;
-    setIsPulling(true);
-    setCanRefresh(false);
-
-    // Add mouse move and up listeners
-    const handleMouseMove = (moveEvent) => {
-      if (!isPulling) return;
-
-      const deltaY = moveEvent.clientY - startY.current;
-      if (deltaY <= 0) return;
-
-      const resistance = 0.5;
-      const calculatedPull = Math.min(deltaY * resistance, maxPull);
-
-      setPullDistance(calculatedPull);
-      setCanRefresh(calculatedPull >= threshold);
-
-      if (calculatedPull >= threshold && !canRefresh) {
-        triggerHaptic(50);
-      }
-    };
-
-    const handleMouseUp = async () => {
-      if (canRefresh && !isRefreshing) {
-        setIsRefreshing(true);
-        triggerHaptic([50, 30, 50]);
-
-        try {
-          if (onRefresh) {
-            await onRefresh();
-          }
-        } catch (error) {
-          console.error('Pull-to-refresh failed:', error);
-        } finally {
-          setIsRefreshing(false);
-        }
-      }
-
-      setPullDistance(0);
+      startY.current = e.clientY;
+      setIsPulling(true);
       setCanRefresh(false);
-      setIsPulling(false);
 
-      // Remove event listeners
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
+      // Add mouse move and up listeners
+      const handleMouseMove = moveEvent => {
+        if (!isPulling) return;
 
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
-  }, [disabled, isMobile, maxPull, threshold, canRefresh, isRefreshing, onRefresh, triggerHaptic]);
+        const deltaY = moveEvent.clientY - startY.current;
+        if (deltaY <= 0) return;
+
+        const resistance = 0.5;
+        const calculatedPull = Math.min(deltaY * resistance, maxPull);
+
+        setPullDistance(calculatedPull);
+        setCanRefresh(calculatedPull >= threshold);
+
+        if (calculatedPull >= threshold && !canRefresh) {
+          triggerHaptic(50);
+        }
+      };
+
+      const handleMouseUp = async () => {
+        if (canRefresh && !isRefreshing) {
+          setIsRefreshing(true);
+          triggerHaptic([50, 30, 50]);
+
+          try {
+            if (onRefresh) {
+              await onRefresh();
+            }
+          } catch (error) {
+            console.error('Pull-to-refresh failed:', error);
+          } finally {
+            setIsRefreshing(false);
+          }
+        }
+
+        setPullDistance(0);
+        setCanRefresh(false);
+        setIsPulling(false);
+
+        // Remove event listeners
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+    },
+    [disabled, isMobile, maxPull, threshold, canRefresh, isRefreshing, onRefresh, triggerHaptic]
+  );
 
   // Reset state when refreshing completes
   useEffect(() => {
@@ -183,7 +192,14 @@ const PullToRefresh = ({
     if (isRefreshing) {
       return (
         <animated.div style={spinnerAnimation}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <path d="M21 12a9 9 0 11-6.219-8.56" />
           </svg>
         </animated.div>
@@ -192,7 +208,14 @@ const PullToRefresh = ({
 
     if (canRefresh) {
       return (
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+        >
           <path d="M3 12a9 9 0 016.219-8.56" />
           <path d="M3 3v5h5" />
           <path d="M21 12a9 9 0 01-6.219 8.56" />
@@ -202,7 +225,14 @@ const PullToRefresh = ({
     }
 
     return (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <svg
+        width="20"
+        height="20"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+      >
         <path d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
       </svg>
     );
@@ -215,7 +245,7 @@ const PullToRefresh = ({
       style={{
         position: 'relative',
         overflow: 'hidden',
-        touchAction: 'pan-y' // Allow vertical scrolling
+        touchAction: 'pan-y', // Allow vertical scrolling
       }}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -242,15 +272,11 @@ const PullToRefresh = ({
           fontWeight: '500',
           zIndex: 1000,
           borderRadius: '0 0 16px 16px',
-          padding: '16px'
+          padding: '16px',
         }}
       >
-        <div style={{ color: 'white' }}>
-          {getPullIcon()}
-        </div>
-        <span style={{ color: 'white' }}>
-          {getPullText()}
-        </span>
+        <div style={{ color: 'white' }}>{getPullIcon()}</div>
+        <span style={{ color: 'white' }}>{getPullText()}</span>
       </animated.div>
 
       {/* Content wrapper */}
@@ -262,7 +288,7 @@ const PullToRefresh = ({
           transition: isPulling ? 'none' : 'transform 0.3s ease',
           minHeight: '100%',
           overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch'
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         {children}

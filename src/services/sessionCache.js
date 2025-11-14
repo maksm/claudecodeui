@@ -26,7 +26,7 @@ class SessionCacheService {
       evictions: 0,
       totalMemoryUsage: 0,
       averageLoadTime: 0,
-      cacheHitRate: 0
+      cacheHitRate: 0,
     };
 
     // Background loading
@@ -53,11 +53,7 @@ class SessionCacheService {
    * Get session from cache
    */
   async get(sessionId, options = {}) {
-    const {
-      forceRefresh = false,
-      enableBackgroundLoad = true,
-      customLoader = null
-    } = options;
+    const { forceRefresh = false, enableBackgroundLoad = true, customLoader = null } = options;
 
     const entry = this.cache.get(sessionId);
 
@@ -75,7 +71,7 @@ class SessionCacheService {
         data: entry.data,
         fromCache: true,
         isStale: this.isStale(entry),
-        cachedAt: entry.cachedAt
+        cachedAt: entry.cachedAt,
       };
     }
 
@@ -90,7 +86,7 @@ class SessionCacheService {
           data,
           fromCache: false,
           isStale: false,
-          cachedAt: Date.now()
+          cachedAt: Date.now(),
         };
       } catch (error) {
         console.error(`Failed to load session ${sessionId}:`, error);
@@ -105,11 +101,7 @@ class SessionCacheService {
    * Set session in cache
    */
   set(sessionId, data, options = {}) {
-    const {
-      ttl = this.defaultTTL,
-      priority = 'normal',
-      metadata = {}
-    } = options;
+    const { ttl = this.defaultTTL, priority = 'normal', metadata = {} } = options;
 
     const now = Date.now();
     const entry = {
@@ -119,7 +111,7 @@ class SessionCacheService {
       priority,
       metadata,
       accessCount: 0,
-      size: this.calculateDataSize(data)
+      size: this.calculateDataSize(data),
     };
 
     // Check memory limits before adding
@@ -276,7 +268,7 @@ class SessionCacheService {
       averageEntrySize: this.cache.size > 0 ? this.metrics.totalMemoryUsage / this.cache.size : 0,
       backgroundLoadQueue: this.backgroundLoadQueue.size,
       loadingPromises: this.loadingPromises.size,
-      memoryUsagePercentage: (this.metrics.totalMemoryUsage / this.maxMemoryUsage) * 100
+      memoryUsagePercentage: (this.metrics.totalMemoryUsage / this.maxMemoryUsage) * 100,
     };
   }
 
@@ -303,7 +295,7 @@ class SessionCacheService {
       isStale: this.isStale(entry),
       isExpired: this.isExpired(entry),
       ttl: Math.max(0, entry.expiresAt - Date.now()),
-      ...entry.metadata
+      ...entry.metadata,
     };
   }
 
@@ -349,7 +341,7 @@ class SessionCacheService {
     // Prioritize important sessions
     const prioritizedIds = [
       ...prioritySessions,
-      ...sessionIds.filter(id => !prioritySessions.includes(id))
+      ...sessionIds.filter(id => !prioritySessions.includes(id)),
     ];
 
     // Load in batches to avoid overwhelming the system
@@ -358,9 +350,7 @@ class SessionCacheService {
       const batch = prioritizedIds.slice(i, i + batchSize);
 
       await Promise.allSettled(
-        batch.map(sessionId =>
-          this.performBackgroundLoad(sessionId, loader)
-        )
+        batch.map(sessionId => this.performBackgroundLoad(sessionId, loader))
       );
 
       // Small delay between batches
@@ -389,7 +379,7 @@ class SessionCacheService {
         data: cachedData,
         fromCache: true,
         isStale: this.isStale(entry),
-        backgroundRefresh: this.isStale(entry)
+        backgroundRefresh: this.isStale(entry),
       };
     }
 
@@ -401,7 +391,7 @@ class SessionCacheService {
       data,
       fromCache: false,
       isStale: false,
-      backgroundRefresh: false
+      backgroundRefresh: false,
     };
   }
 
@@ -478,7 +468,7 @@ class SessionCacheService {
   }
 
   isStale(entry) {
-    return Date.now() > (entry.cachedAt + this.defaultTTL - this.staleWhileRevalidate);
+    return Date.now() > entry.cachedAt + this.defaultTTL - this.staleWhileRevalidate;
   }
 
   isExpired(entry) {
@@ -490,8 +480,10 @@ class SessionCacheService {
   }
 
   updateMetrics() {
-    this.metrics.totalMemoryUsage = Array.from(this.cache.values())
-      .reduce((sum, entry) => sum + entry.size, 0);
+    this.metrics.totalMemoryUsage = Array.from(this.cache.values()).reduce(
+      (sum, entry) => sum + entry.size,
+      0
+    );
   }
 
   updateLoadTimeMetrics(loadTime) {
@@ -546,7 +538,7 @@ class SessionCacheService {
       version: '1.0.0',
       exportedAt: Date.now(),
       entries: {},
-      metadata: this.getStats()
+      metadata: this.getStats(),
     };
 
     for (const [sessionId, entry] of this.cache.entries()) {
@@ -555,7 +547,7 @@ class SessionCacheService {
         cachedAt: entry.cachedAt,
         expiresAt: entry.expiresAt,
         priority: entry.priority,
-        metadata: entry.metadata
+        metadata: entry.metadata,
       };
     }
 
@@ -582,14 +574,19 @@ class SessionCacheService {
         this.set(sessionId, entryData.data, {
           ttl: entryData.expiresAt - Date.now(),
           priority: entryData.priority,
-          metadata: entryData.metadata
+          metadata: entryData.metadata,
         });
       }
     }
   }
 
   validateCacheEntry(entry) {
-    return entry && entry.data && typeof entry.cachedAt === 'number' && typeof entry.expiresAt === 'number';
+    return (
+      entry &&
+      entry.data &&
+      typeof entry.cachedAt === 'number' &&
+      typeof entry.expiresAt === 'number'
+    );
   }
 
   /**

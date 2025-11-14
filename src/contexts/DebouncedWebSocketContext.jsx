@@ -25,7 +25,7 @@ const DebouncedWebSocketContext = createContext({
   pauseUpdates: () => {},
   resumeUpdates: () => {},
   clearQueue: () => {},
-  flushQueue: () => {}
+  flushQueue: () => {},
 });
 
 export const useDebouncedWebSocket = () => {
@@ -41,7 +41,7 @@ export const DebouncedWebSocketProvider = ({
   debounceDelay = 300,
   batchMode = false,
   maxQueueSize = 1000,
-  enableDebouncing = true
+  enableDebouncing = true,
 }) => {
   const [connected, setConnected] = useState(false);
   const [connecting, setConnecting] = useState(false);
@@ -71,11 +71,11 @@ export const DebouncedWebSocketProvider = ({
     messagesDropped: 0,
     averageProcessingTime: 0,
     lastProcessingTime: 0,
-    debounceHits: 0
+    debounceHits: 0,
   });
 
   // Process single message
-  const processMessage = useCallback((message) => {
+  const processMessage = useCallback(message => {
     const startTime = performance.now();
 
     try {
@@ -83,7 +83,7 @@ export const DebouncedWebSocketProvider = ({
       const processedMessage = {
         ...message,
         processedAt: new Date().toISOString(),
-        queueSize: messageQueueRef.current.length
+        queueSize: messageQueueRef.current.length,
       };
 
       setMessages(prev => [...prev, processedMessage]);
@@ -98,10 +98,8 @@ export const DebouncedWebSocketProvider = ({
       if (metrics.averageProcessingTime === 0) {
         metrics.averageProcessingTime = processingTime;
       } else {
-        metrics.averageProcessingTime =
-          (metrics.averageProcessingTime * 0.9) + (processingTime * 0.1);
+        metrics.averageProcessingTime = metrics.averageProcessingTime * 0.9 + processingTime * 0.1;
       }
-
     } catch (err) {
       console.error('Error processing message:', err);
       setError(`Message processing error: ${err.message}`);
@@ -109,7 +107,7 @@ export const DebouncedWebSocketProvider = ({
   }, []);
 
   // Process batch of messages
-  const processBatch = useCallback((batch) => {
+  const processBatch = useCallback(batch => {
     const startTime = performance.now();
 
     try {
@@ -120,7 +118,7 @@ export const DebouncedWebSocketProvider = ({
         const processedBatch = batch.map(msg => ({
           ...msg,
           processedAt: new Date().toISOString(),
-          batchId: Date.now()
+          batchId: Date.now(),
         }));
         return [...prev, ...processedBatch];
       });
@@ -130,7 +128,6 @@ export const DebouncedWebSocketProvider = ({
       const metrics = metricsRef.current;
       metrics.messagesProcessed += batch.length;
       metrics.lastProcessingTime = processingTime;
-
     } catch (err) {
       console.error('Error processing batch:', err);
       setError(`Batch processing error: ${err.message}`);
@@ -138,175 +135,184 @@ export const DebouncedWebSocketProvider = ({
   }, []);
 
   // Debounced message processing
-  const debouncedProcess = useCallback((message) => {
-    if (pausedRef.current) {
-      // Queue message when paused
-      if (messageQueueRef.current.length < maxQueueSize) {
-        messageQueueRef.current.push(message);
-        metricsRef.current.messagesQueued++;
-      } else {
-        metricsRef.current.messagesDropped++;
-        console.warn('Message queue full, dropping message');
-      }
-      return;
-    }
-
-    if (!enableDebouncing) {
-      // Process immediately if debouncing is disabled
-      processMessage(message);
-      return;
-    }
-
-    if (batchMode) {
-      // Add to batch
-      batchRef.current.push(message);
-
-      // Clear existing timeout and set new one
-      if (batchTimeoutRef.current) {
-        clearTimeout(batchTimeoutRef.current);
-      }
-
-      batchTimeoutRef.current = setTimeout(() => {
-        const batch = batchRef.current.splice(0);
-        processBatch(batch);
-      }, debounceDelay);
-
-      return;
-    }
-
-    // Individual message debouncing
-    messageQueueRef.current.push(message);
-    metricsRef.current.messagesQueued++;
-    metricsRef.current.debounceHits++;
-
-    // Clear existing timeout
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    // Set new timeout to process messages
-    debounceTimeoutRef.current = setTimeout(() => {
-      const queuedMessages = messageQueueRef.current.splice(0);
-
-      if (queuedMessages.length > 0) {
-        if (queuedMessages.length === 1) {
-          processMessage(queuedMessages[0]);
+  const debouncedProcess = useCallback(
+    message => {
+      if (pausedRef.current) {
+        // Queue message when paused
+        if (messageQueueRef.current.length < maxQueueSize) {
+          messageQueueRef.current.push(message);
+          metricsRef.current.messagesQueued++;
         } else {
-          // Process as batch if multiple messages queued
-          processBatch(queuedMessages);
+          metricsRef.current.messagesDropped++;
+          console.warn('Message queue full, dropping message');
         }
+        return;
       }
-    }, debounceDelay);
-  }, [enableDebouncing, batchMode, debounceDelay, maxQueueSize, processMessage, processBatch]);
+
+      if (!enableDebouncing) {
+        // Process immediately if debouncing is disabled
+        processMessage(message);
+        return;
+      }
+
+      if (batchMode) {
+        // Add to batch
+        batchRef.current.push(message);
+
+        // Clear existing timeout and set new one
+        if (batchTimeoutRef.current) {
+          clearTimeout(batchTimeoutRef.current);
+        }
+
+        batchTimeoutRef.current = setTimeout(() => {
+          const batch = batchRef.current.splice(0);
+          processBatch(batch);
+        }, debounceDelay);
+
+        return;
+      }
+
+      // Individual message debouncing
+      messageQueueRef.current.push(message);
+      metricsRef.current.messagesQueued++;
+      metricsRef.current.debounceHits++;
+
+      // Clear existing timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
+
+      // Set new timeout to process messages
+      debounceTimeoutRef.current = setTimeout(() => {
+        const queuedMessages = messageQueueRef.current.splice(0);
+
+        if (queuedMessages.length > 0) {
+          if (queuedMessages.length === 1) {
+            processMessage(queuedMessages[0]);
+          } else {
+            // Process as batch if multiple messages queued
+            processBatch(queuedMessages);
+          }
+        }
+      }, debounceDelay);
+    },
+    [enableDebouncing, batchMode, debounceDelay, maxQueueSize, processMessage, processBatch]
+  );
 
   // WebSocket message handler
-  const handleWebSocketMessage = useCallback((event) => {
-    try {
-      const message = JSON.parse(event.data);
-      metricsRef.current.messagesReceived++;
+  const handleWebSocketMessage = useCallback(
+    event => {
+      try {
+        const message = JSON.parse(event.data);
+        metricsRef.current.messagesReceived++;
 
-      // Route message based on type
-      switch (message.type) {
-        case 'claude-response':
-        case 'cursor-response':
-        case 'system-message':
-          debouncedProcess(message);
-          break;
+        // Route message based on type
+        switch (message.type) {
+          case 'claude-response':
+          case 'cursor-response':
+          case 'system-message':
+            debouncedProcess(message);
+            break;
 
-        case 'session-update':
-        case 'project-update':
-          // High priority - process immediately
-          processMessage(message);
-          break;
+          case 'session-update':
+          case 'project-update':
+            // High priority - process immediately
+            processMessage(message);
+            break;
 
-        case 'heartbeat':
-        case 'ping':
-          // Low priority - debounce
-          debouncedProcess(message);
-          break;
+          case 'heartbeat':
+          case 'ping':
+            // Low priority - debounce
+            debouncedProcess(message);
+            break;
 
-        default:
-          // Unknown message type - process immediately for safety
-          processMessage(message);
+          default:
+            // Unknown message type - process immediately for safety
+            processMessage(message);
+        }
+      } catch (err) {
+        console.error('Failed to parse WebSocket message:', err);
+        setError(`Message parsing error: ${err.message}`);
       }
-    } catch (err) {
-      console.error('Failed to parse WebSocket message:', err);
-      setError(`Message parsing error: ${err.message}`);
-    }
-  }, [debouncedProcess, processMessage]);
+    },
+    [debouncedProcess, processMessage]
+  );
 
   // WebSocket connection management
-  const connect = useCallback((url, protocols = []) => {
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      return Promise.resolve();
-    }
+  const connect = useCallback(
+    (url, protocols = []) => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        return Promise.resolve();
+      }
 
-    return new Promise((resolve, reject) => {
-      setConnecting(true);
-      setError(null);
-      wsUrlRef.current = url;
-
-      const ws = new WebSocket(url, protocols);
-      wsRef.current = ws;
-
-      const timeoutId = setTimeout(() => {
-        reject(new Error('Connection timeout'));
-        setConnecting(false);
-        setError('Connection timeout');
-      }, 10000);
-
-      ws.onopen = () => {
-        clearTimeout(timeoutId);
-        setConnected(true);
-        setConnecting(false);
+      return new Promise((resolve, reject) => {
+        setConnecting(true);
         setError(null);
+        wsUrlRef.current = url;
 
-        // Reset metrics
-        metricsRef.current = {
-          messagesReceived: 0,
-          messagesQueued: 0,
-          messagesProcessed: 0,
-          messagesDropped: 0,
-          averageProcessingTime: 0,
-          lastProcessingTime: 0,
-          debounceHits: 0
+        const ws = new WebSocket(url, protocols);
+        wsRef.current = ws;
+
+        const timeoutId = setTimeout(() => {
+          reject(new Error('Connection timeout'));
+          setConnecting(false);
+          setError('Connection timeout');
+        }, 10000);
+
+        ws.onopen = () => {
+          clearTimeout(timeoutId);
+          setConnected(true);
+          setConnecting(false);
+          setError(null);
+
+          // Reset metrics
+          metricsRef.current = {
+            messagesReceived: 0,
+            messagesQueued: 0,
+            messagesProcessed: 0,
+            messagesDropped: 0,
+            averageProcessingTime: 0,
+            lastProcessingTime: 0,
+            debounceHits: 0,
+          };
+
+          // Update connection stats
+          setConnectionStats({
+            url,
+            connectedAt: new Date().toISOString(),
+            protocol: ws.protocol,
+            extensions: ws.extensions,
+          });
+
+          resolve();
         };
 
-        // Update connection stats
-        setConnectionStats({
-          url,
-          connectedAt: new Date().toISOString(),
-          protocol: ws.protocol,
-          extensions: ws.extensions
-        });
+        ws.onmessage = handleWebSocketMessage;
 
-        resolve();
-      };
+        ws.onerror = event => {
+          clearTimeout(timeoutId);
+          setConnected(false);
+          setConnecting(false);
+          setError('WebSocket connection error');
+          reject(new Error('WebSocket connection error'));
+        };
 
-      ws.onmessage = handleWebSocketMessage;
+        ws.onclose = event => {
+          clearTimeout(timeoutId);
+          setConnected(false);
+          setConnecting(false);
 
-      ws.onerror = (event) => {
-        clearTimeout(timeoutId);
-        setConnected(false);
-        setConnecting(false);
-        setError('WebSocket connection error');
-        reject(new Error('WebSocket connection error'));
-      };
-
-      ws.onclose = (event) => {
-        clearTimeout(timeoutId);
-        setConnected(false);
-        setConnecting(false);
-
-        if (event.code !== 1000) {
-          setError(`WebSocket closed: ${event.code} - ${event.reason}`);
-        }
-      };
-    });
-  }, [handleWebSocketMessage]);
+          if (event.code !== 1000) {
+            setError(`WebSocket closed: ${event.code} - ${event.reason}`);
+          }
+        };
+      });
+    },
+    [handleWebSocketMessage]
+  );
 
   // Send message
-  const sendMessage = useCallback((message) => {
+  const sendMessage = useCallback(message => {
     return new Promise((resolve, reject) => {
       if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
         reject(new Error('WebSocket not connected'));
@@ -386,10 +392,7 @@ export const DebouncedWebSocketProvider = ({
 
   // Flush queue (process all pending messages immediately)
   const flushQueue = useCallback(() => {
-    const allMessages = [
-      ...messageQueueRef.current.splice(0),
-      ...batchRef.current.splice(0)
-    ];
+    const allMessages = [...messageQueueRef.current.splice(0), ...batchRef.current.splice(0)];
 
     // Clear timeouts
     if (debounceTimeoutRef.current) {
@@ -415,7 +418,7 @@ export const DebouncedWebSocketProvider = ({
       queueSize: messageQueueRef.current.length,
       batchSize: batchRef.current.length,
       isProcessing: processingRef.current,
-      isPaused: pausedRef.current
+      isPaused: pausedRef.current,
     };
   }, []);
 
@@ -432,7 +435,7 @@ export const DebouncedWebSocketProvider = ({
       setConnectionStats(prev => ({
         ...prev,
         metrics: getMetrics(),
-        lastUpdate: new Date().toISOString()
+        lastUpdate: new Date().toISOString(),
       }));
     }, 1000);
 
@@ -464,7 +467,7 @@ export const DebouncedWebSocketProvider = ({
 
     // Connection management
     connect,
-    disconnect
+    disconnect,
   };
 
   return (

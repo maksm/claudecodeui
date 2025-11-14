@@ -9,7 +9,7 @@ const TasksSettingsContext = createContext({
   isTaskMasterInstalled: null,
   isTaskMasterReady: null,
   installationStatus: null,
-  isCheckingInstallation: true
+  isCheckingInstallation: true,
 });
 
 export const useTasksSettings = () => {
@@ -88,13 +88,11 @@ export const TasksSettingsProvider = ({ children }) => {
     isTaskMasterInstalled,
     isTaskMasterReady,
     installationStatus,
-    isCheckingInstallation
+    isCheckingInstallation,
   };
 
   return (
-    <TasksSettingsContext.Provider value={contextValue}>
-      {children}
-    </TasksSettingsContext.Provider>
+    <TasksSettingsContext.Provider value={contextValue}>{children}</TasksSettingsContext.Provider>
   );
 };
 

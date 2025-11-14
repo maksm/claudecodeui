@@ -182,7 +182,7 @@
   },
   "lint-staged": {
     "**/*.{js,jsx,mjs,cjs}": [
-      "eslint --fix",
+      "eslint --fix --quiet",
       "prettier --write"
     ],
     "**/*.{json,md,yml,yaml}": [

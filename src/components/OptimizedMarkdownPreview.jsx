@@ -28,10 +28,10 @@ const OptimizedMarkdownPreview = ({
     isReady,
     error: workerError,
     getCacheStats,
-    clearCache
+    clearCache,
   } = useMarkdownWorker({
     cacheSize: 100,
-    enableCache: true
+    enableCache: true,
   });
 
   // Process markdown content with worker
@@ -47,7 +47,7 @@ const OptimizedMarkdownPreview = ({
           enableGfm: true,
           enableMath: false, // Disable math for performance unless needed
           enableHighlight: true,
-          enableSanitization: true
+          enableSanitization: true,
         });
 
         if (mounted && result.html) {
@@ -96,7 +96,7 @@ const OptimizedMarkdownPreview = ({
             enableGfm: true,
             enableMath: false,
             enableHighlight: true,
-            enableSanitization: true
+            enableSanitization: true,
           });
 
           if (isMounted && result.html) {
@@ -104,7 +104,6 @@ const OptimizedMarkdownPreview = ({
             setProcessingState({ isProcessing: false, error: null });
           }
         }, 300); // 300ms debounce
-
       } catch (err) {
         console.error('Markdown processing error:', err);
         if (isMounted) {
@@ -156,7 +155,7 @@ const OptimizedMarkdownPreview = ({
     return {
       words: content.split(/\s+/).filter(word => word.length > 0).length,
       lines: content.split('\n').length,
-      chars: content.length
+      chars: content.length,
     };
   }, [content]);
 
@@ -209,7 +208,7 @@ const OptimizedMarkdownPreview = ({
           // Custom styles for better markdown rendering
           color: theme === 'dark' ? '#f9fafb' : '#111827',
           wordWrap: 'break-word',
-          overflowWrap: 'break-word'
+          overflowWrap: 'break-word',
         }}
       />
     );
@@ -231,7 +230,8 @@ const OptimizedMarkdownPreview = ({
               )}
             </div>
             <div className="text-xs text-gray-500 dark:text-gray-400">
-              {contentStats.words} words • {contentStats.lines} lines • {contentStats.chars.toLocaleString()} chars
+              {contentStats.words} words • {contentStats.lines} lines •{' '}
+              {contentStats.chars.toLocaleString()} chars
             </div>
           </div>
 
@@ -240,13 +240,23 @@ const OptimizedMarkdownPreview = ({
               onClick={handleCopy}
               disabled={processingState.isProcessing}
               className="p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title={copied ? "Copied!" : "Copy content"}
+              title={copied ? 'Copied!' : 'Copy content'}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 {copied ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
                 ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                  />
                 )}
               </svg>
             </button>
@@ -275,7 +285,12 @@ const OptimizedMarkdownPreview = ({
                 title="Switch to edit mode"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
                 </svg>
               </button>
             )}
@@ -300,9 +315,7 @@ const OptimizedMarkdownPreview = ({
 
       {/* Preview Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="p-6">
-          {renderHtmlContent()}
-        </div>
+        <div className="p-6">{renderHtmlContent()}</div>
       </div>
 
       {/* Performance indicator */}
@@ -315,11 +328,7 @@ const OptimizedMarkdownPreview = ({
   );
 
   if (isFullscreen) {
-    return (
-      <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">
-        {previewContent}
-      </div>
-    );
+    return <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900">{previewContent}</div>;
   }
 
   return previewContent;

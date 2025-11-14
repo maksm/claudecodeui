@@ -37,11 +37,11 @@ describe('ThemeContext', () => {
       getItem: jest.fn(),
       setItem: jest.fn(),
       removeItem: jest.fn(),
-      clear: jest.fn()
+      clear: jest.fn(),
     };
     Object.defineProperty(window, 'localStorage', {
       value: localStorageMock,
-      writable: true
+      writable: true,
     });
 
     // Mock matchMedia
@@ -65,7 +65,7 @@ describe('ThemeContext', () => {
     });
     Object.defineProperty(window, 'matchMedia', {
       value: matchMediaMock,
-      writable: true
+      writable: true,
     });
 
     // Mock document.documentElement
@@ -74,18 +74,18 @@ describe('ThemeContext', () => {
         classList: {
           add: jest.fn(),
           remove: jest.fn(),
-          contains: jest.fn()
-        }
+          contains: jest.fn(),
+        },
       },
-      writable: true
+      writable: true,
     });
 
     // Mock document.querySelector
     Object.defineProperty(document, 'querySelector', {
       value: jest.fn(() => ({
-        setAttribute: jest.fn()
+        setAttribute: jest.fn(),
       })),
-      writable: true
+      writable: true,
     });
   });
 
@@ -230,7 +230,7 @@ describe('ThemeContext', () => {
           mediaQueryCallback = callback;
         }
       }),
-      removeEventListener: jest.fn()
+      removeEventListener: jest.fn(),
     };
     matchMediaMock.mockReturnValue(mockMediaQuery);
 
@@ -259,7 +259,7 @@ describe('ThemeContext', () => {
           mediaQueryCallback = callback;
         }
       }),
-      removeEventListener: jest.fn()
+      removeEventListener: jest.fn(),
     };
     matchMediaMock.mockReturnValue(mockMediaQuery);
 
@@ -282,7 +282,7 @@ describe('ThemeContext', () => {
     const mockMediaQuery = {
       matches: false,
       addEventListener: jest.fn(),
-      removeEventListener: jest.fn()
+      removeEventListener: jest.fn(),
     };
     matchMediaMock.mockReturnValue(mockMediaQuery);
 

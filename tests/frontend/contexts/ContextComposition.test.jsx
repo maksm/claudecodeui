@@ -8,8 +8,14 @@ import { AuthProvider, useAuth } from '../../../src/contexts/AuthContext.jsx';
 import { WebSocketProvider, useWebSocketContext } from '../../../src/contexts/WebSocketContext.jsx';
 import { ThemeProvider, useTheme } from '../../../src/contexts/ThemeContext.jsx';
 import { TaskMasterProvider, useTaskMaster } from '../../../src/contexts/TaskMasterContext.jsx';
-import { TasksSettingsProvider, useTasksSettings } from '../../../src/contexts/TasksSettingsContext.jsx';
-import { SessionManagerProvider, useSessionManager } from '../../../src/contexts/SessionManagerContext.jsx';
+import {
+  TasksSettingsProvider,
+  useTasksSettings,
+} from '../../../src/contexts/TasksSettingsContext.jsx';
+import {
+  SessionManagerProvider,
+  useSessionManager,
+} from '../../../src/contexts/SessionManagerContext.jsx';
 
 import { api } from '../../../src/utils/api';
 
@@ -20,8 +26,8 @@ jest.mock('../../../src/utils/websocket.js', () => ({
     ws: null,
     sendMessage: jest.fn(),
     messages: [],
-    isConnected: true
-  })
+    isConnected: true,
+  }),
 }));
 
 // Mock AuthContext to avoid API calls
@@ -35,8 +41,8 @@ jest.mock('../../../src/contexts/AuthContext.jsx', () => ({
     login: jest.fn(),
     logout: jest.fn(),
     register: jest.fn(),
-    error: null
-  })
+    error: null,
+  }),
 }));
 
 // Test component that uses all contexts
@@ -287,7 +293,9 @@ describe('Context Composition and Provider Hierarchies', () => {
             <span data-testid="theme1">{theme}</span>
             <span data-testid="theme2">{theme}</span>
             <span data-testid="connected">{isConnected.toString()}</span>
-            <button onClick={toggleTheme} data-testid="toggle">Toggle</button>
+            <button onClick={toggleTheme} data-testid="toggle">
+              Toggle
+            </button>
           </div>
         );
       };
@@ -300,7 +308,9 @@ describe('Context Composition and Provider Hierarchies', () => {
         </ThemeProvider>
       );
 
-      expect(screen.getByTestId('theme1')).toHaveTextContent(screen.getByTestId('theme2').textContent);
+      expect(screen.getByTestId('theme1')).toHaveTextContent(
+        screen.getByTestId('theme2').textContent
+      );
       expect(screen.getByTestId('connected')).toHaveTextContent('true');
     });
 

@@ -4,36 +4,22 @@ import { render } from '@testing-library/react';
 
 // Mock contexts providers
 const MockThemeContext = ({ children }) => {
-  return (
-    <div data-testid="mock-theme-provider">
-      {children}
-    </div>
-  );
+  return <div data-testid="mock-theme-provider">{children}</div>;
 };
 
 const MockAuthContext = ({ children }) => {
-  return (
-    <div data-testid="mock-auth-provider">
-      {children}
-    </div>
-  );
+  return <div data-testid="mock-auth-provider">{children}</div>;
 };
 
 // Custom render function with optional providers
 const customRender = (ui, options = {}) => {
-  const {
-    withTheme = false,
-    withAuth = false,
-    ...renderOptions
-  } = options;
+  const { withTheme = false, withAuth = false, ...renderOptions } = options;
 
   const Wrapper = ({ children }) => {
     if (withTheme && withAuth) {
       return (
         <MockAuthContext>
-          <MockThemeContext>
-            {children}
-          </MockThemeContext>
+          <MockThemeContext>{children}</MockThemeContext>
         </MockAuthContext>
       );
     } else if (withTheme) {

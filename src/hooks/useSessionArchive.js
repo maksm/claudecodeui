@@ -11,7 +11,7 @@ export const useSessionArchive = (options = {}) => {
     maxArchiveSize = 50 * 1024 * 1024,
     enableCompression = true,
     maxStoredArchives = 100,
-    autoCleanup = true
+    autoCleanup = true,
   } = options;
 
   // Archive service instance
@@ -19,7 +19,7 @@ export const useSessionArchive = (options = {}) => {
     return new SessionArchiveService({
       maxArchiveSize,
       enableCompression,
-      maxStoredArchives
+      maxStoredArchives,
     });
   }, [maxArchiveSize, enableCompression, maxStoredArchives]);
 
@@ -78,35 +78,37 @@ export const useSessionArchive = (options = {}) => {
   }, []);
 
   // Archive a session
-  const archiveSession = useCallback(async (sessionData, archiveOptions = {}) => {
-    try {
-      setIsProcessing(true);
-      setError(null);
-      setProgress({ stage: 'preparing', progress: 0 });
+  const archiveSession = useCallback(
+    async (sessionData, archiveOptions = {}) => {
+      try {
+        setIsProcessing(true);
+        setError(null);
+        setProgress({ stage: 'preparing', progress: 0 });
 
-      const result = await archiveServiceRef.current.archiveSession(sessionData, {
-        ...archiveOptions,
-        onProgress: (stage, progressValue) => {
-          setProgress({ stage, progress: progressValue });
-        }
-      });
+        const result = await archiveServiceRef.current.archiveSession(sessionData, {
+          ...archiveOptions,
+          onProgress: (stage, progressValue) => {
+            setProgress({ stage, progress: progressValue });
+          },
+        });
 
-      // Refresh archives list
-      await refreshArchives();
-      refreshStats();
+        // Refresh archives list
+        await refreshArchives();
+        refreshStats();
 
-      setProgress(null);
-      return result;
-
-    } catch (err) {
-      console.error('Failed to archive session:', err);
-      setError(err.message);
-      setProgress(null);
-      throw err;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [refreshArchives, refreshStats]);
+        setProgress(null);
+        return result;
+      } catch (err) {
+        console.error('Failed to archive session:', err);
+        setError(err.message);
+        setProgress(null);
+        throw err;
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [refreshArchives, refreshStats]
+  );
 
   // Load an archived session
   const loadArchive = useCallback(async (archiveId, loadOptions = {}) => {
@@ -119,12 +121,11 @@ export const useSessionArchive = (options = {}) => {
         ...loadOptions,
         onProgress: (stage, progressValue) => {
           setProgress({ stage, progress: progressValue });
-        }
+        },
       });
 
       setProgress(null);
       return result;
-
     } catch (err) {
       console.error('Failed to load archive:', err);
       setError(err.message);
@@ -136,25 +137,27 @@ export const useSessionArchive = (options = {}) => {
   }, []);
 
   // Delete an archive
-  const deleteArchive = useCallback(async (archiveId) => {
-    try {
-      setIsProcessing(true);
-      setError(null);
+  const deleteArchive = useCallback(
+    async archiveId => {
+      try {
+        setIsProcessing(true);
+        setError(null);
 
-      await archiveServiceRef.current.deleteArchive(archiveId);
+        await archiveServiceRef.current.deleteArchive(archiveId);
 
-      // Refresh archives list
-      await refreshArchives();
-      refreshStats();
-
-    } catch (err) {
-      console.error('Failed to delete archive:', err);
-      setError(err.message);
-      throw err;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [refreshArchives, refreshStats]);
+        // Refresh archives list
+        await refreshArchives();
+        refreshStats();
+      } catch (err) {
+        console.error('Failed to delete archive:', err);
+        setError(err.message);
+        throw err;
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [refreshArchives, refreshStats]
+  );
 
   // Create export package
   const createExportPackage = useCallback(async (archiveIds = [], format = 'zip') => {
@@ -167,7 +170,6 @@ export const useSessionArchive = (options = {}) => {
 
       setProgress(null);
       return result;
-
     } catch (err) {
       console.error('Failed to create export package:', err);
       setError(err.message);
@@ -179,49 +181,51 @@ export const useSessionArchive = (options = {}) => {
   }, []);
 
   // Import export package
-  const importExportPackage = useCallback(async (file, importOptions = {}) => {
-    try {
-      setIsProcessing(true);
-      setError(null);
-      setProgress({ stage: 'importing', progress: 0 });
+  const importExportPackage = useCallback(
+    async (file, importOptions = {}) => {
+      try {
+        setIsProcessing(true);
+        setError(null);
+        setProgress({ stage: 'importing', progress: 0 });
 
-      const result = await archiveServiceRef.current.importExportPackage(file, {
-        ...importOptions,
-        onProgress: (stage, progressValue) => {
-          setProgress({ stage, progress: progressValue });
-        }
-      });
+        const result = await archiveServiceRef.current.importExportPackage(file, {
+          ...importOptions,
+          onProgress: (stage, progressValue) => {
+            setProgress({ stage, progress: progressValue });
+          },
+        });
 
-      // Refresh archives list
-      await refreshArchives();
-      refreshStats();
+        // Refresh archives list
+        await refreshArchives();
+        refreshStats();
 
-      setProgress(null);
-      return result;
-
-    } catch (err) {
-      console.error('Failed to import export package:', err);
-      setError(err.message);
-      setProgress(null);
-      throw err;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [refreshArchives, refreshStats]);
+        setProgress(null);
+        return result;
+      } catch (err) {
+        console.error('Failed to import export package:', err);
+        setError(err.message);
+        setProgress(null);
+        throw err;
+      } finally {
+        setIsProcessing(false);
+      }
+    },
+    [refreshArchives, refreshStats]
+  );
 
   // Search archives
   const searchArchives = useCallback((query, filters = {}) => {
     const searchFilters = {
       ...filters,
       // Add title and description search
-      title: query
+      title: query,
     };
 
     return archiveServiceRef.current.listArchives(searchFilters);
   }, []);
 
   // Filter archives by tags
-  const filterByTags = useCallback((tags) => {
+  const filterByTags = useCallback(tags => {
     return archiveServiceRef.current.listArchives({ tags });
   }, []);
 
@@ -229,45 +233,50 @@ export const useSessionArchive = (options = {}) => {
   const filterByDateRange = useCallback((startDate, endDate) => {
     return archiveServiceRef.current.listArchives({
       dateFrom: startDate.toISOString(),
-      dateTo: endDate.toISOString()
+      dateTo: endDate.toISOString(),
     });
   }, []);
 
   // Get archive by ID
-  const getArchiveById = useCallback((archiveId) => {
-    return archives.find(a => a.id === archiveId);
-  }, [archives]);
+  const getArchiveById = useCallback(
+    archiveId => {
+      return archives.find(a => a.id === archiveId);
+    },
+    [archives]
+  );
 
   // Batch operations
-  const batchDeleteArchives = useCallback(async (archiveIds) => {
-    try {
-      setIsProcessing(true);
-      setError(null);
+  const batchDeleteArchives = useCallback(
+    async archiveIds => {
+      try {
+        setIsProcessing(true);
+        setError(null);
 
-      const results = [];
-      for (const archiveId of archiveIds) {
-        try {
-          await archiveServiceRef.current.deleteArchive(archiveId);
-          results.push({ archiveId, success: true });
-        } catch (err) {
-          results.push({ archiveId, success: false, error: err.message });
+        const results = [];
+        for (const archiveId of archiveIds) {
+          try {
+            await archiveServiceRef.current.deleteArchive(archiveId);
+            results.push({ archiveId, success: true });
+          } catch (err) {
+            results.push({ archiveId, success: false, error: err.message });
+          }
         }
+
+        // Refresh archives list
+        await refreshArchives();
+        refreshStats();
+
+        return results;
+      } catch (err) {
+        console.error('Failed to batch delete archives:', err);
+        setError(err.message);
+        throw err;
+      } finally {
+        setIsProcessing(false);
       }
-
-      // Refresh archives list
-      await refreshArchives();
-      refreshStats();
-
-      return results;
-
-    } catch (err) {
-      console.error('Failed to batch delete archives:', err);
-      setError(err.message);
-      throw err;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [refreshArchives, refreshStats]);
+    },
+    [refreshArchives, refreshStats]
+  );
 
   // Get storage information
   const getStorageInfo = useCallback(() => {
@@ -285,7 +294,6 @@ export const useSessionArchive = (options = {}) => {
       // Refresh archives list
       await refreshArchives();
       refreshStats();
-
     } catch (err) {
       console.error('Failed to cleanup archives:', err);
       setError(err.message);
@@ -296,7 +304,7 @@ export const useSessionArchive = (options = {}) => {
   }, [refreshArchives, refreshStats]);
 
   // Format file size
-  const formatFileSize = useCallback((bytes) => {
+  const formatFileSize = useCallback(bytes => {
     if (bytes === 0) return '0 B';
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
@@ -305,22 +313,25 @@ export const useSessionArchive = (options = {}) => {
   }, []);
 
   // Format date
-  const formatDate = useCallback((dateString) => {
+  const formatDate = useCallback(dateString => {
     const date = new Date(dateString);
     return date.toLocaleString();
   }, []);
 
   // Calculate compression savings
-  const calculateSavings = useCallback((archive) => {
-    if (!archive.compressed || !archive.originalSize) return null;
-    const saved = archive.originalSize - archive.size;
-    const percentage = ((saved / archive.originalSize) * 100).toFixed(1);
-    return {
-      bytes: saved,
-      percentage: parseFloat(percentage),
-      formatted: formatFileSize(saved)
-    };
-  }, [formatFileSize]);
+  const calculateSavings = useCallback(
+    archive => {
+      if (!archive.compressed || !archive.originalSize) return null;
+      const saved = archive.originalSize - archive.size;
+      const percentage = ((saved / archive.originalSize) * 100).toFixed(1);
+      return {
+        bytes: saved,
+        percentage: parseFloat(percentage),
+        formatted: formatFileSize(saved),
+      };
+    },
+    [formatFileSize]
+  );
 
   // Get archive tags
   const getAllTags = useCallback(() => {
@@ -347,78 +358,81 @@ export const useSessionArchive = (options = {}) => {
       compressedArchives,
       compressionRate: totalArchives > 0 ? compressedArchives / totalArchives : 0,
       compressionRatio: totalOriginalSize > 0 ? totalOriginalSize / totalSize : 1,
-      tags: getAllTags()
+      tags: getAllTags(),
     };
   }, [archives, getAllTags]);
 
   // Memoized return value
-  const archiveState = useMemo(() => ({
-    // Data
-    archives,
-    stats,
-    error,
-    isProcessing,
-    progress,
+  const archiveState = useMemo(
+    () => ({
+      // Data
+      archives,
+      stats,
+      error,
+      isProcessing,
+      progress,
 
-    // Actions
-    archiveSession,
-    loadArchive,
-    deleteArchive,
-    createExportPackage,
-    importExportPackage,
+      // Actions
+      archiveSession,
+      loadArchive,
+      deleteArchive,
+      createExportPackage,
+      importExportPackage,
 
-    // Search and filter
-    searchArchives,
-    filterByTags,
-    filterByDateRange,
-    refreshArchives,
-    getArchiveById,
+      // Search and filter
+      searchArchives,
+      filterByTags,
+      filterByDateRange,
+      refreshArchives,
+      getArchiveById,
 
-    // Batch operations
-    batchDeleteArchives,
+      // Batch operations
+      batchDeleteArchives,
 
-    // Management
-    getStorageInfo,
-    cleanupArchives,
+      // Management
+      getStorageInfo,
+      cleanupArchives,
 
-    // Utilities
-    formatFileSize,
-    formatDate,
-    calculateSavings,
-    getAllTags,
-    getArchiveStats,
+      // Utilities
+      formatFileSize,
+      formatDate,
+      calculateSavings,
+      getAllTags,
+      getArchiveStats,
 
-    // Derived state
-    hasArchives: archives.length > 0,
-    totalArchives: archives.length,
-    isStorageOptimized: stats?.compressionRate > 0.5,
-    needsCleanup: stats?.totalArchives > maxStoredArchives * 0.8
-  }), [
-    archives,
-    stats,
-    error,
-    isProcessing,
-    progress,
-    archiveSession,
-    loadArchive,
-    deleteArchive,
-    createExportPackage,
-    importExportPackage,
-    searchArchives,
-    filterByTags,
-    filterByDateRange,
-    refreshArchives,
-    getArchiveById,
-    batchDeleteArchives,
-    getStorageInfo,
-    cleanupArchives,
-    formatFileSize,
-    formatDate,
-    calculateSavings,
-    getAllTags,
-    getArchiveStats,
-    maxStoredArchives
-  ]);
+      // Derived state
+      hasArchives: archives.length > 0,
+      totalArchives: archives.length,
+      isStorageOptimized: stats?.compressionRate > 0.5,
+      needsCleanup: stats?.totalArchives > maxStoredArchives * 0.8,
+    }),
+    [
+      archives,
+      stats,
+      error,
+      isProcessing,
+      progress,
+      archiveSession,
+      loadArchive,
+      deleteArchive,
+      createExportPackage,
+      importExportPackage,
+      searchArchives,
+      filterByTags,
+      filterByDateRange,
+      refreshArchives,
+      getArchiveById,
+      batchDeleteArchives,
+      getStorageInfo,
+      cleanupArchives,
+      formatFileSize,
+      formatDate,
+      calculateSavings,
+      getAllTags,
+      getArchiveStats,
+      maxStoredArchives,
+    ]
+  );
 
   return archiveState;
 };

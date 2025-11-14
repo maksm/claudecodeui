@@ -9,7 +9,7 @@ const AuthContext = createContext({
   logout: () => {},
   isLoading: true,
   needsSetup: false,
-  error: null
+  error: null,
 });
 
 export const useAuth = () => {
@@ -139,7 +139,7 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     localStorage.removeItem('auth-token');
-    
+
     // Optional: Call logout endpoint for logging
     if (token) {
       api.auth.logout().catch(error => {
@@ -156,12 +156,8 @@ export const AuthProvider = ({ children }) => {
     logout,
     isLoading,
     needsSetup,
-    error
+    error,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -10,7 +10,7 @@ const VIEWS = {
   CHAT: 'chat',
   FILES: 'files',
   SHELL: 'shell',
-  SETTINGS: 'settings'
+  SETTINGS: 'settings',
 };
 
 const VIEW_ORDER = [VIEWS.CHAT, VIEWS.FILES, VIEWS.SHELL, VIEWS.SETTINGS];
@@ -25,43 +25,46 @@ const SwipeNavigation = ({ children, currentView, onViewChange }) => {
   const [previousView, setPreviousView] = useState(currentView);
 
   // Get current view index for navigation
-  const getCurrentIndex = useCallback((view) => {
+  const getCurrentIndex = useCallback(view => {
     return VIEW_ORDER.indexOf(view);
   }, []);
 
   // Navigate to view by index
-  const navigateToView = useCallback((targetIndex) => {
-    if (targetIndex < 0 || targetIndex >= VIEW_ORDER.length) return;
+  const navigateToView = useCallback(
+    targetIndex => {
+      if (targetIndex < 0 || targetIndex >= VIEW_ORDER.length) return;
 
-    const targetView = VIEW_ORDER[targetIndex];
-    if (targetView === currentView || isAnimating) return;
+      const targetView = VIEW_ORDER[targetIndex];
+      if (targetView === currentView || isAnimating) return;
 
-    setIsAnimating(true);
-    setPreviousView(currentView);
+      setIsAnimating(true);
+      setPreviousView(currentView);
 
-    // Trigger haptic feedback
-    if ('vibrate' in navigator) {
-      navigator.vibrate(30);
-    }
+      // Trigger haptic feedback
+      if ('vibrate' in navigator) {
+        navigator.vibrate(30);
+      }
 
-    // Update view
-    onViewChange?.(targetView);
+      // Update view
+      onViewChange?.(targetView);
 
-    // Navigate to appropriate route
-    const routes = {
-      [VIEWS.CHAT]: '/chat',
-      [VIEWS.FILES]: '/projects',
-      [VIEWS.SHELL]: '/shell',
-      [VIEWS.SETTINGS]: '/settings'
-    };
+      // Navigate to appropriate route
+      const routes = {
+        [VIEWS.CHAT]: '/chat',
+        [VIEWS.FILES]: '/projects',
+        [VIEWS.SHELL]: '/shell',
+        [VIEWS.SETTINGS]: '/settings',
+      };
 
-    navigate(routes[targetView], { replace: true });
+      navigate(routes[targetView], { replace: true });
 
-    // Reset animation state
-    setTimeout(() => {
-      setIsAnimating(false);
-    }, 300);
-  }, [currentView, isAnimating, onViewChange, navigate]);
+      // Reset animation state
+      setTimeout(() => {
+        setIsAnimating(false);
+      }, 300);
+    },
+    [currentView, isAnimating, onViewChange, navigate]
+  );
 
   // Swipe left handler (navigate to next view)
   const handleSwipeLeft = useCallback(() => {
@@ -93,9 +96,11 @@ const SwipeNavigation = ({ children, currentView, onViewChange }) => {
     }
 
     // Emit custom event for pull-to-refresh
-    window.dispatchEvent(new CustomEvent('swipeDownRefresh', {
-      detail: { currentView }
-    }));
+    window.dispatchEvent(
+      new CustomEvent('swipeDownRefresh', {
+        detail: { currentView },
+      })
+    );
   }, [currentView]);
 
   // Configure swipe gestures
@@ -104,16 +109,10 @@ const SwipeNavigation = ({ children, currentView, onViewChange }) => {
     velocityThreshold: 0.2,
     restraint: 80,
     disabled: window.innerWidth >= 1024, // Disable on desktop
-    preventDefault: true
+    preventDefault: true,
   };
 
-  const {
-    AnimatedComponent,
-    isDragging,
-    isSwiping,
-    swipeDirection,
-    reset
-  } = useSwipeGestures(
+  const { AnimatedComponent, isDragging, isSwiping, swipeDirection, reset } = useSwipeGestures(
     handleSwipeLeft,
     handleSwipeRight,
     handleSwipeUp,
@@ -129,28 +128,31 @@ const SwipeNavigation = ({ children, currentView, onViewChange }) => {
   }, [currentView, previousView, reset]);
 
   // Handle keyboard navigation for accessibility
-  const handleKeyDown = useCallback((event) => {
-    if (window.innerWidth >= 1024) return; // Only on mobile
+  const handleKeyDown = useCallback(
+    event => {
+      if (window.innerWidth >= 1024) return; // Only on mobile
 
-    switch (event.key) {
-      case 'ArrowLeft':
-        event.preventDefault();
-        handleSwipeRight();
-        break;
-      case 'ArrowRight':
-        event.preventDefault();
-        handleSwipeLeft();
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        handleSwipeUp();
-        break;
-      case 'ArrowDown':
-        event.preventDefault();
-        handleSwipeDown();
-        break;
-    }
-  }, [handleSwipeLeft, handleSwipeRight, handleSwipeUp, handleSwipeDown]);
+      switch (event.key) {
+        case 'ArrowLeft':
+          event.preventDefault();
+          handleSwipeRight();
+          break;
+        case 'ArrowRight':
+          event.preventDefault();
+          handleSwipeLeft();
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          handleSwipeUp();
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          handleSwipeDown();
+          break;
+      }
+    },
+    [handleSwipeLeft, handleSwipeRight, handleSwipeUp, handleSwipeDown]
+  );
 
   // Add keyboard event listeners
   useEffect(() => {
@@ -204,7 +206,7 @@ const SwipeNavigation = ({ children, currentView, onViewChange }) => {
       style={{
         position: 'relative',
         minHeight: '100vh',
-        touchAction: 'none'
+        touchAction: 'none',
       }}
     >
       {/* Visual feedback overlay */}
@@ -220,7 +222,7 @@ const SwipeNavigation = ({ children, currentView, onViewChange }) => {
             background: `rgba(0, 0, 0, ${theme === 'dark' ? 0.1 : 0.05})`,
             pointerEvents: 'none',
             zIndex: 1000,
-            backdropFilter: 'blur(1px)'
+            backdropFilter: 'blur(1px)',
           }}
         />
       )}
@@ -232,9 +234,7 @@ const SwipeNavigation = ({ children, currentView, onViewChange }) => {
       {renderConnectionStatus()}
 
       {/* Main content */}
-      <div className="swipe-content">
-        {children}
-      </div>
+      <div className="swipe-content">{children}</div>
 
       {/* CSS for swipe navigation */}
       <style>{`

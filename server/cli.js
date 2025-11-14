@@ -22,29 +22,29 @@ const __dirname = dirname(__filename);
 
 // ANSI color codes for terminal output
 const colors = {
-    reset: '\x1b[0m',
-    bright: '\x1b[1m',
-    dim: '\x1b[2m',
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
 
-    // Foreground colors
-    cyan: '\x1b[36m',
-    green: '\x1b[32m',
-    yellow: '\x1b[33m',
-    blue: '\x1b[34m',
-    magenta: '\x1b[35m',
-    white: '\x1b[37m',
-    gray: '\x1b[90m',
+  // Foreground colors
+  cyan: '\x1b[36m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  white: '\x1b[37m',
+  gray: '\x1b[90m',
 };
 
 // Helper to colorize text
 const c = {
-    info: (text) => `${colors.cyan}${text}${colors.reset}`,
-    ok: (text) => `${colors.green}${text}${colors.reset}`,
-    warn: (text) => `${colors.yellow}${text}${colors.reset}`,
-    error: (text) => `${colors.yellow}${text}${colors.reset}`,
-    tip: (text) => `${colors.blue}${text}${colors.reset}`,
-    bright: (text) => `${colors.bright}${text}${colors.reset}`,
-    dim: (text) => `${colors.dim}${text}${colors.reset}`,
+  info: text => `${colors.cyan}${text}${colors.reset}`,
+  ok: text => `${colors.green}${text}${colors.reset}`,
+  warn: text => `${colors.yellow}${text}${colors.reset}`,
+  error: text => `${colors.yellow}${text}${colors.reset}`,
+  tip: text => `${colors.blue}${text}${colors.reset}`,
+  bright: text => `${colors.bright}${text}${colors.reset}`,
+  dim: text => `${colors.dim}${text}${colors.reset}`,
 };
 
 // Load package.json for version info
@@ -53,92 +53,108 @@ const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
 
 // Load environment variables from .env file if it exists
 function loadEnvFile() {
-    try {
-        const envPath = path.join(__dirname, '../.env');
-        const envFile = fs.readFileSync(envPath, 'utf8');
-        envFile.split('\n').forEach(line => {
-            const trimmedLine = line.trim();
-            if (trimmedLine && !trimmedLine.startsWith('#')) {
-                const [key, ...valueParts] = trimmedLine.split('=');
-                if (key && valueParts.length > 0 && !process.env[key]) {
-                    process.env[key] = valueParts.join('=').trim();
-                }
-            }
-        });
-    } catch (e) {
-        // .env file is optional
-    }
+  try {
+    const envPath = path.join(__dirname, '../.env');
+    const envFile = fs.readFileSync(envPath, 'utf8');
+    envFile.split('\n').forEach(line => {
+      const trimmedLine = line.trim();
+      if (trimmedLine && !trimmedLine.startsWith('#')) {
+        const [key, ...valueParts] = trimmedLine.split('=');
+        if (key && valueParts.length > 0 && !process.env[key]) {
+          process.env[key] = valueParts.join('=').trim();
+        }
+      }
+    });
+  } catch (e) {
+    // .env file is optional
+  }
 }
 
 // Get the database path (same logic as db.js)
 function getDatabasePath() {
-    loadEnvFile();
-    return process.env.DATABASE_PATH || path.join(__dirname, 'database', 'auth.db');
+  loadEnvFile();
+  return process.env.DATABASE_PATH || path.join(__dirname, 'database', 'auth.db');
 }
 
 // Get the installation directory
 function getInstallDir() {
-    return path.join(__dirname, '..');
+  return path.join(__dirname, '..');
 }
 
 // Show status command
 function showStatus() {
-    console.log(`\n${c.bright('Claude Code UI - Status')}\n`);
-    console.log(c.dim('═'.repeat(60)));
+  console.log(`\n${c.bright('Claude Code UI - Status')}\n`);
+  console.log(c.dim('═'.repeat(60)));
 
-    // Version info
-    console.log(`\n${c.info('[INFO]')} Version: ${c.bright(packageJson.version)}`);
+  // Version info
+  console.log(`\n${c.info('[INFO]')} Version: ${c.bright(packageJson.version)}`);
 
-    // Installation location
-    const installDir = getInstallDir();
-    console.log(`\n${c.info('[INFO]')} Installation Directory:`);
-    console.log(`       ${c.dim(installDir)}`);
+  // Installation location
+  const installDir = getInstallDir();
+  console.log(`\n${c.info('[INFO]')} Installation Directory:`);
+  console.log(`       ${c.dim(installDir)}`);
 
-    // Database location
-    const dbPath = getDatabasePath();
-    const dbExists = fs.existsSync(dbPath);
-    console.log(`\n${c.info('[INFO]')} Database Location:`);
-    console.log(`       ${c.dim(dbPath)}`);
-    console.log(`       Status: ${dbExists ? c.ok('[OK] Exists') : c.warn('[WARN] Not created yet (will be created on first run)')}`);
+  // Database location
+  const dbPath = getDatabasePath();
+  const dbExists = fs.existsSync(dbPath);
+  console.log(`\n${c.info('[INFO]')} Database Location:`);
+  console.log(`       ${c.dim(dbPath)}`);
+  console.log(
+    `       Status: ${dbExists ? c.ok('[OK] Exists') : c.warn('[WARN] Not created yet (will be created on first run)')}`
+  );
 
-    if (dbExists) {
-        const stats = fs.statSync(dbPath);
-        console.log(`       Size: ${c.dim((stats.size / 1024).toFixed(2) + ' KB')}`);
-        console.log(`       Modified: ${c.dim(stats.mtime.toLocaleString())}`);
-    }
+  if (dbExists) {
+    const stats = fs.statSync(dbPath);
+    console.log(`       Size: ${c.dim((stats.size / 1024).toFixed(2) + ' KB')}`);
+    console.log(`       Modified: ${c.dim(stats.mtime.toLocaleString())}`);
+  }
 
-    // Environment variables
-    console.log(`\n${c.info('[INFO]')} Configuration:`);
-    console.log(`       PORT: ${c.bright(process.env.PORT || '3001')} ${c.dim(process.env.PORT ? '' : '(default)')}`);
-    console.log(`       DATABASE_PATH: ${c.dim(process.env.DATABASE_PATH || '(using default location)')}`);
-    console.log(`       CLAUDE_CLI_PATH: ${c.dim(process.env.CLAUDE_CLI_PATH || 'claude (default)')}`);
-    console.log(`       CONTEXT_WINDOW: ${c.dim(process.env.CONTEXT_WINDOW || '160000 (default)')}`);
+  // Environment variables
+  console.log(`\n${c.info('[INFO]')} Configuration:`);
+  console.log(
+    `       PORT: ${c.bright(process.env.PORT || '3001')} ${c.dim(process.env.PORT ? '' : '(default)')}`
+  );
+  console.log(
+    `       DATABASE_PATH: ${c.dim(process.env.DATABASE_PATH || '(using default location)')}`
+  );
+  console.log(
+    `       CLAUDE_CLI_PATH: ${c.dim(process.env.CLAUDE_CLI_PATH || 'claude (default)')}`
+  );
+  console.log(`       CONTEXT_WINDOW: ${c.dim(process.env.CONTEXT_WINDOW || '160000 (default)')}`);
 
-    // Claude projects folder
-    const claudeProjectsPath = path.join(process.env.HOME, '.claude', 'projects');
-    const projectsExists = fs.existsSync(claudeProjectsPath);
-    console.log(`\n${c.info('[INFO]')} Claude Projects Folder:`);
-    console.log(`       ${c.dim(claudeProjectsPath)}`);
-    console.log(`       Status: ${projectsExists ? c.ok('[OK] Exists') : c.warn('[WARN] Not found')}`);
+  // Claude projects folder
+  const claudeProjectsPath = path.join(process.env.HOME, '.claude', 'projects');
+  const projectsExists = fs.existsSync(claudeProjectsPath);
+  console.log(`\n${c.info('[INFO]')} Claude Projects Folder:`);
+  console.log(`       ${c.dim(claudeProjectsPath)}`);
+  console.log(
+    `       Status: ${projectsExists ? c.ok('[OK] Exists') : c.warn('[WARN] Not found')}`
+  );
 
-    // Config file location
-    const envFilePath = path.join(__dirname, '../.env');
-    const envExists = fs.existsSync(envFilePath);
-    console.log(`\n${c.info('[INFO]')} Configuration File:`);
-    console.log(`       ${c.dim(envFilePath)}`);
-    console.log(`       Status: ${envExists ? c.ok('[OK] Exists') : c.warn('[WARN] Not found (using defaults)')}`);
+  // Config file location
+  const envFilePath = path.join(__dirname, '../.env');
+  const envExists = fs.existsSync(envFilePath);
+  console.log(`\n${c.info('[INFO]')} Configuration File:`);
+  console.log(`       ${c.dim(envFilePath)}`);
+  console.log(
+    `       Status: ${envExists ? c.ok('[OK] Exists') : c.warn('[WARN] Not found (using defaults)')}`
+  );
 
-    console.log('\n' + c.dim('═'.repeat(60)));
-    console.log(`\n${c.tip('[TIP]')} Hints:`);
-    console.log(`      ${c.dim('>')} Set DATABASE_PATH env variable to use a custom database location`);
-    console.log(`      ${c.dim('>')} Create .env file in installation directory for persistent config`);
-    console.log(`      ${c.dim('>')} Run "claude-code-ui" or "cloudcli start" to start the server`);
-    console.log(`      ${c.dim('>')} Access the UI at http://localhost:3001 (or custom PORT)\n`);
+  console.log('\n' + c.dim('═'.repeat(60)));
+  console.log(`\n${c.tip('[TIP]')} Hints:`);
+  console.log(
+    `      ${c.dim('>')} Set DATABASE_PATH env variable to use a custom database location`
+  );
+  console.log(
+    `      ${c.dim('>')} Create .env file in installation directory for persistent config`
+  );
+  console.log(`      ${c.dim('>')} Run "claude-code-ui" or "cloudcli start" to start the server`);
+  console.log(`      ${c.dim('>')} Access the UI at http://localhost:3001 (or custom PORT)\n`);
 }
 
 // Show help
 function showHelp() {
-    console.log(`
+  console.log(`
 ╔═══════════════════════════════════════════════════════════════╗
 ║              Claude Code UI - Command Line Tool               ║
 ╚═══════════════════════════════════════════════════════════════╝
@@ -179,47 +195,47 @@ Report Issues:
 
 // Show version
 function showVersion() {
-    console.log(`${packageJson.version}`);
+  console.log(`${packageJson.version}`);
 }
 
 // Start the server
 async function startServer() {
-    // Import and run the server
-    await import('./index.js');
+  // Import and run the server
+  await import('./index.js');
 }
 
 // Main CLI handler
 async function main() {
-    const args = process.argv.slice(2);
-    const command = args[0] || 'start';
+  const args = process.argv.slice(2);
+  const command = args[0] || 'start';
 
-    switch (command) {
-        case 'start':
-            await startServer();
-            break;
-        case 'status':
-        case 'info':
-            showStatus();
-            break;
-        case 'help':
-        case '-h':
-        case '--help':
-            showHelp();
-            break;
-        case 'version':
-        case '-v':
-        case '--version':
-            showVersion();
-            break;
-        default:
-            console.error(`\n❌ Unknown command: ${command}`);
-            console.log('   Run "cloudcli help" for usage information.\n');
-            process.exit(1);
-    }
+  switch (command) {
+    case 'start':
+      await startServer();
+      break;
+    case 'status':
+    case 'info':
+      showStatus();
+      break;
+    case 'help':
+    case '-h':
+    case '--help':
+      showHelp();
+      break;
+    case 'version':
+    case '-v':
+    case '--version':
+      showVersion();
+      break;
+    default:
+      console.error(`\n❌ Unknown command: ${command}`);
+      console.log('   Run "cloudcli help" for usage information.\n');
+      process.exit(1);
+  }
 }
 
 // Run the CLI
 main().catch(error => {
-    console.error('\n❌ Error:', error.message);
-    process.exit(1);
+  console.error('\n❌ Error:', error.message);
+  process.exit(1);
 });

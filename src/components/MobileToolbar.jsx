@@ -34,14 +34,14 @@ const MobileToolbar = ({
   const expandAnimation = useSpring({
     height: isExpanded ? 120 : 60,
     opacity: isExpanded ? 1 : 0.9,
-    config: { tension: 300, friction: 30 }
+    config: { tension: 300, friction: 30 },
   });
 
   // Animation for search input
   const searchAnimation = useSpring({
     width: searchFocused ? '200px' : '0px',
     opacity: searchFocused ? 1 : 0,
-    config: { tension: 200, friction: 20 }
+    config: { tension: 200, friction: 20 },
   });
 
   // Navigation items
@@ -49,11 +49,11 @@ const MobileToolbar = ({
     { id: 'chat', icon: '💬', label: 'Chat', active: activeView === 'chat' },
     { id: 'projects', icon: '📁', label: 'Projects', active: activeView === 'projects' },
     { id: 'shell', icon: '🖥️', label: 'Terminal', active: activeView === 'shell' },
-    { id: 'settings', icon: '⚙️', label: 'Settings', active: activeView === 'settings' }
+    { id: 'settings', icon: '⚙️', label: 'Settings', active: activeView === 'settings' },
   ];
 
   // Handle navigation click
-  const handleNavClick = (itemId) => {
+  const handleNavClick = itemId => {
     triggerHaptic(30);
     onNavClick?.(itemId);
     setIsExpanded(false);
@@ -79,7 +79,7 @@ const MobileToolbar = ({
   };
 
   // Handle search submit
-  const handleSearchSubmit = (e) => {
+  const handleSearchSubmit = e => {
     e.preventDefault();
     if (searchValue.trim()) {
       triggerHaptic(50);
@@ -91,7 +91,7 @@ const MobileToolbar = ({
 
   // Click outside to close expanded toolbar
   useEffect(() => {
-    const handleClickOutside = (event) => {
+    const handleClickOutside = event => {
       if (toolbarRef.current && !toolbarRef.current.contains(event.target)) {
         setIsExpanded(false);
       }
@@ -124,7 +124,7 @@ const MobileToolbar = ({
         display: 'flex',
         flexDirection: 'column',
         boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
-        transition: 'all 0.3s ease'
+        transition: 'all 0.3s ease',
       }}
       {...props}
     >
@@ -132,7 +132,7 @@ const MobileToolbar = ({
       <div className="toolbar-main">
         {/* Navigation items */}
         <div className="toolbar-nav">
-          {navItems.map((item) => (
+          {navItems.map(item => (
             <button
               key={item.id}
               onClick={() => handleNavClick(item.id)}
@@ -147,12 +147,18 @@ const MobileToolbar = ({
                 justifyContent: 'center',
                 background: 'transparent',
                 border: 'none',
-                color: item.active ? (theme === 'dark' ? '#60a5fa' : '#3b82f6') : (theme === 'dark' ? '#9ca3af' : '#6b7280'),
+                color: item.active
+                  ? theme === 'dark'
+                    ? '#60a5fa'
+                    : '#3b82f6'
+                  : theme === 'dark'
+                    ? '#9ca3af'
+                    : '#6b7280',
                 fontSize: '20px',
                 padding: '4px',
                 cursor: 'pointer',
                 position: 'relative',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
               }}
             >
               <span>{item.icon}</span>
@@ -160,7 +166,7 @@ const MobileToolbar = ({
                 style={{
                   fontSize: '10px',
                   marginTop: '2px',
-                  fontWeight: '500'
+                  fontWeight: '500',
                 }}
               >
                 {item.label}
@@ -175,7 +181,7 @@ const MobileToolbar = ({
                     width: '20px',
                     height: '2px',
                     background: theme === 'dark' ? '#60a5fa' : '#3b82f6',
-                    borderRadius: '1px'
+                    borderRadius: '1px',
                   }}
                 />
               )}
@@ -193,7 +199,7 @@ const MobileToolbar = ({
                 marginRight: searchFocused ? '8px' : '0',
                 overflow: 'hidden',
                 display: 'flex',
-                alignItems: 'center'
+                alignItems: 'center',
               }}
             >
               <form onSubmit={handleSearchSubmit} style={{ display: 'flex', alignItems: 'center' }}>
@@ -201,7 +207,7 @@ const MobileToolbar = ({
                   ref={searchInputRef}
                   type="text"
                   value={searchValue}
-                  onChange={(e) => setSearchValue(e.target.value)}
+                  onChange={e => setSearchValue(e.target.value)}
                   onFocus={handleSearchFocus}
                   onBlur={handleSearchBlur}
                   placeholder="Search..."
@@ -215,7 +221,7 @@ const MobileToolbar = ({
                     background: theme === 'dark' ? '#374151' : '#f9fafb',
                     color: theme === 'dark' ? '#f9fafb' : '#111827',
                     fontSize: '14px',
-                    outline: 'none'
+                    outline: 'none',
                   }}
                 />
               </form>
@@ -237,10 +243,17 @@ const MobileToolbar = ({
                 padding: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.35-4.35" />
               </svg>
@@ -255,7 +268,7 @@ const MobileToolbar = ({
               height: '8px',
               borderRadius: '50%',
               background: isConnected ? '#10b981' : '#ef4444',
-              margin: '0 8px'
+              margin: '0 8px',
             }}
           />
 
@@ -276,10 +289,17 @@ const MobileToolbar = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 transform: isExpanded ? 'rotate(90deg)' : 'rotate(0)',
-                transition: 'transform 0.3s ease'
+                transition: 'transform 0.3s ease',
               }}
             >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <line x1="3" y1="12" x2="21" y2="12" />
                 <line x1="3" y1="6" x2="21" y2="6" />
                 <line x1="3" y1="18" x2="21" y2="18" />
@@ -302,7 +322,7 @@ const MobileToolbar = ({
                 padding: '8px 12px',
                 background: theme === 'dark' ? '#374151' : '#f3f4f6',
                 borderRadius: '8px',
-                marginBottom: '8px'
+                marginBottom: '8px',
               }}
             >
               <div
@@ -318,13 +338,19 @@ const MobileToolbar = ({
                   color: theme === 'dark' ? '#f9fafb' : '#111827',
                   fontSize: '14px',
                   fontWeight: '600',
-                  marginRight: '8px'
+                  marginRight: '8px',
                 }}
               >
                 {user.username.charAt(0).toUpperCase()}
               </div>
               <div>
-                <div style={{ fontSize: '14px', fontWeight: '500', color: theme === 'dark' ? '#f9fafb' : '#111827' }}>
+                <div
+                  style={{
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    color: theme === 'dark' ? '#f9fafb' : '#111827',
+                  }}
+                >
                   {user.username}
                 </div>
                 <div style={{ fontSize: '12px', color: theme === 'dark' ? '#9ca3af' : '#6b7280' }}>
@@ -335,7 +361,10 @@ const MobileToolbar = ({
           )}
 
           {/* Quick actions */}
-          <div className="toolbar-quick-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div
+            className="toolbar-quick-actions"
+            style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}
+          >
             <button
               onClick={() => {
                 triggerHaptic(30);
@@ -351,7 +380,7 @@ const MobileToolbar = ({
                 color: theme === 'dark' ? '#f9fafb' : '#111827',
                 fontSize: '12px',
                 cursor: 'pointer',
-                minHeight: '32px'
+                minHeight: '32px',
               }}
             >
               Settings
@@ -371,7 +400,7 @@ const MobileToolbar = ({
                 color: theme === 'dark' ? '#f9fafb' : '#111827',
                 fontSize: '12px',
                 cursor: 'pointer',
-                minHeight: '32px'
+                minHeight: '32px',
               }}
             >
               Help

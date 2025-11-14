@@ -10,12 +10,12 @@ jest.mock('../../../src/utils/api');
 
 // Mock AuthContext
 jest.mock('../../../src/contexts/AuthContext', () => ({
-  useAuth: jest.fn()
+  useAuth: jest.fn(),
 }));
 
 // Mock WebSocketContext
 jest.mock('../../../src/contexts/WebSocketContext', () => ({
-  useWebSocketContext: jest.fn()
+  useWebSocketContext: jest.fn(),
 }));
 
 // Test component to use the TaskMaster context
@@ -31,7 +31,7 @@ const TestComponent = () => {
     refreshProjects,
     setCurrentProject,
     refreshTasks,
-    clearError
+    clearError,
   } = useTaskMaster();
 
   return (
@@ -69,13 +69,13 @@ const renderWithTaskMasterProvider = (authProps = {}, wsProps = {}) => {
     user: { username: 'testuser' },
     token: 'test-token',
     isLoading: false,
-    ...authProps
+    ...authProps,
   });
 
   // Default WebSocket mock
   useWebSocketContext.mockReturnValue({
     messages: [],
-    ...wsProps
+    ...wsProps,
   });
 
   return render(
@@ -119,16 +119,17 @@ describe('TaskMasterContext', () => {
     it('loads projects on mount when authenticated', async () => {
       const mockProjects = [
         { id: 1, name: 'Project 1', taskmaster: { hasTaskmaster: true } },
-        { id: 2, name: 'Project 2', taskmaster: null }
+        { id: 2, name: 'Project 2', taskmaster: null },
       ];
-      api.get = jest.fn()
+      api.get = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue(mockProjects)
+          json: jest.fn().mockResolvedValue(mockProjects),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ isReady: true })
+          json: jest.fn().mockResolvedValue({ isReady: true }),
         });
 
       renderWithTaskMasterProvider();
@@ -149,19 +150,20 @@ describe('TaskMasterContext', () => {
           taskmaster: {
             hasTaskmaster: true,
             status: 'ready',
-            metadata: { taskCount: 5, completed: 2 }
-          }
-        }
+            metadata: { taskCount: 5, completed: 2 },
+          },
+        },
       ];
 
-      api.get = jest.fn()
+      api.get = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue(mockProjects)
+          json: jest.fn().mockResolvedValue(mockProjects),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ isReady: true })
+          json: jest.fn().mockResolvedValue({ isReady: true }),
         });
 
       renderWithTaskMasterProvider();
@@ -189,18 +191,19 @@ describe('TaskMasterContext', () => {
   describe('Current Project Management', () => {
     it('sets current project when setCurrentProject is called', async () => {
       const user = userEvent.setup();
-      api.get = jest.fn()
+      api.get = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue([])
+          json: jest.fn().mockResolvedValue([]),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ isReady: true })
+          json: jest.fn().mockResolvedValue({ isReady: true }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ taskmaster: { hasTaskmaster: true } })
+          json: jest.fn().mockResolvedValue({ taskmaster: { hasTaskmaster: true } }),
         });
 
       renderWithTaskMasterProvider();
@@ -212,18 +215,19 @@ describe('TaskMasterContext', () => {
 
     it('clears tasks when switching projects', async () => {
       const user = userEvent.setup();
-      api.get = jest.fn()
+      api.get = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue([])
+          json: jest.fn().mockResolvedValue([]),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ isReady: true })
+          json: jest.fn().mockResolvedValue({ isReady: true }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ taskmaster: { hasTaskmaster: true } })
+          json: jest.fn().mockResolvedValue({ taskmaster: { hasTaskmaster: true } }),
         });
 
       renderWithTaskMasterProvider();
@@ -238,33 +242,37 @@ describe('TaskMasterContext', () => {
     it('loads tasks for current project', async () => {
       const mockTasks = [
         { id: 1, title: 'Task 1', status: 'pending' },
-        { id: 2, title: 'Task 2', status: 'completed' }
+        { id: 2, title: 'Task 2', status: 'completed' },
       ];
 
-      api.get = jest.fn()
+      api.get = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue([{ name: 'test-project' }])
+          json: jest.fn().mockResolvedValue([{ name: 'test-project' }]),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ isReady: true })
+          json: jest.fn().mockResolvedValue({ isReady: true }),
         })
         .mockResolvedValueOnce({
           ok: true,
           json: jest.fn().mockResolvedValue({
-            taskmaster: { hasTaskmaster: true }
-          })
+            taskmaster: { hasTaskmaster: true },
+          }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ tasks: mockTasks })
+          json: jest.fn().mockResolvedValue({ tasks: mockTasks }),
         });
 
       const SetProjectButton = () => {
         const { setCurrentProject } = useTaskMaster();
         return (
-          <button onClick={() => setCurrentProject({ name: 'test-project' })} data-testid="internal-set-project">
+          <button
+            onClick={() => setCurrentProject({ name: 'test-project' })}
+            data-testid="internal-set-project"
+          >
             Set Project
           </button>
         );
@@ -292,33 +300,37 @@ describe('TaskMasterContext', () => {
       const mockTasks = [
         { id: 1, title: 'Task 1', status: 'completed' },
         { id: 2, title: 'Task 2', status: 'in-progress' },
-        { id: 3, title: 'Task 3', status: 'pending' }
+        { id: 3, title: 'Task 3', status: 'pending' },
       ];
 
-      api.get = jest.fn()
+      api.get = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue([{ name: 'test-project' }])
+          json: jest.fn().mockResolvedValue([{ name: 'test-project' }]),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ isReady: true })
+          json: jest.fn().mockResolvedValue({ isReady: true }),
         })
         .mockResolvedValueOnce({
           ok: true,
           json: jest.fn().mockResolvedValue({
-            taskmaster: { hasTaskmaster: true }
-          })
+            taskmaster: { hasTaskmaster: true },
+          }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ tasks: mockTasks })
+          json: jest.fn().mockResolvedValue({ tasks: mockTasks }),
         });
 
       const SetProjectButton = () => {
         const { setCurrentProject } = useTaskMaster();
         return (
-          <button onClick={() => setCurrentProject({ name: 'test-project' })} data-testid="internal-set-project">
+          <button
+            onClick={() => setCurrentProject({ name: 'test-project' })}
+            data-testid="internal-set-project"
+          >
             Set Project
           </button>
         );
@@ -347,18 +359,19 @@ describe('TaskMasterContext', () => {
       const mockProjects = [{ name: 'Project 1' }];
       const mockMessage = { type: 'taskmaster-project-updated', projectName: 'Project 1' };
 
-      api.get = jest.fn()
+      api.get = jest
+        .fn()
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue([])
+          json: jest.fn().mockResolvedValue([]),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue({ isReady: true })
+          json: jest.fn().mockResolvedValue({ isReady: true }),
         })
         .mockResolvedValueOnce({
           ok: true,
-          json: jest.fn().mockResolvedValue(mockProjects)
+          json: jest.fn().mockResolvedValue(mockProjects),
         });
 
       renderWithTaskMasterProvider({ messages: [mockMessage] });
@@ -401,7 +414,7 @@ describe('TaskMasterContext', () => {
   describe('Context Value', () => {
     it('provides all required context properties', () => {
       const { result } = renderHook(() => useTaskMaster(), {
-        wrapper: ({ children }) => <TaskMasterProvider>{children}</TaskMasterProvider>
+        wrapper: ({ children }) => <TaskMasterProvider>{children}</TaskMasterProvider>,
       });
 
       expect(result.current).toMatchObject({
@@ -416,7 +429,7 @@ describe('TaskMasterContext', () => {
         setCurrentProject: expect.any(Function),
         refreshTasks: expect.any(Function),
         refreshMCPStatus: expect.any(Function),
-        clearError: expect.any(Function)
+        clearError: expect.any(Function),
       });
     });
   });

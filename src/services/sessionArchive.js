@@ -27,7 +27,7 @@ class SessionArchiveService {
       totalCompressionTime: 0,
       totalDecompressionTime: 0,
       averageCompressionRatio: 0,
-      storageUsed: 0
+      storageUsed: 0,
     };
 
     // Cleanup interval
@@ -42,29 +42,29 @@ class SessionArchiveService {
   initStorage() {
     if (typeof window !== 'undefined' && window.localStorage) {
       return {
-        get: (key) => localStorage.getItem(key),
+        get: key => localStorage.getItem(key),
         set: (key, value) => localStorage.setItem(key, value),
-        remove: (key) => localStorage.removeItem(key),
+        remove: key => localStorage.removeItem(key),
         clear: () => localStorage.clear(),
-        keys: () => Object.keys(localStorage)
+        keys: () => Object.keys(localStorage),
       };
     } else if (typeof window !== 'undefined' && window.sessionStorage) {
       return {
-        get: (key) => sessionStorage.getItem(key),
+        get: key => sessionStorage.getItem(key),
         set: (key, value) => sessionStorage.setItem(key, value),
-        remove: (key) => sessionStorage.removeItem(key),
+        remove: key => sessionStorage.removeItem(key),
         clear: () => sessionStorage.clear(),
-        keys: () => Object.keys(sessionStorage)
+        keys: () => Object.keys(sessionStorage),
       };
     } else {
       // Memory fallback
       const memoryStore = new Map();
       return {
-        get: (key) => memoryStore.get(key) || null,
+        get: key => memoryStore.get(key) || null,
         set: (key, value) => memoryStore.set(key, value),
-        remove: (key) => memoryStore.delete(key),
+        remove: key => memoryStore.delete(key),
         clear: () => memoryStore.clear(),
-        keys: () => Array.from(memoryStore.keys())
+        keys: () => Array.from(memoryStore.keys()),
       };
     }
   }
@@ -75,11 +75,13 @@ class SessionArchiveService {
   loadMetadata() {
     try {
       const metadataJson = this.storage.get(`${this.storageKey}-metadata`);
-      return metadataJson ? JSON.parse(metadataJson) : {
-        archives: [],
-        version: '1.0.0',
-        created: new Date().toISOString()
-      };
+      return metadataJson
+        ? JSON.parse(metadataJson)
+        : {
+            archives: [],
+            version: '1.0.0',
+            created: new Date().toISOString(),
+          };
     } catch (error) {
       console.error('Failed to load archive metadata:', error);
       return { archives: [], version: '1.0.0', created: new Date().toISOString() };
@@ -108,7 +110,7 @@ class SessionArchiveService {
       tags = [],
       priority = 'normal',
       includeFiles = true,
-      customMetadata = {}
+      customMetadata = {},
     } = options;
 
     if (!sessionId || !sessionData) {
@@ -131,16 +133,16 @@ class SessionArchiveService {
           ...customMetadata,
           messageCount: sessionData.messages?.length || 0,
           createdAt: new Date().toISOString(),
-          version: '1.0.0'
+          version: '1.0.0',
         },
-        files: includeFiles ? (sessionData.files || []) : [],
+        files: includeFiles ? sessionData.files || [] : [],
         settings: sessionData.settings || {},
         stats: {
           messageCount: sessionData.messages?.length || 0,
           fileCount: (sessionData.files || []).length,
           totalSize: this.calculateDataSize(sessionData),
-          archivedAt: new Date().toISOString()
-        }
+          archivedAt: new Date().toISOString(),
+        },
       };
 
       // Serialize data
@@ -155,7 +157,7 @@ class SessionArchiveService {
         try {
           const compressedData = pako.gzip(serializedData, {
             level: this.compressionLevel,
-            to: 'string'
+            to: 'string',
           });
 
           // Only use compression if it actually reduces size
@@ -185,7 +187,7 @@ class SessionArchiveService {
         createdAt: new Date().toISOString(),
         lastAccessed: new Date().toISOString(),
         version: '1.0.0',
-        stats: archiveData.stats
+        stats: archiveData.stats,
       };
 
       // Check storage limits
@@ -207,16 +209,17 @@ class SessionArchiveService {
       const compressionRatio = compressed ? originalSize / finalData.length : 1;
       this.updateCompressionRatio(compressionRatio);
 
-      console.log(`Session archived: ${sessionId} (${finalData.length} bytes, ${Math.round(compressionTime)}ms)`);
+      console.log(
+        `Session archived: ${sessionId} (${finalData.length} bytes, ${Math.round(compressionTime)}ms)`
+      );
 
       return {
         success: true,
         archiveId,
         archiveRecord,
         compressionRatio,
-        processingTime: compressionTime
+        processingTime: compressionTime,
       };
-
     } catch (error) {
       console.error('Failed to archive session:', error);
       throw error;
@@ -227,10 +230,7 @@ class SessionArchiveService {
    * Load and decompress an archived session
    */
   async loadArchive(archiveId, options = {}) {
-    const {
-      includeFiles = true,
-      validateData = true
-    } = options;
+    const { includeFiles = true, validateData = true } = options;
 
     if (!archiveId) {
       throw new Error('Archive ID is required');
@@ -258,7 +258,9 @@ class SessionArchiveService {
         try {
           decompressedData = pako.ungzip(compressedData, { to: 'string' });
         } catch (decompressionError) {
-          throw new Error(`Failed to decompress archive ${archiveId}: ${decompressionError.message}`);
+          throw new Error(
+            `Failed to decompress archive ${archiveId}: ${decompressionError.message}`
+          );
         }
       }
 
@@ -295,9 +297,8 @@ class SessionArchiveService {
         success: true,
         sessionData,
         archiveRecord,
-        processingTime: decompressionTime
+        processingTime: decompressionTime,
       };
-
     } catch (error) {
       console.error('Failed to load archive:', error);
       throw error;
@@ -318,7 +319,7 @@ class SessionArchiveService {
         version: '1.0.0',
         createdAt: new Date().toISOString(),
         archiveIds,
-        totalArchives: archiveIds.length
+        totalArchives: archiveIds.length,
       };
 
       // Add metadata
@@ -344,7 +345,7 @@ class SessionArchiveService {
       const zipBlob = await zip.generateAsync({
         type: 'blob',
         compression: 'DEFLATE',
-        compressionOptions: { level: 6 }
+        compressionOptions: { level: 6 },
       });
 
       return {
@@ -352,9 +353,8 @@ class SessionArchiveService {
         blob: zipBlob,
         filename: `claude-sessions-export-${new Date().toISOString().split('T')[0]}.zip`,
         size: zipBlob.size,
-        archiveCount: archiveIds.length
+        archiveCount: archiveIds.length,
       };
-
     } catch (error) {
       console.error('Failed to create export package:', error);
       throw error;
@@ -365,10 +365,7 @@ class SessionArchiveService {
    * Import archives from export package
    */
   async importExportPackage(zipBlob, options = {}) {
-    const {
-      overwriteExisting = false,
-      validateData = true
-    } = options;
+    const { overwriteExisting = false, validateData = true } = options;
 
     try {
       const zip = new JSZip();
@@ -401,7 +398,7 @@ class SessionArchiveService {
               importResults.push({
                 archiveId,
                 success: false,
-                error: 'Archive already exists'
+                error: 'Archive already exists',
               });
               continue;
             }
@@ -421,14 +418,14 @@ class SessionArchiveService {
 
             importResults.push({
               archiveId,
-              success: true
+              success: true,
             });
           }
         } catch (error) {
           importResults.push({
             archiveId,
             success: false,
-            error: error.message
+            error: error.message,
           });
         }
       }
@@ -441,9 +438,8 @@ class SessionArchiveService {
         success: true,
         results: importResults,
         imported: importResults.filter(r => r.success).length,
-        failed: importResults.filter(r => !r.success).length
+        failed: importResults.filter(r => !r.success).length,
       };
-
     } catch (error) {
       console.error('Failed to import export package:', error);
       throw error;
@@ -462,9 +458,7 @@ class SessionArchiveService {
     }
 
     if (filters.tags && filters.tags.length > 0) {
-      archives = archives.filter(a =>
-        filters.tags.some(tag => a.tags.includes(tag))
-      );
+      archives = archives.filter(a => filters.tags.some(tag => a.tags.includes(tag)));
     }
 
     if (filters.priority) {
@@ -501,7 +495,7 @@ class SessionArchiveService {
     return {
       archives,
       total: archives.length,
-      totalSize: archives.reduce((sum, a) => sum + a.size, 0)
+      totalSize: archives.reduce((sum, a) => sum + a.size, 0),
     };
   }
 
@@ -533,7 +527,10 @@ class SessionArchiveService {
   getStats() {
     const totalArchives = this.metadata.archives.length;
     const totalSize = this.metadata.archives.reduce((sum, a) => sum + a.size, 0);
-    const totalOriginalSize = this.metadata.archives.reduce((sum, a) => sum + (a.originalSize || a.size), 0);
+    const totalOriginalSize = this.metadata.archives.reduce(
+      (sum, a) => sum + (a.originalSize || a.size),
+      0
+    );
     const compressedArchives = this.metadata.archives.filter(a => a.compressed).length;
 
     return {
@@ -545,7 +542,7 @@ class SessionArchiveService {
       compressedArchives,
       compressionRate: totalArchives > 0 ? compressedArchives / totalArchives : 0,
       metrics: { ...this.metrics },
-      storageQuota: this.getStorageQuota()
+      storageQuota: this.getStorageQuota(),
     };
   }
 
@@ -554,8 +551,8 @@ class SessionArchiveService {
    */
   async cleanupOldArchives() {
     try {
-      const archives = [...this.metadata.archives].sort((a, b) =>
-        new Date(a.lastAccessed) - new Date(b.lastAccessed)
+      const archives = [...this.metadata.archives].sort(
+        (a, b) => new Date(a.lastAccessed) - new Date(b.lastAccessed)
       );
 
       let removedCount = 0;
@@ -575,9 +572,10 @@ class SessionArchiveService {
       }
 
       if (removedCount > 0) {
-        console.log(`Cleanup completed: removed ${removedCount} archives, freed ${freedSpace} bytes`);
+        console.log(
+          `Cleanup completed: removed ${removedCount} archives, freed ${freedSpace} bytes`
+        );
       }
-
     } catch (error) {
       console.error('Archive cleanup failed:', error);
     }
@@ -628,7 +626,7 @@ class SessionArchiveService {
         return {
           used: this.metrics.storageUsed,
           available: 'unknown',
-          quota: 'unknown'
+          quota: 'unknown',
         };
       } catch (error) {
         return { used: this.metrics.storageUsed, available: 'unknown', quota: 'unknown' };
@@ -647,7 +645,9 @@ class SessionArchiveService {
       // Check again after cleanup
       const newStats = this.getStats();
       if (newStats.metrics.storageUsed + requiredSize > this.maxArchiveSize) {
-        throw new Error('Insufficient storage space. Consider deleting old archives or increasing storage limits.');
+        throw new Error(
+          'Insufficient storage space. Consider deleting old archives or increasing storage limits.'
+        );
       }
     }
   }

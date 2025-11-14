@@ -18,40 +18,36 @@ const STATIC_ASSETS = [
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
   // Fonts
-  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'
+  'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
 ];
 
 // API endpoints to cache with network-first strategy
-const API_ENDPOINTS = [
-  '/api/projects',
-  '/api/auth/status',
-  '/api/settings'
-];
+const API_ENDPOINTS = ['/api/projects', '/api/auth/status', '/api/settings'];
 
 // Runtime cache patterns
 const RUNTIME_PATTERNS = [
   /\.(png|jpg|jpeg|gif|webp|svg|ico)$/i, // Images
-  /\.(woff|woff2|ttf|eot)$/i,           // Fonts
-  /\.(css|js)$/i                        // Stylesheets and scripts
+  /\.(woff|woff2|ttf|eot)$/i, // Fonts
+  /\.(css|js)$/i, // Stylesheets and scripts
 ];
 
 // Install event - cache static assets
-self.addEventListener('install', (event) => {
+self.addEventListener('install', event => {
   console.log(`[SW] Installing version ${CACHE_VERSION}`);
 
   event.waitUntil(
     Promise.all([
       // Cache static assets
-      caches.open(STATIC_CACHE).then((cache) => {
+      caches.open(STATIC_CACHE).then(cache => {
         console.log('[SW] Caching static assets');
         return cache.addAll(STATIC_ASSETS);
       }),
 
       // Pre-warm API cache
-      caches.open(API_CACHE).then((cache) => {
+      caches.open(API_CACHE).then(cache => {
         console.log('[SW] Initializing API cache');
         return cache.addAll(API_ENDPOINTS.map(url => new Request(url, { method: 'GET' })));
-      })
+      }),
     ])
   );
 
@@ -60,13 +56,13 @@ self.addEventListener('install', (event) => {
 });
 
 // Activate event - clean up old caches
-self.addEventListener('activate', (event) => {
+self.addEventListener('activate', event => {
   console.log(`[SW] Activating version ${CACHE_VERSION}`);
 
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then(cacheNames => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
+        cacheNames.map(cacheName => {
           if (
             cacheName !== STATIC_CACHE &&
             cacheName !== API_CACHE &&
@@ -117,8 +113,8 @@ const networkFirst = async (request, cacheName = API_CACHE) => {
       statusText: 'Service Unavailable',
       headers: {
         'Content-Type': 'text/plain',
-        'Cache-Control': 'no-cache'
-      }
+        'Cache-Control': 'no-cache',
+      },
     });
   }
 
@@ -151,14 +147,14 @@ const cacheFirst = async (request, cacheName = RUNTIME_CACHE) => {
   if (request.method === 'GET' && RUNTIME_PATTERNS.some(pattern => pattern.test(request.url))) {
     return new Response('Asset not available offline', {
       status: 404,
-      statusText: 'Not Found'
+      statusText: 'Not Found',
     });
   }
 
   throw new Error('Cache miss and network unavailable');
 };
 
-const staleWhileRevalidate = async (request) => {
+const staleWhileRevalidate = async request => {
   console.log(`[SW] Stale-while-revalidate: ${request.url}`);
 
   // Get cached version immediately
@@ -166,14 +162,16 @@ const staleWhileRevalidate = async (request) => {
   const cachedResponse = await cache.match(request);
 
   // Start network request in background
-  const networkPromise = fetch(request).then((networkResponse) => {
-    if (networkResponse.ok) {
-      cache.put(request, networkResponse.clone());
-    }
-    return networkResponse;
-  }).catch((error) => {
-    console.log(`[SW] Background fetch failed: ${error.message}`);
-  });
+  const networkPromise = fetch(request)
+    .then(networkResponse => {
+      if (networkResponse.ok) {
+        cache.put(request, networkResponse.clone());
+      }
+      return networkResponse;
+    })
+    .catch(error => {
+      console.log(`[SW] Background fetch failed: ${error.message}`);
+    });
 
   // Return cached version if available
   if (cachedResponse) {
@@ -185,7 +183,7 @@ const staleWhileRevalidate = async (request) => {
 };
 
 // Determine cache strategy based on request
-const getCacheStrategy = (request) => {
+const getCacheStrategy = request => {
   const url = new URL(request.url);
 
   // API requests - Network First with cache fallback
@@ -199,7 +197,10 @@ const getCacheStrategy = (request) => {
   }
 
   // Static assets - Cache First
-  if (STATIC_ASSETS.includes(url.pathname) || RUNTIME_PATTERNS.some(pattern => pattern.test(url.pathname))) {
+  if (
+    STATIC_ASSETS.includes(url.pathname) ||
+    RUNTIME_PATTERNS.some(pattern => pattern.test(url.pathname))
+  ) {
     return { strategy: cacheFirst, cacheName: RUNTIME_CACHE };
   }
 
@@ -213,7 +214,7 @@ const getCacheStrategy = (request) => {
 };
 
 // Main fetch event handler
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', event => {
   const { strategy, cacheName } = getCacheStrategy(event.request);
 
   // Skip non-GET requests and WebSocket connections
@@ -225,7 +226,7 @@ self.addEventListener('fetch', (event) => {
 });
 
 // Background sync for offline actions
-self.addEventListener('sync', (event) => {
+self.addEventListener('sync', event => {
   console.log(`[SW] Background sync: ${event.tag}`);
 
   if (event.tag === 'background-sync') {
@@ -237,7 +238,7 @@ self.addEventListener('sync', (event) => {
 });
 
 // Push notification handling
-self.addEventListener('push', (event) => {
+self.addEventListener('push', event => {
   console.log('[SW] Push message received');
 
   const options = {
@@ -251,14 +252,14 @@ self.addEventListener('push', (event) => {
       {
         action: 'open',
         title: 'Open App',
-        icon: '/icons/action-open.png'
+        icon: '/icons/action-open.png',
       },
       {
         action: 'dismiss',
         title: 'Dismiss',
-        icon: '/icons/action-dismiss.png'
-      }
-    ]
+        icon: '/icons/action-dismiss.png',
+      },
+    ],
   };
 
   // Handle custom push data
@@ -273,13 +274,11 @@ self.addEventListener('push', (event) => {
     }
   }
 
-  event.waitUntil(
-    self.registration.showNotification(options.title || 'Claude Code UI', options)
-  );
+  event.waitUntil(self.registration.showNotification(options.title || 'Claude Code UI', options));
 });
 
 // Notification click handling
-self.addEventListener('notificationclick', (event) => {
+self.addEventListener('notificationclick', event => {
   console.log('[SW] Notification clicked:', event.action);
 
   event.notification.close();
@@ -287,7 +286,7 @@ self.addEventListener('notificationclick', (event) => {
   const urlToOpen = event.notification.data?.url || '/';
 
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
+    clients.matchAll({ type: 'window' }).then(clientList => {
       // Focus existing window if available
       for (const client of clientList) {
         if (client.url === urlToOpen && 'focus' in client) {
@@ -304,7 +303,7 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 // Message handling for communication with main app
-self.addEventListener('message', (event) => {
+self.addEventListener('message', event => {
   const { type, payload } = event.data;
 
   switch (type) {
@@ -317,19 +316,23 @@ self.addEventListener('message', (event) => {
       break;
 
     case 'CACHE_URLS':
-      cacheUrls(payload.urls).then(() => {
-        event.ports[0].postMessage({ success: true });
-      }).catch((error) => {
-        event.ports[0].postMessage({ success: false, error: error.message });
-      });
+      cacheUrls(payload.urls)
+        .then(() => {
+          event.ports[0].postMessage({ success: true });
+        })
+        .catch(error => {
+          event.ports[0].postMessage({ success: false, error: error.message });
+        });
       break;
 
     case 'CLEAR_CACHE':
-      clearCache().then(() => {
-        event.ports[0].postMessage({ success: true });
-      }).catch((error) => {
-        event.ports[0].postMessage({ success: false, error: error.message });
-      });
+      clearCache()
+        .then(() => {
+          event.ports[0].postMessage({ success: true });
+        })
+        .catch(error => {
+          event.ports[0].postMessage({ success: false, error: error.message });
+        });
       break;
 
     default:
@@ -381,13 +384,11 @@ const clearOfflineActions = async () => {
 };
 
 // Periodic sync for cache updates
-self.addEventListener('periodicsync', (event) => {
+self.addEventListener('periodicsync', event => {
   console.log('[SW] Periodic sync:', event.tag);
 
   if (event.tag === 'cache-update') {
-    event.waitUntil(
-      updateCriticalCache()
-    );
+    event.waitUntil(updateCriticalCache());
   }
 });
 
@@ -399,13 +400,15 @@ const updateCriticalCache = async () => {
     const staticCache = await caches.open(STATIC_CACHE);
     await Promise.all(
       STATIC_ASSETS.map(url =>
-        fetch(url).then(response => {
-          if (response.ok) {
-            return staticCache.put(url, response);
-          }
-        }).catch(error => {
-          console.log(`[SW] Failed to update ${url}: ${error.message}`);
-        })
+        fetch(url)
+          .then(response => {
+            if (response.ok) {
+              return staticCache.put(url, response);
+            }
+          })
+          .catch(error => {
+            console.log(`[SW] Failed to update ${url}: ${error.message}`);
+          })
       )
     );
 
@@ -413,13 +416,15 @@ const updateCriticalCache = async () => {
     const apiCache = await caches.open(API_CACHE);
     await Promise.all(
       API_ENDPOINTS.map(url =>
-        fetch(new Request(url, { method: 'GET' })).then(response => {
-          if (response.ok) {
-            return apiCache.put(url, response);
-          }
-        }).catch(error => {
-          console.log(`[SW] Failed to update API ${url}: ${error.message}`);
-        })
+        fetch(new Request(url, { method: 'GET' }))
+          .then(response => {
+            if (response.ok) {
+              return apiCache.put(url, response);
+            }
+          })
+          .catch(error => {
+            console.log(`[SW] Failed to update API ${url}: ${error.message}`);
+          })
       )
     );
 
@@ -430,11 +435,11 @@ const updateCriticalCache = async () => {
 };
 
 // Error handling
-self.addEventListener('error', (event) => {
+self.addEventListener('error', event => {
   console.error('[SW] Service Worker error:', event.error);
 });
 
-self.addEventListener('unhandledrejection', (event) => {
+self.addEventListener('unhandledrejection', event => {
   console.error('[SW] Unhandled promise rejection:', event.reason);
 });
 

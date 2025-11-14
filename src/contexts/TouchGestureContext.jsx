@@ -24,7 +24,7 @@ const TouchGestureContext = createContext({
   triggerHaptic: () => {},
 
   // Configuration
-  gestureConfig: {}
+  gestureConfig: {},
 });
 
 export const useTouchGestures = () => {
@@ -42,7 +42,7 @@ export const TouchGestureProvider = ({ children }) => {
     threshold: 50,
     velocityThreshold: 0.3,
     restraint: 100,
-    preventDefault: true
+    preventDefault: true,
   });
 
   // Navigation state
@@ -52,33 +52,31 @@ export const TouchGestureProvider = ({ children }) => {
   const [onSwipeDown, setOnSwipeDown] = useState(null);
 
   // Gesture state from useSwipeGestures hook
-  const {
-    isDragging,
-    isSwiping,
-    swipeDirection,
-    reset
-  } = useSwipeGestures(
+  const { isDragging, isSwiping, swipeDirection, reset } = useSwipeGestures(
     onSwipeLeft,
     onSwipeRight,
     onSwipeUp,
     onSwipeDown,
     {
       ...gestureConfig,
-      disabled: !gesturesEnabled
+      disabled: !gesturesEnabled,
     }
   );
 
   // Haptic feedback function
-  const triggerHaptic = useCallback((pattern = 50) => {
-    if ('vibrate' in navigator && gesturesEnabled) {
-      try {
-        navigator.vibrate(pattern);
-      } catch (error) {
-        // Silently ignore vibration errors
-        console.debug('Vibration not supported:', error);
+  const triggerHaptic = useCallback(
+    (pattern = 50) => {
+      if ('vibrate' in navigator && gesturesEnabled) {
+        try {
+          navigator.vibrate(pattern);
+        } catch (error) {
+          // Silently ignore vibration errors
+          console.debug('Vibration not supported:', error);
+        }
       }
-    }
-  }, [gesturesEnabled]);
+    },
+    [gesturesEnabled]
+  );
 
   // Enable/disable gestures
   const enableGestures = useCallback(() => {
@@ -98,7 +96,7 @@ export const TouchGestureProvider = ({ children }) => {
   }, [reset]);
 
   // Set navigation callbacks
-  const setSwipeHandlers = useCallback((handlers) => {
+  const setSwipeHandlers = useCallback(handlers => {
     if (handlers.onSwipeLeft) setOnSwipeLeft(() => handlers.onSwipeLeft);
     if (handlers.onSwipeRight) setOnSwipeRight(() => handlers.onSwipeRight);
     if (handlers.onSwipeUp) setOnSwipeUp(() => handlers.onSwipeUp);
@@ -115,7 +113,7 @@ export const TouchGestureProvider = ({ children }) => {
         ...prev,
         threshold: isMobile ? 40 : isTablet ? 60 : 80,
         velocityThreshold: isMobile ? 0.2 : 0.3,
-        disabled: !isMobile && !isTablet
+        disabled: !isMobile && !isTablet,
       }));
     };
 
@@ -159,7 +157,7 @@ export const TouchGestureProvider = ({ children }) => {
   // Global gesture event listeners
   useEffect(() => {
     // Listen for custom gesture events
-    const handleCustomSwipe = (event) => {
+    const handleCustomSwipe = event => {
       const { direction, view } = event.detail;
       setCurrentView(view);
       triggerHaptic(40); // Medium vibration for view change
@@ -189,14 +187,10 @@ export const TouchGestureProvider = ({ children }) => {
 
     // Configuration
     gestureConfig,
-    setGestureConfig
+    setGestureConfig,
   };
 
-  return (
-    <TouchGestureContext.Provider value={value}>
-      {children}
-    </TouchGestureContext.Provider>
-  );
+  return <TouchGestureContext.Provider value={value}>{children}</TouchGestureContext.Provider>;
 };
 
 export default TouchGestureProvider;

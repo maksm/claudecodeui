@@ -48,7 +48,7 @@ const HAPTIC_PATTERNS = {
   LIGHT: [25],
   MEDIUM: [50],
   STRONG: [100],
-  HEAVY: [200]
+  HEAVY: [200],
 };
 
 // Device capability detection
@@ -59,7 +59,7 @@ const getDeviceCapabilities = () => {
       canVibrate: false,
       maxDuration: 0,
       maxIntensity: 0,
-      deviceType: 'unknown'
+      deviceType: 'unknown',
     };
   }
 
@@ -68,7 +68,7 @@ const getDeviceCapabilities = () => {
     canVibrate: 'vibrate' in navigator,
     maxDuration: 0,
     maxIntensity: 0,
-    deviceType: 'unknown'
+    deviceType: 'unknown',
   };
 
   if (capabilities.canVibrate) {
@@ -113,7 +113,7 @@ const HapticContext = createContext({
   triggerPattern: () => {},
   setEnabled: () => {},
   setIntensity: () => {},
-  getDeviceCapabilities: () => {}
+  getDeviceCapabilities: () => {},
 });
 
 export const useHaptic = () => {
@@ -139,56 +139,68 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
   }, []);
 
   // Apply intensity to vibration pattern
-  const applyIntensity = useCallback((pattern, intensityLevel) => {
-    if (!Array.isArray(pattern)) {
-      return pattern;
-    }
+  const applyIntensity = useCallback(
+    (pattern, intensityLevel) => {
+      if (!Array.isArray(pattern)) {
+        return pattern;
+      }
 
-    return pattern.map(duration => {
-      const adjustedDuration = Math.round(duration * intensityLevel);
-      return Math.max(0, Math.min(adjustedDuration, capabilities.maxDuration || 10000));
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [capabilities.maxDuration]);
+      return pattern.map(duration => {
+        const adjustedDuration = Math.round(duration * intensityLevel);
+        return Math.max(0, Math.min(adjustedDuration, capabilities.maxDuration || 10000));
+      });
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    },
+    [capabilities.maxDuration]
+  );
 
   // Trigger haptic feedback
-  const trigger = useCallback((pattern = HAPTIC_PATTERNS.TAP, customIntensity = null) => {
-    if (!enabled || !capabilities.canVibrate) {
-      return false;
-    }
+  const trigger = useCallback(
+    (pattern = HAPTIC_PATTERNS.TAP, customIntensity = null) => {
+      if (!enabled || !capabilities.canVibrate) {
+        return false;
+      }
 
-    try {
-      const finalIntensity = customIntensity !== null ? customIntensity : intensity;
-      const adjustedPattern = applyIntensity(pattern, finalIntensity);
+      try {
+        const finalIntensity = customIntensity !== null ? customIntensity : intensity;
+        const adjustedPattern = applyIntensity(pattern, finalIntensity);
 
-      // Add to history
-      setPatternHistory(prev => [...prev.slice(-9), {
-        pattern: adjustedPattern,
-        timestamp: Date.now(),
-        intensity: finalIntensity
-      }]);
+        // Add to history
+        setPatternHistory(prev => [
+          ...prev.slice(-9),
+          {
+            pattern: adjustedPattern,
+            timestamp: Date.now(),
+            intensity: finalIntensity,
+          },
+        ]);
 
-      // Trigger vibration
-      navigator.vibrate(adjustedPattern);
+        // Trigger vibration
+        navigator.vibrate(adjustedPattern);
 
-      console.debug('Haptic triggered:', { pattern: adjustedPattern, intensity: finalIntensity });
-      return true;
-    } catch (error) {
-      console.error('Haptic trigger failed:', error);
-      return false;
-    }
-  }, [enabled, capabilities.canVibrate, intensity, applyIntensity]);
+        console.debug('Haptic triggered:', { pattern: adjustedPattern, intensity: finalIntensity });
+        return true;
+      } catch (error) {
+        console.error('Haptic trigger failed:', error);
+        return false;
+      }
+    },
+    [enabled, capabilities.canVibrate, intensity, applyIntensity]
+  );
 
   // Trigger specific pattern by name
-  const triggerPattern = useCallback((patternName, customIntensity = null) => {
-    const pattern = HAPTIC_PATTERNS[patternName.toUpperCase()];
-    if (!pattern) {
-      console.warn(`Unknown haptic pattern: ${patternName}`);
-      return false;
-    }
+  const triggerPattern = useCallback(
+    (patternName, customIntensity = null) => {
+      const pattern = HAPTIC_PATTERNS[patternName.toUpperCase()];
+      if (!pattern) {
+        console.warn(`Unknown haptic pattern: ${patternName}`);
+        return false;
+      }
 
-    return trigger(pattern, customIntensity);
-  }, [trigger]);
+      return trigger(pattern, customIntensity);
+    },
+    [trigger]
+  );
 
   // Get device capabilities
   const getDeviceCapabilities = useCallback(() => {
@@ -201,14 +213,17 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
   }, []);
 
   // Check if specific pattern is available
-  const hasPattern = useCallback((patternName) => {
+  const hasPattern = useCallback(patternName => {
     return patternName.toUpperCase() in HAPTIC_PATTERNS;
   }, []);
 
   // Get recent patterns
-  const getRecentPatterns = useCallback((count = 5) => {
-    return patternHistory.slice(-count);
-  }, [patternHistory]);
+  const getRecentPatterns = useCallback(
+    (count = 5) => {
+      return patternHistory.slice(-count);
+    },
+    [patternHistory]
+  );
 
   // Advanced haptic functions
   const hapticUtils = {
@@ -241,7 +256,7 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
     strong: () => trigger(HAPTIC_PATTERNS.STRONG),
 
     // Custom pattern
-    custom: (pattern, intensityLevel = 1) => trigger(pattern, intensityLevel)
+    custom: (pattern, intensityLevel = 1) => trigger(pattern, intensityLevel),
   };
 
   const value = {
@@ -263,14 +278,10 @@ export const HapticProvider = ({ children, defaultEnabled = true, defaultIntensi
 
     // Utilities
     patterns: HAPTIC_PATTERNS,
-    utils: hapticUtils
+    utils: hapticUtils,
   };
 
-  return (
-    <HapticContext.Provider value={value}>
-      {children}
-    </HapticContext.Provider>
-  );
+  return <HapticContext.Provider value={value}>{children}</HapticContext.Provider>;
 };
 
 // Convenience hook for common haptic patterns

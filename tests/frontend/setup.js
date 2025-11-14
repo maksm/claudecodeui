@@ -37,21 +37,21 @@ global.WebSocket = jest.fn(() => ({
   CONNECTING: 0,
   OPEN: 1,
   CLOSING: 2,
-  CLOSED: 3
+  CLOSED: 3,
 }));
 
 // Mock ResizeObserver
 global.ResizeObserver = jest.fn(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
-  disconnect: jest.fn()
+  disconnect: jest.fn(),
 }));
 
 // Mock IntersectionObserver
 global.IntersectionObserver = jest.fn(() => ({
   observe: jest.fn(),
   unobserve: jest.fn(),
-  disconnect: jest.fn()
+  disconnect: jest.fn(),
 }));
 
 // Mock matchMedia with proper event listener support
@@ -71,7 +71,7 @@ Object.defineProperty(window, 'matchMedia', {
 
     // Mock the media query list object to be more realistic
     Object.defineProperty(mediaQuery, 'matches', {
-      get: jest.fn(() => query === '(prefers-color-scheme: dark)' ? false : false)
+      get: jest.fn(() => (query === '(prefers-color-scheme: dark)' ? false : false)),
     });
 
     return mediaQuery;
@@ -161,17 +161,17 @@ if (!window.location || window.location.href === 'about:blank') {
       hash: '',
       assign: jest.fn(),
       replace: jest.fn(),
-      reload: jest.fn()
+      reload: jest.fn(),
     },
     writable: true,
-    configurable: true
+    configurable: true,
   });
 }
 
 // Setup MSW server before all tests
 beforeAll(() => {
   server.listen({
-    onUnhandledRequest: 'warn'
+    onUnhandledRequest: 'warn',
   });
 });
 

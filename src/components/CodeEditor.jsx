@@ -14,7 +14,15 @@ import { X, Save, Download, Maximize2, Minimize2, Eye } from 'lucide-react';
 import { api } from '../utils/api';
 import MarkdownPreview from './MarkdownPreview';
 
-function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded = false, onToggleExpand = null, initialPreviewMode = false }) {
+function CodeEditor({
+  file,
+  onClose,
+  projectPath,
+  isSidebar = false,
+  isExpanded = false,
+  onToggleExpand = null,
+  initialPreviewMode = false,
+}) {
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -37,7 +45,9 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
   const [fontSize, setFontSize] = useState(() => {
     return localStorage.getItem('codeEditorFontSize') || '14';
   });
-  const [isPreviewMode, setIsPreviewMode] = useState(initialPreviewMode && isMarkdownFile(file?.name));
+  const [isPreviewMode, setIsPreviewMode] = useState(
+    initialPreviewMode && isMarkdownFile(file?.name)
+  );
   const editorRef = useRef(null);
 
   // Create minimap extension with chunk-based gutters
@@ -47,7 +57,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
     const gutters = {};
 
     return [
-      showMinimap.compute(['doc'], (state) => {
+      showMinimap.compute(['doc'], state => {
         // Get actual chunks from merge view
         const chunksData = getChunks(state);
         const chunks = chunksData?.chunks || [];
@@ -70,9 +80,9 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
           create: () => ({ dom: document.createElement('div') }),
           displayText: 'blocks',
           showOverlay: 'always',
-          gutters: [gutters]
+          gutters: [gutters],
         };
-      })
+      }),
     ];
   }, [file.diffInfo, showDiff, minimapEnabled, isDarkMode]);
 
@@ -81,33 +91,35 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
     if (!file.diffInfo || !showDiff) return [];
 
     return [
-      ViewPlugin.fromClass(class {
-        constructor(view) {
-          // Delay to ensure merge view is fully initialized
-          setTimeout(() => {
-            const chunksData = getChunks(view.state);
-            const chunks = chunksData?.chunks || [];
+      ViewPlugin.fromClass(
+        class {
+          constructor(view) {
+            // Delay to ensure merge view is fully initialized
+            setTimeout(() => {
+              const chunksData = getChunks(view.state);
+              const chunks = chunksData?.chunks || [];
 
-            if (chunks.length > 0) {
-              const firstChunk = chunks[0];
+              if (chunks.length > 0) {
+                const firstChunk = chunks[0];
 
-              // Scroll to the first chunk
-              view.dispatch({
-                effects: EditorView.scrollIntoView(firstChunk.fromB, { y: 'center' })
-              });
-            }
-          }, 100);
+                // Scroll to the first chunk
+                view.dispatch({
+                  effects: EditorView.scrollIntoView(firstChunk.fromB, { y: 'center' }),
+                });
+              }
+            }, 100);
+          }
+
+          update() {}
+          destroy() {}
         }
-
-        update() {}
-        destroy() {}
-      })
+      ),
     ];
   }, [file.diffInfo, showDiff]);
 
   // Create editor toolbar panel - always visible
   const editorToolbarPanel = useMemo(() => {
-    const createPanel = (view) => {
+    const createPanel = view => {
       const dom = document.createElement('div');
       dom.className = 'cm-editor-toolbar-panel';
 
@@ -121,7 +133,8 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
         const chunkCount = chunks.length;
 
         // Build the toolbar HTML
-        let toolbarHTML = '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">';
+        let toolbarHTML =
+          '<div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">';
 
         // Left side - diff navigation (if applicable)
         toolbarHTML += '<div style="display: flex; align-items: center; gap: 8px;">';
@@ -150,9 +163,10 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
           toolbarHTML += `
             <button class="cm-toolbar-btn cm-toggle-diff-btn" title="${showDiff ? 'Hide diff highlighting' : 'Show diff highlighting'}">
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                ${showDiff ?
-                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />' :
-                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />'
+                ${
+                  showDiff
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />'
                 }
               </svg>
             </button>
@@ -173,9 +187,10 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
           toolbarHTML += `
             <button class="cm-toolbar-btn cm-expand-btn" title="${isExpanded ? 'Collapse editor' : 'Expand editor to full width'}">
               <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                ${isExpanded ?
-                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />' :
-                  '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />'
+                ${
+                  isExpanded
+                    ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" />'
+                    : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />'
                 }
               </svg>
             </button>
@@ -199,7 +214,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
             const chunk = chunks[currentIndex];
             if (chunk) {
               view.dispatch({
-                effects: EditorView.scrollIntoView(chunk.fromB, { y: 'center' })
+                effects: EditorView.scrollIntoView(chunk.fromB, { y: 'center' }),
               });
             }
             updatePanel();
@@ -212,7 +227,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
             const chunk = chunks[currentIndex];
             if (chunk) {
               view.dispatch({
-                effects: EditorView.scrollIntoView(chunk.fromB, { y: 'center' })
+                effects: EditorView.scrollIntoView(chunk.fromB, { y: 'center' }),
               });
             }
             updatePanel();
@@ -249,7 +264,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
       return {
         top: true,
         dom,
-        update: updatePanel
+        update: updatePanel,
       };
     };
 
@@ -257,13 +272,13 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
   }, [file.diffInfo, showDiff, isSidebar, isExpanded, onToggleExpand]);
 
   // Check if file is markdown
-  const isMarkdownFile = (filename) => {
+  const isMarkdownFile = filename => {
     const ext = filename.split('.').pop()?.toLowerCase();
     return ext === 'md' || ext === 'markdown';
   };
 
   // Get language extension based on file extension
-  const getLanguageExtension = (filename) => {
+  const getLanguageExtension = filename => {
     const ext = filename.split('.').pop()?.toLowerCase();
     switch (ext) {
       case 'js':
@@ -298,7 +313,11 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
 
         // If we have diffInfo with both old and new content, we can show the diff directly
         // This handles both GitPanel (full content) and ChatInterface (full content from API)
-        if (file.diffInfo && file.diffInfo.new_string !== undefined && file.diffInfo.old_string !== undefined) {
+        if (
+          file.diffInfo &&
+          file.diffInfo.new_string !== undefined &&
+          file.diffInfo.old_string !== undefined
+        ) {
           // Use the new_string as the content to display
           // The unifiedMergeView will compare it against old_string
           setContent(file.diffInfo.new_string);
@@ -317,7 +336,9 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
         setContent(data.content);
       } catch (error) {
         console.error('Error loading file:', error);
-        setContent(`// Error loading file: ${error.message}\n// File: ${file.name}\n// Path: ${file.path}`);
+        setContent(
+          `// Error loading file: ${error.message}\n// File: ${file.name}\n// Path: ${file.path}`
+        );
       } finally {
         setLoading(false);
       }
@@ -332,7 +353,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
       console.log('Saving file:', {
         projectName: file.projectName,
         path: file.path,
-        contentLength: content?.length
+        contentLength: content?.length,
       });
 
       const response = await api.saveFile(file.projectName, file.path, content);
@@ -340,7 +361,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
       console.log('Save response:', {
         status: response.status,
         ok: response.ok,
-        contentType: response.headers.get('content-type')
+        contentType: response.headers.get('content-type'),
       });
 
       if (!response.ok) {
@@ -360,7 +381,6 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
 
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2000);
-
     } catch (error) {
       console.error('Error saving file:', error);
       window.alert(`Error saving file: ${error.message}`);
@@ -438,7 +458,7 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
 
   // Handle keyboard shortcuts
   useEffect(() => {
-    const handleKeyDown = (e) => {
+    const handleKeyDown = e => {
       if (e.ctrlKey || e.metaKey) {
         if (e.key === 's') {
           e.preventDefault();
@@ -564,172 +584,197 @@ function CodeEditor({ file, onClose, projectPath, isSidebar = false, isExpanded 
           }
         `}
       </style>
-      <div className={isSidebar ?
-        'w-full h-full flex flex-col' :
-        `fixed inset-0 z-40 ${
-          // Mobile: native fullscreen, Desktop: modal with backdrop
-          'md:bg-black/50 md:flex md:items-center md:justify-center md:p-4'
-        } ${isFullscreen ? 'md:p-0' : ''}`}>
-        <div className={isSidebar ?
-          'bg-background flex flex-col w-full h-full' :
-          `bg-background shadow-2xl flex flex-col ${
-          // Mobile: always fullscreen, Desktop: modal sizing
-          'w-full h-full md:rounded-lg md:shadow-2xl' +
-          (isFullscreen ? ' md:w-full md:h-full md:rounded-none' : ' md:w-full md:max-w-6xl md:h-[80vh] md:max-h-[80vh]')
-        }`}>
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0 min-w-0">
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <h3 className="font-medium text-gray-900 dark:text-white truncate">{file.name}</h3>
-                {file.diffInfo && (
-                  <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-2 py-1 rounded whitespace-nowrap">
-                    Showing changes
-                  </span>
-                )}
+      <div
+        className={
+          isSidebar
+            ? 'w-full h-full flex flex-col'
+            : `fixed inset-0 z-40 ${
+                // Mobile: native fullscreen, Desktop: modal with backdrop
+                'md:bg-black/50 md:flex md:items-center md:justify-center md:p-4'
+              } ${isFullscreen ? 'md:p-0' : ''}`
+        }
+      >
+        <div
+          className={
+            isSidebar
+              ? 'bg-background flex flex-col w-full h-full'
+              : `bg-background shadow-2xl flex flex-col ${
+                  // Mobile: always fullscreen, Desktop: modal sizing
+                  'w-full h-full md:rounded-lg md:shadow-2xl' +
+                  (isFullscreen
+                    ? ' md:w-full md:h-full md:rounded-none'
+                    : ' md:w-full md:max-w-6xl md:h-[80vh] md:max-h-[80vh]')
+                }`
+          }
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-border flex-shrink-0 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                    {file.name}
+                  </h3>
+                  {file.diffInfo && (
+                    <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300 px-2 py-1 rounded whitespace-nowrap">
+                      Showing changes
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{file.path}</p>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{file.path}</p>
+            </div>
+
+            <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+              {isMarkdownFile(file.name) && (
+                <button
+                  onClick={() => setIsPreviewMode(!isPreviewMode)}
+                  className={`p-2 md:p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center transition-colors ${
+                    isPreviewMode
+                      ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  }`}
+                  title={isPreviewMode ? 'Switch to edit mode' : 'Preview markdown'}
+                >
+                  <Eye className="w-5 h-5 md:w-4 md:h-4" />
+                </button>
+              )}
+
+              <button
+                onClick={handleDownload}
+                className="p-2 md:p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center"
+                title="Download file"
+              >
+                <Download className="w-5 h-5 md:w-4 md:h-4" />
+              </button>
+
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className={`px-3 py-2 text-white rounded-md disabled:opacity-50 flex items-center gap-2 transition-colors min-h-[44px] md:min-h-0 ${
+                  saveSuccess ? 'bg-green-600 hover:bg-green-700' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {saveSuccess ? (
+                  <>
+                    <svg
+                      className="w-5 h-5 md:w-4 md:h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span className="hidden sm:inline">Saved!</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5 md:w-4 md:h-4" />
+                    <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save'}</span>
+                  </>
+                )}
+              </button>
+
+              {!isSidebar && (
+                <button
+                  onClick={toggleFullscreen}
+                  className="hidden md:flex p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 items-center justify-center"
+                  title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+                >
+                  {isFullscreen ? (
+                    <Minimize2 className="w-4 h-4" />
+                  ) : (
+                    <Maximize2 className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+
+              <button
+                onClick={onClose}
+                className="p-2 md:p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center"
+                title="Close"
+              >
+                <X className="w-6 h-6 md:w-4 md:h-4" />
+              </button>
             </div>
           </div>
 
-          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
-            {isMarkdownFile(file.name) && (
-              <button
-                onClick={() => setIsPreviewMode(!isPreviewMode)}
-                className={`p-2 md:p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center transition-colors ${
-                  isPreviewMode
-                    ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900'
-                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-                }`}
-                title={isPreviewMode ? 'Switch to edit mode' : 'Preview markdown'}
-              >
-                <Eye className="w-5 h-5 md:w-4 md:h-4" />
-              </button>
+          {/* Editor/Preview */}
+          <div className="flex-1 overflow-hidden">
+            {isMarkdownFile(file.name) && isPreviewMode ? (
+              <MarkdownPreview
+                content={content}
+                filename={file.name}
+                isDarkMode={isDarkMode}
+                onTogglePreview={() => setIsPreviewMode(false)}
+              />
+            ) : (
+              <CodeMirror
+                ref={editorRef}
+                value={content}
+                onChange={setContent}
+                extensions={[
+                  ...getLanguageExtension(file.name),
+                  // Always show the toolbar
+                  ...editorToolbarPanel,
+                  // Only show diff-related extensions when diff is enabled
+                  ...(file.diffInfo && showDiff && file.diffInfo.old_string !== undefined
+                    ? [
+                        unifiedMergeView({
+                          original: file.diffInfo.old_string,
+                          mergeControls: false,
+                          highlightChanges: true,
+                          syntaxHighlightDeletions: false,
+                          gutter: true,
+                          // NOTE: NO collapseUnchanged - this shows the full file!
+                        }),
+                        ...minimapExtension,
+                        ...scrollToFirstChunkExtension,
+                      ]
+                    : []),
+                  ...(wordWrap ? [EditorView.lineWrapping] : []),
+                ]}
+                theme={isDarkMode ? oneDark : undefined}
+                height="100%"
+                style={{
+                  fontSize: `${fontSize}px`,
+                  height: '100%',
+                }}
+                basicSetup={{
+                  lineNumbers: showLineNumbers,
+                  foldGutter: true,
+                  dropCursor: false,
+                  allowMultipleSelections: false,
+                  indentOnInput: true,
+                  bracketMatching: true,
+                  closeBrackets: true,
+                  autocompletion: true,
+                  highlightSelectionMatches: true,
+                  searchKeymap: true,
+                }}
+              />
             )}
-
-            <button
-              onClick={handleDownload}
-              className="p-2 md:p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center"
-              title="Download file"
-            >
-              <Download className="w-5 h-5 md:w-4 md:h-4" />
-            </button>
-
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className={`px-3 py-2 text-white rounded-md disabled:opacity-50 flex items-center gap-2 transition-colors min-h-[44px] md:min-h-0 ${
-                saveSuccess
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-blue-600 hover:bg-blue-700'
-              }`}
-            >
-              {saveSuccess ? (
-                <>
-                  <svg className="w-5 h-5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="hidden sm:inline">Saved!</span>
-                </>
-              ) : (
-                <>
-                  <Save className="w-5 h-5 md:w-4 md:h-4" />
-                  <span className="hidden sm:inline">{saving ? 'Saving...' : 'Save'}</span>
-                </>
-              )}
-            </button>
-
-            {!isSidebar && (
-              <button
-                onClick={toggleFullscreen}
-                className="hidden md:flex p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 items-center justify-center"
-                title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-              >
-                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-              </button>
-            )}
-
-            <button
-              onClick={onClose}
-              className="p-2 md:p-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 min-w-[44px] min-h-[44px] md:min-w-0 md:min-h-0 flex items-center justify-center"
-              title="Close"
-            >
-              <X className="w-6 h-6 md:w-4 md:h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Editor/Preview */}
-        <div className="flex-1 overflow-hidden">
-          {isMarkdownFile(file.name) && isPreviewMode ? (
-            <MarkdownPreview
-              content={content}
-              filename={file.name}
-              isDarkMode={isDarkMode}
-              onTogglePreview={() => setIsPreviewMode(false)}
-            />
-          ) : (
-            <CodeMirror
-              ref={editorRef}
-              value={content}
-              onChange={setContent}
-              extensions={[
-                ...getLanguageExtension(file.name),
-                // Always show the toolbar
-                ...editorToolbarPanel,
-                // Only show diff-related extensions when diff is enabled
-                ...(file.diffInfo && showDiff && file.diffInfo.old_string !== undefined
-                  ? [
-                      unifiedMergeView({
-                        original: file.diffInfo.old_string,
-                        mergeControls: false,
-                        highlightChanges: true,
-                        syntaxHighlightDeletions: false,
-                        gutter: true
-                        // NOTE: NO collapseUnchanged - this shows the full file!
-                      }),
-                      ...minimapExtension,
-                      ...scrollToFirstChunkExtension
-                    ]
-                  : []),
-                ...(wordWrap ? [EditorView.lineWrapping] : [])
-              ]}
-              theme={isDarkMode ? oneDark : undefined}
-              height="100%"
-              style={{
-                fontSize: `${fontSize}px`,
-                height: '100%',
-              }}
-              basicSetup={{
-                lineNumbers: showLineNumbers,
-                foldGutter: true,
-                dropCursor: false,
-                allowMultipleSelections: false,
-                indentOnInput: true,
-                bracketMatching: true,
-                closeBrackets: true,
-                autocompletion: true,
-                highlightSelectionMatches: true,
-                searchKeymap: true,
-              }}
-            />
-          )}
-        </div>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between p-3 border-t border-border bg-muted flex-shrink-0">
-          <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
-            <span>Lines: {content.split('\n').length}</span>
-            <span>Characters: {content.length}</span>
           </div>
 
-          <div className="text-sm text-gray-500 dark:text-gray-400">
-            Press Ctrl+S to save • Esc to close{isMarkdownFile(file.name) && ' • Ctrl+P to toggle preview'}
+          {/* Footer */}
+          <div className="flex items-center justify-between p-3 border-t border-border bg-muted flex-shrink-0">
+            <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
+              <span>Lines: {content.split('\n').length}</span>
+              <span>Characters: {content.length}</span>
+            </div>
+
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              Press Ctrl+S to save • Esc to close
+              {isMarkdownFile(file.name) && ' • Ctrl+P to toggle preview'}
+            </div>
           </div>
         </div>
       </div>
-    </div>
     </>
   );
 }

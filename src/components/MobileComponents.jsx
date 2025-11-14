@@ -17,7 +17,7 @@ export const MobileButton = ({
   const { getTouchTargetSize, triggerHaptic, deviceInfo } = useResponsiveDesign();
   const [isPressed, setIsPressed] = useState(false);
 
-  const handleClick = (event) => {
+  const handleClick = event => {
     if (haptic && deviceInfo.isTouch) {
       triggerHaptic(25);
     }
@@ -36,14 +36,14 @@ export const MobileButton = ({
   const sizeClasses = {
     small: 'mobile-btn-sm',
     medium: 'mobile-btn-md',
-    large: 'mobile-btn-lg'
+    large: 'mobile-btn-lg',
   };
 
   const variantClasses = {
     primary: 'mobile-btn-primary',
     secondary: 'mobile-btn-secondary',
     ghost: 'mobile-btn-ghost',
-    danger: 'mobile-btn-danger'
+    danger: 'mobile-btn-danger',
   };
 
   return (
@@ -51,7 +51,7 @@ export const MobileButton = ({
       className={`${baseClasses} ${sizeClasses[size]} ${variantClasses[variant]} ${fullWidth ? 'mobile-btn-full' : ''} ${isPressed ? 'mobile-btn-pressed' : ''} ${className}`}
       style={{
         minHeight: `${getTouchTargetSize()}px`,
-        width: fullWidth ? '100%' : 'auto'
+        width: fullWidth ? '100%' : 'auto',
       }}
       onClick={handleClick}
       onTouchStart={handlePressStart}
@@ -84,7 +84,7 @@ export const MobileInput = ({
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef(null);
 
-  const handleFocus = (event) => {
+  const handleFocus = event => {
     setIsFocused(true);
     onFocus?.(event);
 
@@ -96,18 +96,14 @@ export const MobileInput = ({
     }
   };
 
-  const handleBlur = (event) => {
+  const handleBlur = event => {
     setIsFocused(false);
     onBlur?.(event);
   };
 
   return (
     <div className={`mobile-input-group ${className}`}>
-      {label && (
-        <label className="mobile-input-label">
-          {label}
-        </label>
-      )}
+      {label && <label className="mobile-input-label">{label}</label>}
       <input
         ref={inputRef}
         type={type}
@@ -119,7 +115,7 @@ export const MobileInput = ({
         className={`mobile-input ${error ? 'mobile-input-error' : ''} ${isFocused ? 'mobile-input-focused' : ''}`}
         style={{
           minHeight: `${getTouchTargetSize()}px`,
-          fontSize: '16px' // Prevents zoom on iOS
+          fontSize: '16px', // Prevents zoom on iOS
         }}
         {...props}
       />
@@ -148,12 +144,12 @@ export const MobileList = ({
   const startY = useRef(0);
   const listRef = useRef(null);
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = e => {
     if (!pullToRefresh || listRef.current.scrollTop !== 0) return;
     startY.current = e.touches[0].clientY;
   };
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = e => {
     if (!pullToRefresh || listRef.current.scrollTop !== 0) return;
 
     const currentY = e.touches[0].clientY;
@@ -184,14 +180,10 @@ export const MobileList = ({
           className="mobile-pull-to-refresh"
           style={{
             height: `${pullDistance}px`,
-            opacity: pullDistance / 100
+            opacity: pullDistance / 100,
           }}
         >
-          {isRefreshing ? (
-            <div className="mobile-spinner" />
-          ) : (
-            <span>↓ Pull to refresh</span>
-          )}
+          {isRefreshing ? <div className="mobile-spinner" /> : <span>↓ Pull to refresh</span>}
         </div>
       )}
 
@@ -204,11 +196,7 @@ export const MobileList = ({
         {...props}
       >
         {items.map((item, index) => (
-          <div
-            key={index}
-            className="mobile-list-item"
-            onClick={() => onItemClick?.(item, index)}
-          >
+          <div key={index} className="mobile-list-item" onClick={() => onItemClick?.(item, index)}>
             {renderItem(item, index)}
           </div>
         ))}
@@ -260,7 +248,7 @@ export const MobileModal = ({
     small: 'mobile-modal-sm',
     medium: 'mobile-modal-md',
     large: 'mobile-modal-lg',
-    full: 'mobile-modal-full'
+    full: 'mobile-modal-full',
   };
 
   return (
@@ -277,7 +265,7 @@ export const MobileModal = ({
               className="mobile-modal-close"
               style={{
                 minHeight: `${getTouchTargetSize()}px`,
-                width: `${getTouchTargetSize()}px`
+                width: `${getTouchTargetSize()}px`,
               }}
               aria-label="Close modal"
             >
@@ -286,9 +274,7 @@ export const MobileModal = ({
           </div>
         )}
 
-        <div className="mobile-modal-content">
-          {children}
-        </div>
+        <div className="mobile-modal-content">{children}</div>
       </div>
     </div>
   );
@@ -312,20 +298,20 @@ export const MobileBottomSheet = ({
   const startHeight = useRef(0);
   const sheetRef = useRef(null);
 
-  const snapToHeight = (height) => {
+  const snapToHeight = height => {
     if (sheetRef.current) {
       sheetRef.current.style.height = `${height}%`;
     }
     setCurrentSnap(height);
   };
 
-  const handleDragStart = (e) => {
+  const handleDragStart = e => {
     setIsDragging(true);
     startY.current = e.touches[0].clientY;
     startHeight.current = currentSnap;
   };
 
-  const handleDragMove = (e) => {
+  const handleDragMove = e => {
     if (!isDragging) return;
 
     const currentY = e.touches[0].clientY;
@@ -387,9 +373,7 @@ export const MobileBottomSheet = ({
           </div>
         )}
 
-        <div className="mobile-bottom-sheet-content">
-          {children}
-        </div>
+        <div className="mobile-bottom-sheet-content">{children}</div>
       </div>
     </div>
   );
@@ -400,5 +384,5 @@ export default {
   MobileInput,
   MobileList,
   MobileModal,
-  MobileBottomSheet
+  MobileBottomSheet,
 };

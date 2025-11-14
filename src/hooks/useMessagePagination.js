@@ -11,7 +11,7 @@ export const useMessagePagination = (sessionId, options = {}) => {
     maxCacheSize = 5000,
     enableCache = true,
     autoLoad = true,
-    preloadPages = 2
+    preloadPages = 2,
   } = options;
 
   // Initialize service instance
@@ -19,7 +19,7 @@ export const useMessagePagination = (sessionId, options = {}) => {
     return new MessagePaginationService({
       pageSize,
       maxCacheSize,
-      enableCache
+      enableCache,
     });
   }, [pageSize, maxCacheSize, enableCache]);
 
@@ -104,7 +104,7 @@ export const useMessagePagination = (sessionId, options = {}) => {
   }, [loading]);
 
   // Add real-time message
-  const addRealTimeMessage = useCallback((message) => {
+  const addRealTimeMessage = useCallback(message => {
     if (!sessionIdRef.current) return;
 
     serviceRef.current.addRealTimeMessage(sessionIdRef.current, message);
@@ -117,7 +117,7 @@ export const useMessagePagination = (sessionId, options = {}) => {
       }
       return prev;
     });
-  }, [])
+  }, []);
 
   // Search messages
   const searchMessages = useCallback((query, searchOptions = {}) => {
@@ -219,49 +219,52 @@ export const useMessagePagination = (sessionId, options = {}) => {
   }, [getStatistics]);
 
   // Memoized return value
-  const paginationState = useMemo(() => ({
-    // Data
-    messages,
-    loading,
-    error,
-    hasMore,
-    stats: sessionStats,
+  const paginationState = useMemo(
+    () => ({
+      // Data
+      messages,
+      loading,
+      error,
+      hasMore,
+      stats: sessionStats,
 
-    // Actions
-    loadOlder,
-    loadNewer,
-    addRealTimeMessage,
-    searchMessages,
-    getCachedMessages,
-    clearCache,
-    refresh,
-    preload,
-    getStatistics,
+      // Actions
+      loadOlder,
+      loadNewer,
+      addRealTimeMessage,
+      searchMessages,
+      getCachedMessages,
+      clearCache,
+      refresh,
+      preload,
+      getStatistics,
 
-    // Utilities
-    isLoading: loading,
-    hasError: !!error,
-    messageCount: messages.length,
-    isLoadingMore: loading && hasMore,
+      // Utilities
+      isLoading: loading,
+      hasError: !!error,
+      messageCount: messages.length,
+      isLoadingMore: loading && hasMore,
 
-    // Service reference for advanced usage
-    service: serviceRef.current
-  }), [
-    messages,
-    loading,
-    error,
-    hasMore,
-    sessionStats,
-    loadOlder,
-    loadNewer,
-    addRealTimeMessage,
-    searchMessages,
-    getCachedMessages,
-    clearCache,
-    refresh,
-    preload,
-    getStatistics
-  ]);
+      // Service reference for advanced usage
+      service: serviceRef.current,
+    }),
+    [
+      messages,
+      loading,
+      error,
+      hasMore,
+      sessionStats,
+      loadOlder,
+      loadNewer,
+      addRealTimeMessage,
+      searchMessages,
+      getCachedMessages,
+      clearCache,
+      refresh,
+      preload,
+      getStatistics,
+    ]
+  );
 
   return paginationState;
 };

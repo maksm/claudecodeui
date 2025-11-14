@@ -11,9 +11,9 @@ on:
         required: true
         type: string
       dry_run:
-        description: 'Dry run (don\'t actually publish)'
+        description: 'Dry run (dont actually publish)'
         required: false
-        default: 'false'
+        default: false
         type: boolean
 
 jobs:

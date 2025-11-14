@@ -6,7 +6,7 @@ import { WebSocketProvider, useWebSocketContext } from '../../../src/contexts/We
 
 // Mock the useWebSocket utility
 jest.mock('../../../src/utils/websocket.js', () => ({
-  useWebSocket: jest.fn()
+  useWebSocket: jest.fn(),
 }));
 
 // Test component to use the WebSocket context
@@ -53,7 +53,7 @@ describe('WebSocketContext', () => {
       ws: null,
       sendMessage: jest.fn(),
       messages: [],
-      isConnected: false
+      isConnected: false,
     });
 
     // Mock fetch for config
@@ -70,7 +70,7 @@ describe('WebSocketContext', () => {
         ws: { readyState: 1 },
         sendMessage: jest.fn(),
         messages: [{ type: 'test', data: 'hello' }],
-        isConnected: true
+        isConnected: true,
       };
       mockUseWebSocket.mockReturnValue(mockWebSocketValue);
 
@@ -78,7 +78,9 @@ describe('WebSocketContext', () => {
 
       expect(screen.getByTestId('connected')).toHaveTextContent('true');
       expect(screen.getByTestId('message-count')).toHaveTextContent('1');
-      expect(screen.getByTestId('last-message')).toHaveTextContent('{"type":"test","data":"hello"}');
+      expect(screen.getByTestId('last-message')).toHaveTextContent(
+        '{"type":"test","data":"hello"}'
+      );
       expect(screen.getByTestId('websocket-exists')).toHaveTextContent('exists');
     });
 
@@ -96,9 +98,9 @@ describe('WebSocketContext', () => {
         messages: [
           { type: 'message1', data: 'test1' },
           { type: 'message2', data: 'test2' },
-          { type: 'message3', data: 'test3' }
+          { type: 'message3', data: 'test3' },
         ],
-        isConnected: false
+        isConnected: false,
       });
 
       renderWithWebSocketProvider();
@@ -112,14 +114,16 @@ describe('WebSocketContext', () => {
         sendMessage: jest.fn(),
         messages: [
           { type: 'first', data: 'old' },
-          { type: 'latest', data: 'new' }
+          { type: 'latest', data: 'new' },
         ],
-        isConnected: false
+        isConnected: false,
       });
 
       renderWithWebSocketProvider();
 
-      expect(screen.getByTestId('last-message')).toHaveTextContent('{"type":"latest","data":"new"}');
+      expect(screen.getByTestId('last-message')).toHaveTextContent(
+        '{"type":"latest","data":"new"}'
+      );
     });
 
     it('shows none when no messages', () => {
@@ -127,7 +131,7 @@ describe('WebSocketContext', () => {
         ws: null,
         sendMessage: jest.fn(),
         messages: [],
-        isConnected: false
+        isConnected: false,
       });
 
       renderWithWebSocketProvider();
@@ -142,7 +146,7 @@ describe('WebSocketContext', () => {
         ws: { readyState: 1 },
         sendMessage: jest.fn(),
         messages: [],
-        isConnected: true
+        isConnected: true,
       });
 
       renderWithWebSocketProvider();
@@ -155,7 +159,7 @@ describe('WebSocketContext', () => {
         ws: null,
         sendMessage: jest.fn(),
         messages: [],
-        isConnected: false
+        isConnected: false,
       });
 
       renderWithWebSocketProvider();
@@ -171,7 +175,7 @@ describe('WebSocketContext', () => {
         ws: mockWebSocket,
         sendMessage: jest.fn(),
         messages: [],
-        isConnected: true
+        isConnected: true,
       });
 
       renderWithWebSocketProvider();
@@ -184,7 +188,7 @@ describe('WebSocketContext', () => {
         ws: null,
         sendMessage: jest.fn(),
         messages: [],
-        isConnected: false
+        isConnected: false,
       });
 
       renderWithWebSocketProvider();
@@ -202,7 +206,7 @@ describe('WebSocketContext', () => {
         ws: { readyState: 1 },
         sendMessage: mockSendMessage,
         messages: [],
-        isConnected: true
+        isConnected: true,
       });
 
       renderWithWebSocketProvider();
@@ -211,7 +215,7 @@ describe('WebSocketContext', () => {
 
       expect(mockSendMessage).toHaveBeenCalledWith({
         type: 'test',
-        data: 'hello'
+        data: 'hello',
       });
     });
 
@@ -221,7 +225,7 @@ describe('WebSocketContext', () => {
         ws: null,
         sendMessage: mockSendMessage,
         messages: [],
-        isConnected: false
+        isConnected: false,
       });
 
       renderWithWebSocketProvider();
@@ -238,7 +242,7 @@ describe('WebSocketContext', () => {
         ws: null,
         sendMessage: jest.fn(),
         messages: [],
-        isConnected: false
+        isConnected: false,
       });
 
       const { rerender } = renderWithWebSocketProvider();
@@ -250,7 +254,7 @@ describe('WebSocketContext', () => {
         ws: { readyState: 1 },
         sendMessage: jest.fn(),
         messages: [],
-        isConnected: true
+        isConnected: true,
       });
 
       rerender(
@@ -268,7 +272,7 @@ describe('WebSocketContext', () => {
         ws: { readyState: 1 },
         sendMessage: jest.fn(),
         messages: [{ type: 'old', data: 'message' }],
-        isConnected: true
+        isConnected: true,
       });
 
       const { rerender } = renderWithWebSocketProvider();
@@ -281,9 +285,9 @@ describe('WebSocketContext', () => {
         sendMessage: jest.fn(),
         messages: [
           { type: 'old', data: 'message' },
-          { type: 'new', data: 'message' }
+          { type: 'new', data: 'message' },
         ],
-        isConnected: true
+        isConnected: true,
       });
 
       rerender(
@@ -293,7 +297,9 @@ describe('WebSocketContext', () => {
       );
 
       expect(screen.getByTestId('message-count')).toHaveTextContent('2');
-      expect(screen.getByTestId('last-message')).toHaveTextContent('{"type":"new","data":"message"}');
+      expect(screen.getByTestId('last-message')).toHaveTextContent(
+        '{"type":"new","data":"message"}'
+      );
     });
   });
 
@@ -315,7 +321,7 @@ describe('WebSocketContext', () => {
         ws: { readyState: 1 },
         sendMessage: jest.fn(),
         messages: [],
-        isConnected: true
+        isConnected: true,
       };
       mockUseWebSocket.mockReturnValue(mockWebSocketValue);
 
@@ -324,9 +330,15 @@ describe('WebSocketContext', () => {
         return (
           <div data-testid="context-check">
             <span data-testid="has-ws">{context.ws ? 'has-ws' : 'no-ws'}</span>
-            <span data-testid="has-sendMessage">{typeof context.sendMessage === 'function' ? 'has-sendMessage' : 'no-sendMessage'}</span>
-            <span data-testid="has-messages">{Array.isArray(context.messages) ? 'has-messages' : 'no-messages'}</span>
-            <span data-testid="has-isConnected">{typeof context.isConnected === 'boolean' ? 'has-isConnected' : 'no-isConnected'}</span>
+            <span data-testid="has-sendMessage">
+              {typeof context.sendMessage === 'function' ? 'has-sendMessage' : 'no-sendMessage'}
+            </span>
+            <span data-testid="has-messages">
+              {Array.isArray(context.messages) ? 'has-messages' : 'no-messages'}
+            </span>
+            <span data-testid="has-isConnected">
+              {typeof context.isConnected === 'boolean' ? 'has-isConnected' : 'no-isConnected'}
+            </span>
           </div>
         );
       };
@@ -353,7 +365,7 @@ describe('WebSocketContext', () => {
         ws: customWebSocket,
         sendMessage: customSendMessage,
         messages: customMessages,
-        isConnected: customIsConnected
+        isConnected: customIsConnected,
       });
 
       const TestConsumer = () => {
@@ -383,7 +395,7 @@ describe('WebSocketContext', () => {
         ws: { readyState: 1 },
         sendMessage: jest.fn(),
         messages: [{ shared: 'message' }],
-        isConnected: true
+        isConnected: true,
       };
       mockUseWebSocket.mockReturnValue(sharedWebSocketValue);
 
@@ -426,8 +438,12 @@ describe('WebSocketContext', () => {
         const context = useWebSocketContext();
         return (
           <div data-testid="error-test">
-            <span data-testid="isConnected-default">{(context.isConnected ?? 'undefined').toString()}</span>
-            <span data-testid="messages-default">{Array.isArray(context.messages) ? 'array' : 'not-array'}</span>
+            <span data-testid="isConnected-default">
+              {(context.isConnected ?? 'undefined').toString()}
+            </span>
+            <span data-testid="messages-default">
+              {Array.isArray(context.messages) ? 'array' : 'not-array'}
+            </span>
           </div>
         );
       };

@@ -25,11 +25,11 @@ jest.mock('../../../src/components/TodoList', () => ({
         </div>
       ))}
     </div>
-  )
+  ),
 }));
 
 jest.mock('react-markdown', () => ({
-  default: ({ children }) => <div data-testid="markdown">{children}</div>
+  default: ({ children }) => <div data-testid="markdown">{children}</div>,
 }));
 
 jest.mock('remark-gfm', () => ({}));
@@ -44,19 +44,19 @@ jest.mock('fuse.js', () => ({
     search() {
       return [];
     }
-  }
+  },
 }));
 
 jest.mock('../../../src/components/ClaudeLogo.jsx', () => ({
-  default: ({ className }) => <div data-testid="claude-logo" className={className} />
+  default: ({ className }) => <div data-testid="claude-logo" className={className} />,
 }));
 
 jest.mock('../../../src/components/CursorLogo.jsx', () => ({
-  default: ({ className }) => <div data-testid="cursor-logo" className={className} />
+  default: ({ className }) => <div data-testid="cursor-logo" className={className} />,
 }));
 
 jest.mock('../../../src/components/NextTaskBanner.jsx', () => ({
-  default: ({ task }) => <div data-testid="next-task-banner">{task?.title}</div>
+  default: ({ task }) => <div data-testid="next-task-banner">{task?.title}</div>,
 }));
 
 jest.mock('../../../src/components/ClaudeStatus.jsx', () => ({
@@ -65,7 +65,7 @@ jest.mock('../../../src/components/ClaudeStatus.jsx', () => ({
       <span data-testid="status">{status}</span>
       <span data-testid="message">{message}</span>
     </div>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/TokenUsagePie.jsx', () => ({
@@ -74,7 +74,7 @@ jest.mock('../../../src/components/TokenUsagePie.jsx', () => ({
       <span data-testid="usage">{usage}</span>
       <span data-testid="limit">{limit}</span>
     </div>
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/MicButton.jsx', () => ({
@@ -84,7 +84,7 @@ jest.mock('../../../src/components/MicButton.jsx', () => ({
       onClick={() => onTranscript('Test transcript')}
       disabled={isDisabled}
     />
-  )
+  ),
 }));
 
 jest.mock('../../../src/components/CommandMenu', () => ({
@@ -93,7 +93,7 @@ jest.mock('../../../src/components/CommandMenu', () => ({
       <button onClick={() => onSelect('Test command')}>Select Command</button>
       <button onClick={onClose}>Close</button>
     </div>
-  )
+  ),
 }));
 
 describe('ChatInterface Component', () => {
@@ -105,12 +105,12 @@ describe('ChatInterface Component', () => {
     selectedProject: {
       id: 'test-project',
       name: 'Test Project',
-      path: '/path/to/project'
+      path: '/path/to/project',
     },
     selectedSession: null,
     onSessionStart: mockOnSessionStart,
     onSessionEnd: mockOnSessionEnd,
-    isActive: true
+    isActive: true,
   };
 
   beforeEach(() => {
@@ -125,8 +125,8 @@ describe('ChatInterface Component', () => {
       claudeResponsibility: null,
       sessionProtection: {
         isSessionActive: false,
-        activeSessionId: null
-      }
+        activeSessionId: null,
+      },
     });
 
     // Default tasks settings mock
@@ -135,7 +135,7 @@ describe('ChatInterface Component', () => {
       tasks: [],
       onTaskUpdate: jest.fn(),
       onDeleteTask: jest.fn(),
-      onAddTask: jest.fn()
+      onAddTask: jest.fn(),
     });
 
     // API mock
@@ -190,7 +190,7 @@ describe('ChatInterface Component', () => {
           type: 'claude-command',
           command: 'ask',
           input: 'Hello Claude',
-          tempSessionId: expect.any(String)
+          tempSessionId: expect.any(String),
         })
       );
     });
@@ -207,7 +207,7 @@ describe('ChatInterface Component', () => {
         expect.objectContaining({
           type: 'claude-command',
           command: 'ask',
-          input: 'Hello Claude'
+          input: 'Hello Claude',
         })
       );
     });
@@ -240,7 +240,7 @@ describe('ChatInterface Component', () => {
     it('disables input and send button while message is processing', async () => {
       useWebSocket.mockReturnValue({
         ...useWebSocket(),
-        claudeStatus: 'processing'
+        claudeStatus: 'processing',
       });
 
       render(<ChatInterface {...defaultProps} />);
@@ -255,61 +255,65 @@ describe('ChatInterface Component', () => {
 
   describe('Message History and Display', () => {
     it('displays messages from current session', () => {
-      render(<ChatInterface
-        {...defaultProps}
-        selectedSession={{
-          id: 'session-1',
-          messages: [
-            { role: 'user', content: 'Hello' },
-            { role: 'assistant', content: 'Hi there!' }
-          ]
-        }}
-      />);
+      render(
+        <ChatInterface
+          {...defaultProps}
+          selectedSession={{
+            id: 'session-1',
+            messages: [
+              { role: 'user', content: 'Hello' },
+              { role: 'assistant', content: 'Hi there!' },
+            ],
+          }}
+        />
+      );
 
       expect(screen.getByText('Hello')).toBeInTheDocument();
       expect(screen.getByText('Hi there!')).toBeInTheDocument();
     });
 
     it('formats code blocks correctly', () => {
-      render(<ChatInterface
-        {...defaultProps}
-        selectedSession={{
-          id: 'session-1',
-          messages: [
-            {
-              role: 'assistant',
-              content: 'Here is some code:\n```javascript\nconsole.log("Hello");\n```'
-            }
-          ]
-        }}
-      />);
+      render(
+        <ChatInterface
+          {...defaultProps}
+          selectedSession={{
+            id: 'session-1',
+            messages: [
+              {
+                role: 'assistant',
+                content: 'Here is some code:\n```javascript\nconsole.log("Hello");\n```',
+              },
+            ],
+          }}
+        />
+      );
 
       expect(screen.getByText('console.log("Hello");')).toBeInTheDocument();
     });
 
     it('handles streaming messages correctly', async () => {
-      const { rerender } = render(<ChatInterface
-        {...defaultProps}
-        selectedSession={{
-          id: 'session-1',
-          messages: [
-            { role: 'assistant', content: 'Hello' }
-          ]
-        }}
-      />);
+      const { rerender } = render(
+        <ChatInterface
+          {...defaultProps}
+          selectedSession={{
+            id: 'session-1',
+            messages: [{ role: 'assistant', content: 'Hello' }],
+          }}
+        />
+      );
 
       expect(screen.getByText('Hello')).toBeInTheDocument();
 
       // Simulate streaming update
-      rerender(<ChatInterface
-        {...defaultProps}
-        selectedSession={{
-          id: 'session-1',
-          messages: [
-            { role: 'assistant', content: 'Hello world!' }
-          ]
-        }}
-      />);
+      rerender(
+        <ChatInterface
+          {...defaultProps}
+          selectedSession={{
+            id: 'session-1',
+            messages: [{ role: 'assistant', content: 'Hello world!' }],
+          }}
+        />
+      );
 
       expect(screen.getByText('Hello world!')).toBeInTheDocument();
     });
@@ -372,7 +376,7 @@ describe('ChatInterface Component', () => {
 
       expect(mockSendMessage).toHaveBeenCalledWith(
         expect.objectContaining({
-          tempSessionId: expect.any(String)
+          tempSessionId: expect.any(String),
         })
       );
     });
@@ -380,18 +384,15 @@ describe('ChatInterface Component', () => {
     it('handles session creation response', async () => {
       const mockOnSessionStart = jest.fn();
 
-      render(<ChatInterface
-        {...defaultProps}
-        onSessionStart={mockOnSessionStart}
-      />);
+      render(<ChatInterface {...defaultProps} onSessionStart={mockOnSessionStart} />);
 
       // Simulate receiving session-created message
       const mockMessage = {
         data: JSON.stringify({
           type: 'session-created',
           tempId: 'temp-123',
-          sessionId: 'real-session-456'
-        })
+          sessionId: 'real-session-456',
+        }),
       };
 
       // This would typically come through WebSocket
@@ -405,17 +406,14 @@ describe('ChatInterface Component', () => {
     it('handles session completion', async () => {
       const mockOnSessionEnd = jest.fn();
 
-      render(<ChatInterface
-        {...defaultProps}
-        onSessionEnd={mockOnSessionEnd}
-      />);
+      render(<ChatInterface {...defaultProps} onSessionEnd={mockOnSessionEnd} />);
 
       // Simulate receiving claude-complete message
       const mockMessage = {
         data: JSON.stringify({
           type: 'claude-complete',
-          sessionId: 'session-123'
-        })
+          sessionId: 'session-123',
+        }),
       };
 
       act(() => {
@@ -430,12 +428,10 @@ describe('ChatInterface Component', () => {
     it('displays todo list when tasks are enabled', () => {
       useTasksSettings.mockReturnValue({
         tasksEnabled: true,
-        tasks: [
-          { id: 1, title: 'Test task', done: false }
-        ],
+        tasks: [{ id: 1, title: 'Test task', done: false }],
         onTaskUpdate: jest.fn(),
         onDeleteTask: jest.fn(),
-        onAddTask: jest.fn()
+        onAddTask: jest.fn(),
       });
 
       render(<ChatInterface {...defaultProps} />);
@@ -450,7 +446,7 @@ describe('ChatInterface Component', () => {
         tasks: [],
         onTaskUpdate: jest.fn(),
         onDeleteTask: jest.fn(),
-        onAddTask: jest.fn()
+        onAddTask: jest.fn(),
       });
 
       render(<ChatInterface {...defaultProps} />);
@@ -512,7 +508,7 @@ describe('ChatInterface Component', () => {
         isConnected: false,
         lastMessage: null,
         claudeStatus: 'error',
-        claudeResponsibility: 'Connection lost'
+        claudeResponsibility: 'Connection lost',
       });
 
       render(<ChatInterface {...defaultProps} />);
@@ -522,19 +518,21 @@ describe('ChatInterface Component', () => {
     });
 
     it('displays error messages from assistant', () => {
-      render(<ChatInterface
-        {...defaultProps}
-        selectedSession={{
-          id: 'session-1',
-          messages: [
-            {
-              role: 'assistant',
-              content: 'Error: Something went wrong',
-              isError: true
-            }
-          ]
-        }}
-      />);
+      render(
+        <ChatInterface
+          {...defaultProps}
+          selectedSession={{
+            id: 'session-1',
+            messages: [
+              {
+                role: 'assistant',
+                content: 'Error: Something went wrong',
+                isError: true,
+              },
+            ],
+          }}
+        />
+      );
 
       const errorMessage = screen.getByText(/Error: Something went wrong/i);
       expect(errorMessage).toHaveClass('error');

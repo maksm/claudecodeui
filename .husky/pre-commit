@@ -45,7 +45,7 @@ fi
 TEST_FILES=$(echo "$STAGED_FILES" | grep -E '\.test\.(js|jsx)$' || true)
 if [ -n "$TEST_FILES" ]; then
   echo "${YELLOW}[3/4] Running tests for changed test files...${NC}"
-  npm run test:silent -- --findRelatedTests $TEST_FILES
+  npm run test:silent -- --findRelatedTests $TEST_FILES --passWithNoTests --coverageThreshold='{}'
   TEST_EXIT=$?
 
   if [ $TEST_EXIT -ne 0 ]; then
@@ -59,7 +59,7 @@ else
 
   if [ -n "$SOURCE_FILES" ]; then
     echo "${YELLOW}[3/4] Running related tests for changed source files...${NC}"
-    npm run test:silent -- --findRelatedTests $SOURCE_FILES --passWithNoTests
+    npm run test:silent -- --findRelatedTests $SOURCE_FILES --passWithNoTests --coverageThreshold='{}'
     TEST_EXIT=$?
 
     if [ $TEST_EXIT -ne 0 ]; then

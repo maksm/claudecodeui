@@ -6,11 +6,11 @@ import DarkModeToggle from '../../../src/components/DarkModeToggle';
 // Mock the ThemeContext
 const mockThemeContext = {
   isDarkMode: false,
-  toggleDarkMode: jest.fn()
+  toggleDarkMode: jest.fn(),
 };
 
 jest.mock('../../../src/contexts/ThemeContext', () => ({
-  useTheme: () => mockThemeContext
+  useTheme: () => mockThemeContext,
 }));
 
 describe('DarkModeToggle Component', () => {

@@ -21,13 +21,12 @@ function useLocalStorage(key, initialValue) {
     }
   });
 
-  const setValue = (value) => {
+  const setValue = value => {
     if (typeof window === 'undefined') {
       return;
     }
     try {
-      const valueToStore =
-        value instanceof Function ? value(storedValue) : value;
+      const valueToStore = value instanceof Function ? value(storedValue) : value;
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
       setStoredValue(valueToStore);
     } catch (error) {

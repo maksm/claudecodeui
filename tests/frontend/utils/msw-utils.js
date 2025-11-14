@@ -67,25 +67,25 @@ export const mockAuth = {
     return mockApiEndpoint('post', '/api/auth/login', 200, {
       user,
       token: 'mock-jwt-token',
-      expiresIn: 3600
+      expiresIn: 3600,
     });
   },
 
   unauthorized: () => {
     return mockApiEndpoint('post', '/api/auth/login', 401, {
-      error: 'Invalid credentials'
+      error: 'Invalid credentials',
     });
   },
 
   serverError: () => {
     return mockApiEndpoint('post', '/api/auth/login', 500, {
-      error: 'Internal server error'
+      error: 'Internal server error',
     });
   },
 
   networkError: () => {
     return mockNetworkError('post', '/api/auth/login');
-  }
+  },
 };
 
 /**
@@ -102,9 +102,9 @@ export const mockProjects = {
 
   error: () => {
     return mockApiEndpoint('get', '/api/projects', 500, {
-      error: 'Failed to fetch projects'
+      error: 'Failed to fetch projects',
     });
-  }
+  },
 };
 
 /**
@@ -119,71 +119,79 @@ export const mockTasks = {
     return mockApiEndpoint('get', `/api/tasks?projectId=${projectId}`, 200, tasks);
   },
 
-  createSuccess: (task) => {
+  createSuccess: task => {
     return mockApiEndpoint('post', '/api/tasks', 201, task);
   },
 
-  updateSuccess: (task) => {
+  updateSuccess: task => {
     return mockApiEndpoint('put', `/api/tasks/${task.id}`, 200, task);
   },
 
-  deleteSuccess: (taskId) => {
+  deleteSuccess: taskId => {
     return mockApiEndpoint('delete', `/api/tasks/${taskId}`, 200, {
-      message: 'Task deleted successfully'
+      message: 'Task deleted successfully',
     });
   },
 
-  notFound: (taskId) => {
+  notFound: taskId => {
     return mockApiEndpoint('get', `/api/tasks/${taskId}`, 404, {
-      error: 'Task not found'
+      error: 'Task not found',
     });
-  }
+  },
 };
 
 /**
  * Mocks WebSocket messages
  */
 export const mockWebSocket = {
-  simulateConnection: (ws) => {
+  simulateConnection: ws => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'connection',
-        status: 'connected',
-        timestamp: new Date().toISOString()
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'connection',
+          status: 'connected',
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   },
 
   simulateClaudeResponse: (ws, message, response) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'claude-response',
-        id: Date.now(),
-        message: response || `Mock Claude response to: ${message}`,
-        timestamp: new Date().toISOString()
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'claude-response',
+          id: Date.now(),
+          message: response || `Mock Claude response to: ${message}`,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   },
 
   simulateError: (ws, error) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'error',
-        error: error || 'Mock WebSocket error',
-        timestamp: new Date().toISOString()
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'error',
+          error: error || 'Mock WebSocket error',
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
   },
 
   simulateProjectsUpdated: (ws, projects) => {
     if (ws && ws.readyState === WebSocket.OPEN) {
-      ws.send(JSON.stringify({
-        type: 'projects_updated',
-        projects,
-        timestamp: new Date().toISOString()
-      }));
+      ws.send(
+        JSON.stringify({
+          type: 'projects_updated',
+          projects,
+          timestamp: new Date().toISOString(),
+        })
+      );
     }
-  }
+  },
 };
 
 /**
@@ -195,7 +203,7 @@ export const mockTaskMaster = {
       isInstalled: true,
       version: '1.0.0',
       isReady: true,
-      taskmaster: { hasTaskmaster: true, version: '2.1.0' }
+      taskmaster: { hasTaskmaster: true, version: '2.1.0' },
     });
   },
 
@@ -203,23 +211,23 @@ export const mockTaskMaster = {
     return mockApiEndpoint('get', '/api/taskmaster/status', 200, {
       isInstalled: false,
       isReady: false,
-      taskmaster: { hasTaskmaster: false }
+      taskmaster: { hasTaskmaster: false },
     });
   },
 
   tasksSuccess: (tasks = []) => {
     return mockApiEndpoint('get', '/api/taskmaster/tasks/:projectPath', 200, {
       tasks,
-      total: tasks.length
+      total: tasks.length,
     });
   },
 
   generateSuccess: (numTasks = 5) => {
     return mockApiEndpoint('post', '/api/taskmaster/generate/:projectPath', 200, {
       message: 'Tasks generated successfully',
-      tasksGenerated: numTasks
+      tasksGenerated: numTasks,
     });
-  }
+  },
 };
 
 /**
@@ -234,7 +242,7 @@ export const mockGit = {
       clean: true,
       untracked: [],
       modified: [],
-      staged: []
+      staged: [],
     });
   },
 
@@ -246,13 +254,13 @@ export const mockGit = {
       clean: false,
       untracked: ['new-file.js'],
       modified: ['src/App.jsx', 'README.md'],
-      staged: ['package.json']
+      staged: ['package.json'],
     });
   },
 
   logSuccess: (commits = []) => {
     return mockApiEndpoint('get', '/api/git/log/:projectPath', 200, {
-      commits
+      commits,
     });
   },
 
@@ -262,9 +270,9 @@ export const mockGit = {
       message,
       author: 'Test User',
       files,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-  }
+  },
 };
 
 /**
@@ -277,7 +285,7 @@ export const createMockUser = (overrides = {}) => ({
   email: 'test@example.com',
   createdAt: '2024-01-01T00:00:00Z',
   lastLogin: '2024-01-05T12:00:00Z',
-  ...overrides
+  ...overrides,
 });
 
 /**
@@ -291,7 +299,7 @@ export const createMockProject = (overrides = {}) => ({
   description: 'A test project',
   createdAt: '2024-01-01T00:00:00Z',
   sessions: [],
-  ...overrides
+  ...overrides,
 });
 
 /**
@@ -307,7 +315,7 @@ export const createMockTask = (overrides = {}) => ({
   projectId: 1,
   createdAt: '2024-01-01T00:00:00Z',
   updatedAt: '2024-01-01T00:00:00Z',
-  ...overrides
+  ...overrides,
 });
 
 /**
@@ -347,5 +355,5 @@ export default {
   createMockTask,
   waitForMswRequest,
   resetMswHandlers,
-  cleanupMswHandlers
+  cleanupMswHandlers,
 };

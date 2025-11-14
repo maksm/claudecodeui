@@ -35,9 +35,7 @@ export class AccessibilityHelper {
   }
 
   async checkDocumentStructure() {
-    const results = await new AxeBuilder({ page: this.page })
-      .withTags(['best-practice'])
-      .analyze();
+    const results = await new AxeBuilder({ page: this.page }).withTags(['best-practice']).analyze();
     return results;
   }
 
@@ -56,9 +54,7 @@ export class AccessibilityHelper {
   }
 
   async checkFocusManagement() {
-    const results = await new AxeBuilder({ page: this.page })
-      .withTags(['wcag2a'])
-      .analyze();
+    const results = await new AxeBuilder({ page: this.page }).withTags(['wcag2a']).analyze();
     return results;
   }
 
@@ -200,8 +196,8 @@ export class VisualRegressionHelper {
       results,
       summary: {
         total: results.length,
-        passed: results.filter((r) => r.identical).length,
-        failed: results.filter((r) => !r.identical).length,
+        passed: results.filter(r => r.identical).length,
+        failed: results.filter(r => !r.identical).length,
       },
       generatedAt: new Date().toISOString(),
     };

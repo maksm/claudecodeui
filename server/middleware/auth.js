@@ -10,7 +10,7 @@ const validateApiKey = (req, res, next) => {
   if (!process.env.API_KEY) {
     return next();
   }
-  
+
   const apiKey = req.headers['x-api-key'];
   if (apiKey !== process.env.API_KEY) {
     return res.status(401).json({ error: 'Invalid API key' });
@@ -61,11 +61,11 @@ const authenticateToken = async (req, res, next) => {
 };
 
 // Generate JWT token (never expires)
-const generateToken = (user) => {
+const generateToken = user => {
   return jwt.sign(
-    { 
-      userId: user.id, 
-      username: user.username 
+    {
+      userId: user.id,
+      username: user.username,
     },
     JWT_SECRET
     // No expiration - token lasts forever
@@ -73,7 +73,7 @@ const generateToken = (user) => {
 };
 
 // WebSocket authentication function
-const authenticateWebSocket = (token) => {
+const authenticateWebSocket = token => {
   // Platform mode: bypass token validation, return first user
   if (process.env.VITE_IS_PLATFORM === 'true') {
     try {
@@ -102,10 +102,4 @@ const authenticateWebSocket = (token) => {
   }
 };
 
-export {
-  validateApiKey,
-  authenticateToken,
-  generateToken,
-  authenticateWebSocket,
-  JWT_SECRET
-};
+export { validateApiKey, authenticateToken, generateToken, authenticateWebSocket, JWT_SECRET };
