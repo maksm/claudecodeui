@@ -72,6 +72,9 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [jsonValidationError, setJsonValidationError] = useState('');
   const [toolsProvider, setToolsProvider] = useState('claude'); // 'claude' or 'cursor'
+  const [claudeBackend, setClaudeBackend] = useState(
+    () => localStorage.getItem('claude-backend') || 'claude'
+  ); // 'claude' or 'zai'
 
   // Code Editor settings
   const [codeEditorTheme, setCodeEditorTheme] = useState(
@@ -439,6 +442,11 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
     localStorage.setItem('codeEditorLineNumbers', codeEditorLineNumbers.toString());
     window.dispatchEvent(new Event('codeEditorSettingsChanged'));
   }, [codeEditorLineNumbers]);
+
+  // Persist Claude backend selection to localStorage
+  useEffect(() => {
+    localStorage.setItem('claude-backend', claudeBackend);
+  }, [claudeBackend]);
 
   useEffect(() => {
     localStorage.setItem('codeEditorFontSize', codeEditorFontSize);

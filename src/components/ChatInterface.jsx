@@ -2252,6 +2252,9 @@ function ChatInterface({
   const [cursorModel, setCursorModel] = useState(() => {
     return localStorage.getItem('cursor-model') || 'gpt-5';
   });
+  const [claudeBackend, setClaudeBackend] = useState(() => {
+    return localStorage.getItem('claude-backend') || 'claude';
+  });
   // Load permission mode for the current session
   useEffect(() => {
     if (selectedSession?.id) {
@@ -4627,7 +4630,7 @@ function ChatInterface({
           },
         });
       } else {
-        // Send Claude command (existing code)
+        // Send Claude command (with backend selection for claude/zai)
         sendMessage({
           type: 'claude-command',
           command: input,
@@ -4639,6 +4642,7 @@ function ChatInterface({
             toolsSettings: toolsSettings,
             permissionMode: permissionMode,
             images: uploadedImages, // Pass images to backend
+            backend: claudeBackend, // Pass backend type (claude or zai)
           },
         });
       }
@@ -4667,6 +4671,7 @@ function ChatInterface({
       currentSessionId,
       selectedSession,
       provider,
+      claudeBackend,
       permissionMode,
       onSessionActive,
       cursorModel,
@@ -5095,6 +5100,28 @@ function ChatInterface({
                     </button>
                   </div>
 
+                  {/* Backend Selection for Claude - Shows when Claude is selected */}
+                  <div
+                    className={`mb-6 transition-opacity duration-200 ${provider === 'claude' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      {provider === 'claude' ? 'Select AI Provider' : '\u00A0'}
+                    </label>
+                    <select
+                      value={claudeBackend}
+                      onChange={e => {
+                        const newBackend = e.target.value;
+                        setClaudeBackend(newBackend);
+                        localStorage.setItem('claude-backend', newBackend);
+                      }}
+                      className="pl-4 pr-10 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[140px]"
+                      disabled={provider !== 'claude'}
+                    >
+                      <option value="claude">Claude (Anthropic)</option>
+                      <option value="zai">ZAI</option>
+                    </select>
+                  </div>
+
                   {/* Model Selection for Cursor - Always reserve space to prevent jumping */}
                   <div
                     className={`mb-6 transition-opacity duration-200 ${provider === 'cursor' ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
@@ -5120,7 +5147,7 @@ function ChatInterface({
 
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {provider === 'claude'
-                      ? 'Ready to use Claude AI. Start typing your message below.'
+                      ? `Ready to use Claude Code with ${claudeBackend === 'zai' ? 'ZAI' : 'Claude AI'}. Start typing your message below.`
                       : provider === 'cursor'
                         ? `Ready to use Cursor with ${cursorModel}. Start typing your message below.`
                         : 'Select a provider above to begin'}
