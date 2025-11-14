@@ -2196,8 +2196,9 @@ function ChatInterface({
     return '';
   });
   const [chatMessages, setChatMessages] = useState(() => {
-    if (typeof window !== 'undefined' && selectedProject) {
-      const saved = safeLocalStorage.getItem(`chat_messages_${selectedProject.name}`);
+    if (typeof window !== 'undefined' && selectedProject && selectedSession) {
+      // Scope localStorage to both project and session for proper isolation
+      const saved = safeLocalStorage.getItem(`chat_messages_${selectedProject.name}_${selectedSession.id}`);
       return saved ? JSON.parse(saved) : [];
     }
     return [];
@@ -2222,9 +2223,14 @@ function ChatInterface({
   const inputContainerRef = useRef(null);
   const scrollContainerRef = useRef(null);
   const isLoadingSessionRef = useRef(false); // Track session loading to prevent multiple scrolls
-  // Streaming throttle buffers
-  const streamBufferRef = useRef('');
-  const streamTimerRef = useRef(null);
+
+  // Session isolation: Track current session ID synchronously to prevent race conditions
+  // This ref is updated immediately when switching sessions, avoiding stale state reads
+  const currentSessionIdRef = useRef(null);
+
+  // Session-scoped streaming buffers: Map<sessionId, {buffer: string, timer: timeoutId}>
+  // Each session gets its own buffer to prevent cross-session content mixing
+  const streamBuffersRef = useRef(new Map());
   const commandQueryTimerRef = useRef(null);
   const [debouncedInput, setDebouncedInput] = useState('');
   const [showFileDropdown, setShowFileDropdown] = useState(false);
@@ -3318,6 +3324,15 @@ function ChatInterface({
         // Only reset state if the session ID actually changed (not initial load)
         const sessionChanged = currentSessionId !== null && currentSessionId !== selectedSession.id;
 
+        // Clear stream buffers for the previous session to prevent content mixing
+        if (sessionChanged && currentSessionIdRef.current) {
+          const prevSessionBuffers = streamBuffersRef.current.get(currentSessionIdRef.current);
+          if (prevSessionBuffers?.timer) {
+            clearTimeout(prevSessionBuffers.timer);
+          }
+          streamBuffersRef.current.delete(currentSessionIdRef.current);
+        }
+
         if (sessionChanged) {
           // Reset pagination state when switching sessions
           setMessagesOffset(0);
@@ -3356,7 +3371,9 @@ function ChatInterface({
 
         if (provider === 'cursor') {
           // For Cursor, set the session ID for resuming
+          // Update both state and ref to ensure synchronous access during WebSocket handling
           setCurrentSessionId(selectedSession.id);
+          currentSessionIdRef.current = selectedSession.id;
           sessionStorage.setItem('cursorSessionId', selectedSession.id);
 
           // Only load messages from SQLite if this is NOT a system-initiated session change
@@ -3373,7 +3390,9 @@ function ChatInterface({
           }
         } else {
           // For Claude, load messages normally with pagination
+          // Update both state and ref to ensure synchronous access during WebSocket handling
           setCurrentSessionId(selectedSession.id);
+          currentSessionIdRef.current = selectedSession.id;
 
           // Only load messages from API if this is a user-initiated session change
           // For system-initiated changes, preserve existing messages and rely on WebSocket
@@ -3398,7 +3417,9 @@ function ChatInterface({
           setChatMessages([]);
           setSessionMessages([]);
         }
+        // Clear current session ID in both state and ref
         setCurrentSessionId(null);
+        currentSessionIdRef.current = null;
         sessionStorage.removeItem('cursorSessionId');
         setMessagesOffset(0);
         setHasMoreMessages(false);
@@ -3420,6 +3441,19 @@ function ChatInterface({
     scrollToBottom,
     isSystemSessionChange,
   ]);
+
+  // Cleanup: Clear all stream buffers on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      // Clear all pending timers
+      streamBuffersRef.current.forEach((buffers) => {
+        if (buffers?.timer) {
+          clearTimeout(buffers.timer);
+        }
+      });
+      streamBuffersRef.current.clear();
+    };
+  }, []);
 
   // External Message Update Handler: Reload messages when external CLI modifies current session
   // This triggers when App.jsx detects a JSONL file change for the currently-viewed session
@@ -3495,13 +3529,14 @@ function ChatInterface({
 
   // Persist chat messages to localStorage
   useEffect(() => {
-    if (selectedProject && chatMessages.length > 0) {
+    if (selectedProject && selectedSession && chatMessages.length > 0) {
+      // Scope localStorage to both project and session for proper isolation
       safeLocalStorage.setItem(
-        `chat_messages_${selectedProject.name}`,
+        `chat_messages_${selectedProject.name}_${selectedSession.id}`,
         JSON.stringify(chatMessages)
       );
     }
-  }, [chatMessages, selectedProject]);
+  }, [chatMessages, selectedProject, selectedSession]);
 
   // Load saved state when project changes (but don't interfere with session loading)
   useEffect(() => {
@@ -3551,10 +3586,13 @@ function ChatInterface({
       const isGlobalMessage = globalMessageTypes.includes(latestMessage.type);
       const isProjectSpecificMessage = projectSpecificMessageTypes.includes(latestMessage.type);
 
+      // Use ref for session filtering to avoid race conditions during session switches
+      const activeSessionId = currentSessionIdRef.current;
+
       // DEBUG: Log message details to identify what's leaking
       if (!isGlobalMessage && latestMessage.type !== 'system') {
         console.log(
-          `[DEBUG] Message: type=${latestMessage.type}, sessionId=${latestMessage.sessionId}, currentSessionId=${currentSessionId}, hasSessionId=${!!latestMessage.sessionId}`
+          `[DEBUG] Message: type=${latestMessage.type}, sessionId=${latestMessage.sessionId}, currentSessionId=${activeSessionId}, hasSessionId=${!!latestMessage.sessionId}`
         );
       }
 
@@ -3562,21 +3600,21 @@ function ChatInterface({
       if (
         !isGlobalMessage &&
         latestMessage.sessionId &&
-        currentSessionId &&
-        latestMessage.sessionId !== currentSessionId
+        activeSessionId &&
+        latestMessage.sessionId !== activeSessionId
       ) {
         // Message is for a different session, ignore it
         console.log(
           '⏭️ Skipping message for different session:',
           latestMessage.sessionId,
           'current:',
-          currentSessionId
+          activeSessionId
         );
         return;
       }
 
       // Additional check: If we have a current session but message has no sessionId, it might be leaked
-      if (!isGlobalMessage && !latestMessage.sessionId && currentSessionId) {
+      if (!isGlobalMessage && !latestMessage.sessionId && activeSessionId) {
         console.log(
           '⚠️ WARNING: Message without sessionId during active session:',
           latestMessage.type
@@ -3619,15 +3657,64 @@ function ChatInterface({
           // Handle Cursor streaming format (content_block_delta / content_block_stop)
           if (messageData && typeof messageData === 'object' && messageData.type) {
             if (messageData.type === 'content_block_delta' && messageData.delta?.text) {
+              // Session-scoped streaming: Each session gets its own buffer
+              const sessionId = activeSessionId || 'default';
+
+              // Get or create session buffer
+              let sessionBuffers = streamBuffersRef.current.get(sessionId);
+              if (!sessionBuffers) {
+                sessionBuffers = { buffer: '', timer: null };
+                streamBuffersRef.current.set(sessionId, sessionBuffers);
+              }
+
               // Decode HTML entities and buffer deltas
               const decodedText = decodeHtmlEntities(messageData.delta.text);
-              streamBufferRef.current += decodedText;
-              if (!streamTimerRef.current) {
-                streamTimerRef.current = setTimeout(() => {
-                  const chunk = streamBufferRef.current;
-                  streamBufferRef.current = '';
-                  streamTimerRef.current = null;
+              sessionBuffers.buffer += decodedText;
+
+              if (!sessionBuffers.timer) {
+                sessionBuffers.timer = setTimeout(() => {
+                  const chunk = sessionBuffers.buffer;
+                  sessionBuffers.buffer = '';
+                  sessionBuffers.timer = null;
                   if (!chunk) return;
+
+                  // Only update chat if this is still the active session
+                  if (currentSessionIdRef.current === sessionId || (!currentSessionIdRef.current && sessionId === 'default')) {
+                    setChatMessages(prev => {
+                      const updated = [...prev];
+                      const last = updated[updated.length - 1];
+                      if (last && last.type === 'assistant' && !last.isToolUse && last.isStreaming) {
+                        last.content = (last.content || '') + chunk;
+                      } else {
+                        updated.push({
+                          type: 'assistant',
+                          content: chunk,
+                          timestamp: new Date(),
+                          isStreaming: true,
+                        });
+                      }
+                      return updated;
+                    });
+                  }
+                }, 100);
+              }
+              return;
+            }
+            if (messageData.type === 'content_block_stop') {
+              // Session-scoped streaming: Flush buffer for this session
+              const sessionId = activeSessionId || 'default';
+              const sessionBuffers = streamBuffersRef.current.get(sessionId);
+
+              if (sessionBuffers) {
+                // Flush any buffered text and mark streaming message complete
+                if (sessionBuffers.timer) {
+                  clearTimeout(sessionBuffers.timer);
+                  sessionBuffers.timer = null;
+                }
+                const chunk = sessionBuffers.buffer;
+                sessionBuffers.buffer = '';
+
+                if (chunk) {
                   setChatMessages(prev => {
                     const updated = [...prev];
                     const last = updated[updated.length - 1];
@@ -3643,35 +3730,9 @@ function ChatInterface({
                     }
                     return updated;
                   });
-                }, 100);
+                }
               }
-              return;
-            }
-            if (messageData.type === 'content_block_stop') {
-              // Flush any buffered text and mark streaming message complete
-              if (streamTimerRef.current) {
-                clearTimeout(streamTimerRef.current);
-                streamTimerRef.current = null;
-              }
-              const chunk = streamBufferRef.current;
-              streamBufferRef.current = '';
-              if (chunk) {
-                setChatMessages(prev => {
-                  const updated = [...prev];
-                  const last = updated[updated.length - 1];
-                  if (last && last.type === 'assistant' && !last.isToolUse && last.isStreaming) {
-                    last.content = (last.content || '') + chunk;
-                  } else {
-                    updated.push({
-                      type: 'assistant',
-                      content: chunk,
-                      timestamp: new Date(),
-                      isStreaming: true,
-                    });
-                  }
-                  return updated;
-                });
-              }
+
               setChatMessages(prev => {
                 const updated = [...prev];
                 const last = updated[updated.length - 1];
@@ -3693,11 +3754,11 @@ function ChatInterface({
             latestMessage.data.type === 'system' &&
             latestMessage.data.subtype === 'init' &&
             latestMessage.data.session_id &&
-            currentSessionId &&
-            latestMessage.data.session_id !== currentSessionId
+            activeSessionId &&
+            latestMessage.data.session_id !== activeSessionId
           ) {
             console.log('🔄 Claude CLI session duplication detected:', {
-              originalSession: currentSessionId,
+              originalSession: activeSessionId,
               newSession: latestMessage.data.session_id,
             });
 
@@ -3718,7 +3779,7 @@ function ChatInterface({
             latestMessage.data.type === 'system' &&
             latestMessage.data.subtype === 'init' &&
             latestMessage.data.session_id &&
-            !currentSessionId
+            !activeSessionId
           ) {
             console.log('🔄 New session init detected:', {
               newSession: latestMessage.data.session_id,
@@ -3739,8 +3800,8 @@ function ChatInterface({
             latestMessage.data.type === 'system' &&
             latestMessage.data.subtype === 'init' &&
             latestMessage.data.session_id &&
-            currentSessionId &&
-            latestMessage.data.session_id === currentSessionId
+            activeSessionId &&
+            latestMessage.data.session_id === activeSessionId
           ) {
             console.log('🔄 System init message for current session, ignoring');
             return; // Don't process the message further
@@ -4118,8 +4179,9 @@ function ChatInterface({
           }
 
           // Clear persisted chat messages after successful completion
-          if (selectedProject && latestMessage.exitCode === 0) {
-            safeLocalStorage.removeItem(`chat_messages_${selectedProject.name}`);
+          if (selectedProject && completedSessionId && latestMessage.exitCode === 0) {
+            // Scope localStorage to both project and session for proper isolation
+            safeLocalStorage.removeItem(`chat_messages_${selectedProject.name}_${completedSessionId}`);
           }
           break;
         }
