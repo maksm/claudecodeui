@@ -171,6 +171,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
       );
       const data = await response.json();
 
+      console.log('[GitPanel] Remote status:', data);
       if (!data.error) {
         setRemoteStatus(data);
       } else {
@@ -192,6 +193,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
       );
       const data = await response.json();
 
+      console.log('[GitPanel] Latest PR response:', data);
       setLatestPR(data);
     } catch (error) {
       console.error('Error fetching latest PR:', error);

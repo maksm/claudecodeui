@@ -1158,16 +1158,21 @@ router.get('/latest-pr', async (req, res) => {
       targetBranch = branchOutput.trim();
     }
 
+    console.log('[PR Check] Checking for PR on branch:', targetBranch);
+
     // Get git remote URL
     const remoteUrl = await getGitRemoteUrl(projectPath);
+    console.log('[PR Check] Remote URL:', remoteUrl);
 
     // Parse GitHub URL to get owner and repo
     const { owner, repo } = parseGitHubUrl(remoteUrl);
+    console.log('[PR Check] Repository:', `${owner}/${repo}`);
 
     // Get GitHub token for the authenticated user
     const githubToken = githubTokensDb.getActiveGithubToken(req.user.id);
 
     if (!githubToken) {
+      console.log('[PR Check] No GitHub token configured');
       return res.json({ hasPR: false, message: 'No GitHub token configured' });
     }
 
@@ -1175,6 +1180,7 @@ router.get('/latest-pr', async (req, res) => {
     const octokit = new Octokit({ auth: githubToken });
 
     // Query for open PRs on this branch
+    console.log('[PR Check] Searching for PRs with head:', `${owner}:${targetBranch}`);
     const { data: pulls } = await octokit.pulls.list({
       owner,
       repo,
@@ -1185,8 +1191,11 @@ router.get('/latest-pr', async (req, res) => {
       per_page: 1,
     });
 
+    console.log('[PR Check] Found', pulls.length, 'open PR(s)');
+
     if (pulls.length > 0) {
       const pr = pulls[0];
+      console.log('[PR Check] Returning PR #' + pr.number);
       res.json({
         hasPR: true,
         pr: {
@@ -1198,6 +1207,7 @@ router.get('/latest-pr', async (req, res) => {
         },
       });
     } else {
+      console.log('[PR Check] No open PR found for this branch');
       res.json({ hasPR: false });
     }
   } catch (error) {
