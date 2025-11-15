@@ -189,7 +189,15 @@ export function useWorkflow(projectName, projectPath) {
           setBaseBranch(base);
           setCurrentStep('test');
           setCompletedSteps(prev => [...new Set([...prev, 'branch'])]);
-          return { success: true, data };
+
+          // Return success with additional context
+          return {
+            success: true,
+            data,
+            alreadyOnBranch: data.alreadyOnBranch,
+            existingBranch: data.existingBranch,
+            created: data.created,
+          };
         } else {
           setBranchError(data.error || 'Failed to create branch');
           return { success: false, error: data.error };

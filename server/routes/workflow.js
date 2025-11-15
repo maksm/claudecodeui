@@ -35,7 +35,7 @@ function validateBranchName(branchName) {
   // - No special chars except / - _
   // - Max 100 chars
   // - Start with letter or number
-  const regex = /^[a-zA-Z0-9][a-zA-Z0-9\/_-]{0,99}$/;
+  const regex = /^[a-zA-Z0-9][a-zA-Z0-9/_-]{0,99}$/;
   return regex.test(branchName);
 }
 
@@ -66,32 +66,63 @@ router.post('/create-feature-branch', async (req, res) => {
   try {
     const projectPath = await getProjectPath(project);
 
+    // Get current branch
+    const { stdout: currentBranchOutput } = await execAsync('git rev-parse --abbrev-ref HEAD', {
+      cwd: projectPath,
+    });
+    const currentBranch = currentBranchOutput.trim();
+
+    // Check if we're already on the target branch
+    if (currentBranch === branchName) {
+      // Already on the branch - this is a success, no action needed
+      return res.json({
+        success: true,
+        branch: branchName,
+        baseBranch: currentBranch,
+        created: false,
+        checkedOut: true,
+        alreadyOnBranch: true,
+      });
+    }
+
     // Check if branch already exists
+    let branchExists = false;
     try {
       const { stdout } = await execAsync('git branch --list', { cwd: projectPath });
-      const branches = stdout
-        .split('\n')
-        .map((b) => b.trim().replace(/^\*\s+/, ''));
+      const branches = stdout.split('\n').map(b => b.trim().replace(/^\*\s+/, ''));
 
-      if (branches.includes(branchName)) {
-        return res.status(409).json({
-          error: 'Branch already exists',
-          code: 'BRANCH_EXISTS',
-          branchName,
-        });
-      }
+      branchExists = branches.includes(branchName);
     } catch (error) {
       // If git command fails, continue anyway
       console.error('Error checking branches:', error);
     }
 
-    // Get current branch if baseBranch not specified
+    if (branchExists) {
+      // Branch exists but we're not on it - checkout the existing branch
+      try {
+        await execAsync(`git checkout "${branchName}"`, { cwd: projectPath });
+        return res.json({
+          success: true,
+          branch: branchName,
+          baseBranch: currentBranch,
+          created: false,
+          checkedOut: true,
+          existingBranch: true,
+        });
+      } catch (checkoutError) {
+        return res.status(409).json({
+          error: 'Branch exists but failed to checkout',
+          code: 'CHECKOUT_FAILED',
+          details: checkoutError.message,
+          branchName,
+        });
+      }
+    }
+
+    // Get base branch if not specified
     let base = baseBranch;
     if (!base) {
-      const { stdout: currentBranch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
-        cwd: projectPath,
-      });
-      base = currentBranch.trim();
+      base = currentBranch;
     }
 
     // Create and checkout new branch
@@ -155,8 +186,8 @@ router.post('/auto-commit', async (req, res) => {
 
     const changedFiles = statusOutput
       .split('\n')
-      .filter((line) => line.trim())
-      .map((line) => line.substring(3));
+      .filter(line => line.trim())
+      .map(line => line.substring(3));
 
     // Run CI if requested
     let ciResults = null;
@@ -209,10 +240,9 @@ router.post('/auto-commit', async (req, res) => {
 
     // Commit with AI-generated message
     const safeMessage = commitMessage.replace(/"/g, '\\"');
-    const { stdout: commitOutput } = await execAsync(
-      `git commit -m "${safeMessage}"`,
-      { cwd: projectPath }
-    );
+    const { stdout: commitOutput } = await execAsync(`git commit -m "${safeMessage}"`, {
+      cwd: projectPath,
+    });
 
     // Get commit hash
     const { stdout: commitHash } = await execAsync('git rev-parse --short HEAD', {
@@ -263,7 +293,8 @@ router.post('/create-pr', async (req, res) => {
         installUrl: 'https://cli.github.com/',
         installCommand: {
           macos: 'brew install gh',
-          linux: 'curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg',
+          linux:
+            'curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg',
           windows: 'Download from https://cli.github.com/',
         },
       });
@@ -303,7 +334,7 @@ router.post('/create-pr', async (req, res) => {
             if (i < 3) {
               // Wait with exponential backoff
               const delay = Math.pow(2, i + 1) * 1000;
-              await new Promise((resolve) => setTimeout(resolve, delay));
+              await new Promise(resolve => setTimeout(resolve, delay));
             } else {
               throw pushError;
             }
@@ -410,7 +441,7 @@ router.post('/run-complete', async (req, res) => {
   const sendProgress = (step, data = {}) => {
     if (!wss || !wss.clients) return;
 
-    wss.clients.forEach((client) => {
+    wss.clients.forEach(client => {
       if (client.readyState === 1) {
         try {
           client.send(
@@ -452,7 +483,7 @@ router.post('/run-complete', async (req, res) => {
         sendProgress('ci-running');
         const runner = new TestRunner({ cwd: projectPath });
 
-        runner.on('progress', (progress) => {
+        runner.on('progress', progress => {
           sendProgress('ci-progress', progress);
         });
 
@@ -479,8 +510,8 @@ router.post('/run-complete', async (req, res) => {
       if (statusOutput.trim()) {
         const changedFiles = statusOutput
           .split('\n')
-          .filter((line) => line.trim())
-          .map((line) => line.substring(3));
+          .filter(line => line.trim())
+          .map(line => line.substring(3));
 
         // Get diffs
         let diffContext = '';
@@ -584,7 +615,10 @@ REQUIREMENTS:
 - Return ONLY the commit message (no markdown, explanations, or code blocks)
 
 FILES CHANGED:
-${files.slice(0, 10).map((f) => `- ${f}`).join('\n')}
+${files
+  .slice(0, 10)
+  .map(f => `- ${f}`)
+  .join('\n')}
 
 DIFFS:
 ${diffContext.substring(0, 3000)}
@@ -594,7 +628,7 @@ Generate the commit message:`;
   try {
     let responseText = '';
     const writer = {
-      send: (data) => {
+      send: data => {
         try {
           const parsed = typeof data === 'string' ? JSON.parse(data) : data;
 
@@ -669,7 +703,7 @@ Generate the PR content:`;
   try {
     let responseText = '';
     const writer = {
-      send: (data) => {
+      send: data => {
         try {
           const parsed = typeof data === 'string' ? JSON.parse(data) : data;
           if (parsed.type === 'claude-response' && parsed.data) {
@@ -705,7 +739,7 @@ Generate the PR content:`;
 
     const title = titleMatch
       ? titleMatch[1].trim()
-      : branchName.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
+      : branchName.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 
     const body = bodyMatch
       ? bodyMatch[1].trim()
@@ -715,7 +749,7 @@ Generate the PR content:`;
   } catch (error) {
     console.error('Error generating PR content:', error);
     return {
-      title: branchName.replace(/[-_]/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase()),
+      title: branchName.replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
       body: `## Summary\nChanges from branch: ${branchName}\n\n## Testing\n- [ ] Tests pass locally`,
     };
   }
