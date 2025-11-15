@@ -265,6 +265,7 @@ jobs:
     name: Performance Tests
     runs-on: ubuntu-latest
     needs: build
+    if: false # Disabled: performance test suite not implemented yet
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -379,7 +380,7 @@ jobs:
   generate-reports:
     name: Generate Test Reports
     runs-on: ubuntu-latest
-    needs: [e2e-tests, e2e-tests-mobile, performance-tests]
+    needs: [e2e-tests, e2e-tests-mobile]
     if: always()
     steps:
       - name: Checkout code
@@ -440,7 +441,7 @@ jobs:
   test-summary:
     name: Test Summary
     runs-on: ubuntu-latest
-    needs: [e2e-tests, e2e-tests-mobile, performance-tests, generate-reports]
+    needs: [e2e-tests, e2e-tests-mobile, generate-reports]
     if: always()
     steps:
       - name: Download comprehensive reports
@@ -496,11 +497,11 @@ jobs:
               echo "" >> $GITHUB_STEP_SUMMARY
             fi
 
-            # Performance Tests
-            echo "### ⚡ Performance Tests" >> $GITHUB_STEP_SUMMARY
-            echo "- Load time performance testing completed" >> $GITHUB_STEP_SUMMARY
-            echo "- Performance under load testing completed" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
+            # Performance Tests (disabled)
+            # echo "### ⚡ Performance Tests" >> $GITHUB_STEP_SUMMARY
+            # echo "- Load time performance testing completed" >> $GITHUB_STEP_SUMMARY
+            # echo "- Performance under load testing completed" >> $GITHUB_STEP_SUMMARY
+            # echo "" >> $GITHUB_STEP_SUMMARY
 
             # Artifacts Available
             echo "## 📁 Available Artifacts" >> $GITHUB_STEP_SUMMARY
@@ -579,11 +580,11 @@ jobs:
             }
             commentBody += '\n';
 
-            // Performance Results
-            commentBody += '### ⚡ Performance Tests\n';
-            commentBody += '- Load time performance verified\n';
-            commentBody += '- Performance under load tested\n';
-            commentBody += '\n';
+            // Performance Results (disabled)
+            // commentBody += '### ⚡ Performance Tests\n';
+            // commentBody += '- Load time performance verified\n';
+            // commentBody += '- Performance under load tested\n';
+            // commentBody += '\n';
 
             // Test Statistics
             if (fs.existsSync('test-results')) {
@@ -665,7 +666,7 @@ jobs:
   notify:
     name: Notify Results
     runs-on: ubuntu-latest
-    needs: [e2e-tests, e2e-tests-mobile, performance-tests]
+    needs: [e2e-tests, e2e-tests-mobile]
     if: failure()
     steps:
       - name: Notify on failure
