@@ -1953,4 +1953,159 @@ Brief description of what this web application will do and why it's needed.
   ];
 }
 
+/**
+ * DELETE /api/taskmaster/reset/:projectName
+ * Reset TaskMaster setup - either clear tasks only or full reset
+ * Query params:
+ *   - fullReset: boolean - if true, deletes entire .taskmaster directory
+ *   - confirm: boolean - required confirmation flag
+ */
+router.delete('/reset/:projectName', async (req, res) => {
+  try {
+    const { projectName } = req.params;
+    const { fullReset = 'false', confirm = 'false' } = req.query;
+
+    // Parse boolean strings
+    const isFullReset = fullReset === 'true';
+    const isConfirmed = confirm === 'true';
+
+    if (!isConfirmed) {
+      return res.status(400).json({
+        error: 'Confirmation required',
+        message: 'You must confirm the reset operation by setting confirm=true',
+      });
+    }
+
+    // Get project path
+    let projectPath;
+    try {
+      projectPath = await extractProjectDirectory(projectName);
+    } catch (error) {
+      return res.status(404).json({
+        error: 'Project not found',
+        message: `Project "${projectName}" does not exist`,
+      });
+    }
+
+    const taskmasterDir = path.join(projectPath, '.taskmaster');
+
+    // Check if .taskmaster directory exists
+    if (!fs.existsSync(taskmasterDir)) {
+      return res.status(404).json({
+        error: 'TaskMaster not initialized',
+        message: 'No .taskmaster directory found in this project',
+      });
+    }
+
+    if (isFullReset) {
+      // Full reset: delete entire .taskmaster directory
+      console.log(`[TaskMaster Reset] Full reset requested for project: ${projectName}`);
+
+      try {
+        await fsPromises.rm(taskmasterDir, { recursive: true, force: true });
+        console.log(`[TaskMaster Reset] Successfully deleted .taskmaster directory`);
+
+        // Broadcast update
+        broadcastTaskMasterProjectUpdate(projectName, {
+          hasTaskMaster: false,
+          hasMCPServer: false,
+        });
+
+        return res.json({
+          success: true,
+          message: 'TaskMaster completely reset. All data deleted.',
+          resetType: 'full',
+          deletedDirectory: taskmasterDir,
+        });
+      } catch (deleteError) {
+        console.error('[TaskMaster Reset] Failed to delete directory:', deleteError);
+        return res.status(500).json({
+          error: 'Failed to delete TaskMaster directory',
+          message: deleteError.message,
+        });
+      }
+    } else {
+      // Soft reset: clear tasks.json but keep configuration
+      console.log(`[TaskMaster Reset] Soft reset requested for project: ${projectName}`);
+
+      const tasksJsonPath = path.join(taskmasterDir, 'tasks', 'tasks.json');
+      const tasksDir = path.join(taskmasterDir, 'tasks');
+
+      try {
+        // Create empty tasks structure
+        const emptyTasksData = {
+          tasks: [],
+          tags: {
+            master: {
+              description: 'Main development tasks',
+              tasks: [],
+            },
+          },
+          currentTag: 'master',
+          metadata: {
+            version: '1.0.0',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        };
+
+        // Ensure tasks directory exists
+        if (!fs.existsSync(tasksDir)) {
+          await fsPromises.mkdir(tasksDir, { recursive: true });
+        }
+
+        // Write empty tasks.json
+        await fsPromises.writeFile(tasksJsonPath, JSON.stringify(emptyTasksData, null, 2), 'utf8');
+
+        // Delete individual task markdown files
+        const taskFiles = await fsPromises.readdir(tasksDir);
+        for (const file of taskFiles) {
+          if (file.endsWith('.md') || file.endsWith('.txt')) {
+            await fsPromises.unlink(path.join(tasksDir, file));
+          }
+        }
+
+        // Clear reports directory if it exists
+        const reportsDir = path.join(taskmasterDir, 'reports');
+        if (fs.existsSync(reportsDir)) {
+          const reportFiles = await fsPromises.readdir(reportsDir);
+          for (const file of reportFiles) {
+            await fsPromises.unlink(path.join(reportsDir, file));
+          }
+        }
+
+        console.log(`[TaskMaster Reset] Successfully cleared tasks`);
+
+        // Broadcast update
+        broadcastTaskMasterTasksUpdate(projectName, {
+          tasks: [],
+          totalTasks: 0,
+        });
+
+        return res.json({
+          success: true,
+          message: 'Tasks cleared successfully. Configuration preserved.',
+          resetType: 'soft',
+          clearedFiles: {
+            tasksJson: tasksJsonPath,
+            taskFiles: taskFiles.filter(f => f.endsWith('.md') || f.endsWith('.txt')).length,
+          },
+        });
+      } catch (clearError) {
+        console.error('[TaskMaster Reset] Failed to clear tasks:', clearError);
+        return res.status(500).json({
+          error: 'Failed to clear tasks',
+          message: clearError.message,
+        });
+      }
+    }
+  } catch (error) {
+    console.error('[TaskMaster Reset] Error:', error);
+    res.status(500).json({
+      error: 'Failed to reset TaskMaster',
+      message: error.message,
+    });
+  }
+});
+
 export default router;

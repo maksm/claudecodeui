@@ -22,10 +22,12 @@ import {
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTasksSettings } from '../contexts/TasksSettingsContext';
+import { useTaskMaster } from '../contexts/TaskMasterContext';
 import StandaloneShell from './StandaloneShell';
 import ClaudeLogo from './ClaudeLogo';
 import CursorLogo from './CursorLogo';
 import CredentialsSettings from './CredentialsSettings';
+import { api } from '../utils/api';
 
 function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
   const { isDarkMode, toggleDarkMode } = useTheme();
@@ -37,6 +39,7 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
     installationStatus,
     isCheckingInstallation,
   } = useTasksSettings();
+  const { currentProject, refreshTasks, refreshProjects } = useTaskMaster();
   const [allowedTools, setAllowedTools] = useState([]);
   const [disallowedTools, setDisallowedTools] = useState([]);
   const [newAllowedTool, setNewAllowedTool] = useState('');
@@ -105,6 +108,12 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginProvider, setLoginProvider] = useState(''); // 'claude' or 'cursor'
   const [selectedProject, setSelectedProject] = useState(null);
+
+  // TaskMaster reset modal state
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetType, setResetType] = useState('soft'); // 'soft' or 'full'
+  const [isResetting, setIsResetting] = useState(false);
+  const [resetError, setResetError] = useState(null);
 
   // Claude CLI login status
   const [claudeLoginStatus, setClaudeLoginStatus] = useState({
@@ -520,6 +529,45 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
       // Login successful - could show a success message here
     }
     setShowLoginModal(false);
+  };
+
+  // TaskMaster reset handlers
+  const handleResetTaskMaster = async () => {
+    if (!currentProject) {
+      setResetError('No project selected');
+      return;
+    }
+
+    setIsResetting(true);
+    setResetError(null);
+
+    try {
+      const response = await api.taskmaster.reset(currentProject, {
+        fullReset: resetType === 'full',
+        confirm: true,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Failed to reset TaskMaster');
+      }
+
+      const result = await response.json();
+
+      // Refresh data
+      await refreshTasks();
+      await refreshProjects();
+
+      // Close modal and show success
+      setShowResetModal(false);
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus(null), 3000);
+    } catch (error) {
+      console.error('TaskMaster reset error:', error);
+      setResetError(error.message || 'Failed to reset TaskMaster');
+    } finally {
+      setIsResetting(false);
+    }
   };
 
   const saveSettings = () => {
@@ -2484,6 +2532,34 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
                         </div>
                       </div>
 
+                      {/* TaskMaster Reset Section */}
+                      {currentProject && isTaskMasterInstalled && (
+                        <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                              <AlertTriangle className="w-4 h-4 text-red-600 dark:text-red-400" />
+                            </div>
+                            <div className="flex-1">
+                              <div className="font-medium text-red-900 dark:text-red-100 mb-2">
+                                Reset TaskMaster
+                              </div>
+                              <div className="text-sm text-red-800 dark:text-red-200 mb-3">
+                                Delete tasks and start fresh. You can either clear all tasks while
+                                keeping your configuration, or completely remove TaskMaster from
+                                this project.
+                              </div>
+                              <Button
+                                onClick={() => setShowResetModal(true)}
+                                className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 py-1.5 h-auto"
+                              >
+                                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                Reset TaskMaster
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* TaskMaster Information */}
                       <div className="bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
                         <div className="flex items-start gap-3">
@@ -2651,6 +2727,137 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
           </div>
         </div>
       </div>
+
+      {/* TaskMaster Reset Modal */}
+      {showResetModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-red-600" />
+                Reset TaskMaster
+              </h3>
+              <button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetError(null);
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                disabled={isResetting}
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="p-4 space-y-4">
+              {/* Current Project Info */}
+              <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <div className="text-xs text-muted-foreground mb-1">Current Project</div>
+                <div className="font-medium text-foreground">{currentProject || 'None'}</div>
+              </div>
+
+              {/* Reset Type Selection */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-foreground">Reset Type</label>
+
+                {/* Soft Reset Option */}
+                <label className="flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-gray-900/50 has-[:checked]:border-blue-600 has-[:checked]:bg-blue-50 dark:has-[:checked]:bg-blue-950/50">
+                  <input
+                    type="radio"
+                    name="resetType"
+                    value="soft"
+                    checked={resetType === 'soft'}
+                    onChange={e => setResetType(e.target.value)}
+                    disabled={isResetting}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-foreground text-sm">Clear Tasks Only</div>
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Removes all tasks and reports but keeps your configuration (models, PRD files,
+                      etc.)
+                    </div>
+                  </div>
+                </label>
+
+                {/* Full Reset Option */}
+                <label className="flex items-start gap-3 p-3 border-2 border-red-300 dark:border-red-800 rounded-lg cursor-pointer transition-colors hover:bg-red-50 dark:hover:bg-red-950/30 has-[:checked]:border-red-600 has-[:checked]:bg-red-50 dark:has-[:checked]:bg-red-950/50">
+                  <input
+                    type="radio"
+                    name="resetType"
+                    value="full"
+                    checked={resetType === 'full'}
+                    onChange={e => setResetType(e.target.value)}
+                    disabled={isResetting}
+                    className="mt-0.5"
+                  />
+                  <div className="flex-1">
+                    <div className="font-medium text-red-900 dark:text-red-100 text-sm flex items-center gap-1.5">
+                      Complete Reset
+                      <span className="text-xs bg-red-600 text-white px-1.5 py-0.5 rounded">
+                        Dangerous
+                      </span>
+                    </div>
+                    <div className="text-xs text-red-800 dark:text-red-200 mt-1">
+                      Completely removes the .taskmaster directory. You&apos;ll need to
+                      re-initialize TaskMaster from scratch.
+                    </div>
+                  </div>
+                </label>
+              </div>
+
+              {/* Error Display */}
+              {resetError && (
+                <div className="bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                  <div className="text-sm text-red-800 dark:text-red-200">{resetError}</div>
+                </div>
+              )}
+
+              {/* Warning */}
+              <div className="bg-yellow-50 dark:bg-yellow-950/50 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-yellow-600 dark:text-yellow-500 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-yellow-800 dark:text-yellow-200">
+                    <strong>Warning:</strong> This action cannot be undone. Make sure you have
+                    backups if needed.
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+              <Button
+                onClick={() => {
+                  setShowResetModal(false);
+                  setResetError(null);
+                }}
+                disabled={isResetting}
+                className="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleResetTaskMaster}
+                disabled={isResetting}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                {isResetting ? (
+                  <>
+                    <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                    Resetting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {resetType === 'full' ? 'Complete Reset' : 'Clear Tasks'}
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Login Modal */}
       {showLoginModal && (
