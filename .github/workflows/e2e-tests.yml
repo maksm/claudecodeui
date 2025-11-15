@@ -43,7 +43,6 @@ jobs:
           path: |
             dist/
             public/
-            node_modules/
           retention-days: 1
 
   e2e-tests:
