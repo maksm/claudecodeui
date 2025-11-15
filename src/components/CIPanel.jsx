@@ -15,8 +15,10 @@ import {
   Trash2,
 } from 'lucide-react';
 import { authenticatedFetch } from '../utils/api';
+import { useNotification } from '../contexts/NotificationContext';
 
 function CIPanel({ selectedProject, onSendToChat }) {
+  const { notifyCICompletion } = useNotification();
   const [workflows, setWorkflows] = useState([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
   const [workflowDetails, setWorkflowDetails] = useState(null);
@@ -28,6 +30,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   const [runScope, setRunScope] = useState('all'); // 'all' or 'changes'
   const [changedFiles, setChangedFiles] = useState([]);
   const [isStepSelectorCollapsed, setIsStepSelectorCollapsed] = useState(false);
+  const [previousRunStatus, setPreviousRunStatus] = useState(null);
   const pollIntervalRef = useRef(null);
 
   const totalExecutableSteps = useMemo(() => {
@@ -104,8 +107,24 @@ function CIPanel({ selectedProject, onSendToChat }) {
     }
   }, [activeRun]);
 
+  // Notify when CI run completes
+  useEffect(() => {
+    if (activeRun && activeRun.status && selectedWorkflow) {
+      // Check if status changed from 'running' to a terminal state
+      if (
+        previousRunStatus === 'running' &&
+        (activeRun.status === 'success' || activeRun.status === 'failed')
+      ) {
+        const success = activeRun.status === 'success';
+        const workflowName = selectedWorkflow.name || selectedWorkflow.file;
+        notifyCICompletion(workflowName, success);
+      }
+      setPreviousRunStatus(activeRun.status);
+    }
+  }, [activeRun, selectedWorkflow, previousRunStatus, notifyCICompletion]);
+
   const fetchChangedFiles = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject?.name) return;
 
     try {
       const response = await authenticatedFetch(
@@ -128,7 +147,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   };
 
   const fetchWorkflows = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject?.name) return;
 
     setIsLoading(true);
     try {
@@ -139,6 +158,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
 
       if (data.error) {
         console.error('Error fetching workflows:', data.error);
+        setWorkflows([]);
       } else {
         setWorkflows(data.workflows || []);
         // Auto-select first workflow
@@ -148,6 +168,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
       }
     } catch (error) {
       console.error('Error fetching workflows:', error);
+      setWorkflows([]);
     } finally {
       setIsLoading(false);
     }
@@ -182,7 +203,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   };
 
   const fetchRuns = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject?.name) return;
 
     try {
       const response = await authenticatedFetch(
@@ -283,7 +304,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   };
 
   const clearRuns = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject?.name) return;
 
     try {
       const response = await authenticatedFetch(
@@ -409,7 +430,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
     }
   };
 
-  if (!selectedProject) {
+  if (!selectedProject?.name) {
     return (
       <div className="h-full flex items-center justify-center p-8 text-center">
         <div className="text-gray-500 dark:text-gray-400">

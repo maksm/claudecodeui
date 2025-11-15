@@ -27,6 +27,7 @@ import ClaudeLogo from './ClaudeLogo.jsx';
 import CursorLogo from './CursorLogo.jsx';
 import NextTaskBanner from './NextTaskBanner.jsx';
 import { useTasksSettings } from '../contexts/TasksSettingsContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 import ClaudeStatus from './ClaudeStatus';
 import TokenUsagePie from './TokenUsagePie';
@@ -2189,6 +2190,7 @@ function ChatInterface({
   onShowAllTasks,
 }) {
   const { tasksEnabled } = useTasksSettings();
+  const { notifyAgentCompletion } = useNotification();
   const [input, setInput] = useState(() => {
     if (typeof window !== 'undefined' && selectedProject) {
       return safeLocalStorage.getItem(`draft_input_${selectedProject.name}`) || '';
@@ -4271,6 +4273,12 @@ function ChatInterface({
                 }
               };
               fetchUpdatedTokenUsage();
+            }
+
+            // Trigger notification for agent completion
+            if (selectedProject) {
+              const success = latestMessage.exitCode === 0;
+              notifyAgentCompletion(selectedProject.name, success);
             }
           }
 

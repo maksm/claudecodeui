@@ -1,5 +1,5 @@
 import express from 'express';
-import { apiKeysDb, credentialsDb } from '../database/db.js';
+import { apiKeysDb, credentialsDb, notificationSettingsDb } from '../database/db.js';
 import {
   getAvailableProviders,
   getDefaultProvider,
@@ -223,6 +223,60 @@ router.post('/providers/default', async (req, res) => {
   } catch (error) {
     console.error('Error setting default provider:', error);
     res.status(500).json({ error: error.message || 'Failed to set default provider' });
+  }
+});
+
+// ===============================
+// Notification Settings
+// ===============================
+
+// Get notification settings for the authenticated user
+router.get('/notifications', async (req, res) => {
+  try {
+    const settings = notificationSettingsDb.getSettings(req.user.id);
+    // Return default settings if none exist
+    const defaultSettings = {
+      agent_completion: true,
+      ci_completion: true,
+      browser_notifications: false,
+    };
+    res.json({ settings: settings || defaultSettings });
+  } catch (error) {
+    console.error('Error fetching notification settings:', error);
+    res.status(500).json({ error: 'Failed to fetch notification settings' });
+  }
+});
+
+// Update notification settings
+router.put('/notifications', async (req, res) => {
+  try {
+    const { agentCompletion, ciCompletion, browserNotifications } = req.body;
+
+    // Validate input
+    if (
+      typeof agentCompletion !== 'boolean' ||
+      typeof ciCompletion !== 'boolean' ||
+      typeof browserNotifications !== 'boolean'
+    ) {
+      return res.status(400).json({
+        error: 'All notification settings must be boolean values',
+      });
+    }
+
+    const success = notificationSettingsDb.upsertSettings(req.user.id, {
+      agentCompletion,
+      ciCompletion,
+      browserNotifications,
+    });
+
+    if (success) {
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ error: 'Failed to update notification settings' });
+    }
+  } catch (error) {
+    console.error('Error updating notification settings:', error);
+    res.status(500).json({ error: 'Failed to update notification settings' });
   }
 });
 
