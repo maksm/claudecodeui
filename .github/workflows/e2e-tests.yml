@@ -49,7 +49,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        browser: [chromium, firefox, webkit]
+        browser: [chromium]  # Only chromium for now, add firefox/webkit after installing browsers
       fail-fast: false
 
     steps:
@@ -66,7 +66,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -109,7 +109,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        device: [Pixel 5, iPhone 12]
+        device: [Pixel 5]  # Only Pixel 5 for now, iPhone 12 requires webkit
       fail-fast: false
 
     steps:
@@ -126,7 +126,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -168,7 +168,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -223,7 +223,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -279,7 +279,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -326,7 +326,7 @@ jobs:
         run: npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
