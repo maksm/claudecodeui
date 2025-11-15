@@ -374,7 +374,7 @@ router.post('/checkout', async (req, res) => {
   }
 });
 
-// Create new branch
+// Create new branch from main with current changes
 router.post('/create-branch', async (req, res) => {
   const { project, branch } = req.body;
 
@@ -385,10 +385,60 @@ router.post('/create-branch', async (req, res) => {
   try {
     const projectPath = await getActualProjectPath(project);
 
-    // Create and checkout new branch
-    const { stdout } = await execAsync(`git checkout -b "${branch}"`, { cwd: projectPath });
+    // Validate git repository
+    await validateGitRepository(projectPath);
 
-    res.json({ success: true, output: stdout });
+    // Get current branch to save state
+    const { stdout: currentBranchOutput } = await execAsync('git rev-parse --abbrev-ref HEAD', {
+      cwd: projectPath,
+    });
+    const currentBranch = currentBranchOutput.trim();
+
+    // Stash any current changes to preserve them
+    let hasStashed = false;
+    const { stdout: statusOutput } = await execAsync('git status --porcelain', {
+      cwd: projectPath,
+    });
+
+    if (statusOutput.trim()) {
+      // There are changes, stash them
+      await execAsync('git stash push -m "Temporary stash before branch creation"', {
+        cwd: projectPath,
+      });
+      hasStashed = true;
+    }
+
+    try {
+      // Switch to main branch first
+      await execAsync('git checkout main', { cwd: projectPath });
+
+      // Create and checkout new branch from main
+      const { stdout } = await execAsync(`git checkout -b "${branch}"`, { cwd: projectPath });
+
+      // If we stashed changes, pop them to the new branch
+      if (hasStashed) {
+        await execAsync('git stash pop', { cwd: projectPath });
+      }
+
+      res.json({
+        success: true,
+        output: stdout,
+        fromBranch: 'main',
+        changesRetained: hasStashed,
+        previousBranch: currentBranch,
+      });
+    } catch (checkoutError) {
+      // If switching to main fails, try to go back to original branch
+      try {
+        await execAsync(`git checkout ${currentBranch}`, { cwd: projectPath });
+        if (hasStashed) {
+          await execAsync('git stash pop', { cwd: projectPath });
+        }
+      } catch (restoreError) {
+        console.error('Failed to restore original branch:', restoreError);
+      }
+      throw checkoutError;
+    }
   } catch (error) {
     console.error('Git create branch error:', error);
     res.status(500).json({ error: error.message });
@@ -1169,6 +1219,218 @@ router.get('/check-pr', async (req, res) => {
   } catch (error) {
     console.error('Git check-pr error:', error);
     res.json({ error: error.message });
+  }
+});
+
+// Check for remote changes without fetching (using ls-remote)
+router.get('/check-remote-changes', async (req, res) => {
+  const { project } = req.query;
+
+  if (!project) {
+    return res.status(400).json({ error: 'Project name is required' });
+  }
+
+  try {
+    const projectPath = await getActualProjectPath(project);
+    await validateGitRepository(projectPath);
+
+    // Check if repository has any commits
+    let hasCommits = false;
+    try {
+      await execAsync('git rev-parse HEAD', { cwd: projectPath });
+      hasCommits = true;
+    } catch (error) {
+      // No commits in repository
+      hasCommits = false;
+    }
+
+    // Get current branch
+    let branch;
+    try {
+      const { stdout: currentBranch } = await execAsync('git rev-parse --abbrev-ref HEAD', {
+        cwd: projectPath,
+      });
+      branch = currentBranch.trim();
+    } catch (error) {
+      // If no HEAD, try to get the default branch name
+      try {
+        const { stdout: initBranch } = await execAsync('git config --get init.defaultBranch', {
+          cwd: projectPath,
+        });
+        branch = initBranch.trim() || 'main';
+      } catch (initError) {
+        branch = 'main'; // Fallback to main
+      }
+    }
+
+    // If no commits, we can't check for remote changes meaningfully
+    if (!hasCommits) {
+      return res.json({
+        hasRemote: false,
+        hasUpstream: false,
+        branch,
+        message: 'Repository has no commits - unable to check for remote changes',
+        needsFetch: false,
+        remoteChanges: false,
+      });
+    }
+
+    // Get remote tracking branch information
+    let trackingBranch;
+    let remoteName;
+    try {
+      const { stdout } = await execAsync(`git rev-parse --abbrev-ref ${branch}@{upstream}`, {
+        cwd: projectPath,
+      });
+      trackingBranch = stdout.trim();
+      remoteName = trackingBranch.split('/')[0]; // Extract remote name
+    } catch (error) {
+      return res.json({
+        hasRemote: false,
+        hasUpstream: false,
+        branch,
+        message: 'No remote tracking branch configured',
+        needsFetch: false,
+        remoteChanges: false,
+      });
+    }
+
+    // Get local HEAD commit
+    const { stdout: localHeadOutput } = await execAsync('git rev-parse HEAD', {
+      cwd: projectPath,
+    });
+    const localHead = localHeadOutput.trim();
+
+    // Get remote HEAD commit using ls-remote (without fetching)
+    let remoteHead;
+    try {
+      // Try to get the remote branch HEAD using ls-remote
+      const { stdout: lsRemoteOutput, stderr: lsRemoteStderr } = await execAsync(
+        `git ls-remote ${remoteName} refs/heads/${branch}`,
+        {
+          cwd: projectPath,
+          timeout: 10000, // 10 second timeout
+        }
+      );
+
+      console.log('ls-remote output:', lsRemoteOutput);
+
+      if (lsRemoteOutput && lsRemoteOutput.trim()) {
+        // Parse the output to get the commit hash
+        const lines = lsRemoteOutput.trim().split('\n');
+        if (lines.length > 0 && lines[0]) {
+          remoteHead = lines[0].split('\t')[0];
+        }
+      } else {
+        console.log('ls-remote returned empty output');
+      }
+    } catch (error) {
+      console.log('ls-remote failed, trying alternative approach:', error.message, error.stderr);
+
+      // Fallback: try to get the remote ref directly
+      try {
+        const { stdout: refOutput, stderr: refStderr } = await execAsync(
+          `git ls-remote ${remoteName} ${trackingBranch}`,
+          {
+            cwd: projectPath,
+            timeout: 10000, // 10 second timeout
+          }
+        );
+
+        console.log('fallback ls-remote output:', refOutput);
+
+        if (refOutput && refOutput.trim()) {
+          const lines = refOutput.trim().split('\n');
+          if (lines.length > 0 && lines[0]) {
+            remoteHead = lines[0].split('\t')[0];
+          }
+        }
+      } catch (fallbackError) {
+        console.log('fallback ls-remote also failed:', fallbackError.message, fallbackError.stderr);
+        return res.json({
+          hasRemote: true,
+          hasUpstream: true,
+          branch,
+          remoteBranch: trackingBranch,
+          remoteName,
+          message: 'Unable to check remote status - remote may be unreachable or network issue',
+          needsFetch: false,
+          remoteChanges: null,
+          error: fallbackError.message,
+        });
+      }
+    }
+
+    if (!remoteHead) {
+      return res.json({
+        hasRemote: true,
+        hasUpstream: true,
+        branch,
+        remoteBranch: trackingBranch,
+        remoteName,
+        message: 'Remote branch not found',
+        needsFetch: false,
+        remoteChanges: false,
+      });
+    }
+
+    // Compare local and remote HEAD commits
+    const hasRemoteChanges = localHead !== remoteHead;
+
+    // Get more detailed commit information
+    let commitInfo = {};
+    try {
+      // Get local commit info
+      const { stdout: localCommitInfo } = await execAsync(
+        `git show --format="%H|%s|%an|%ad" -s HEAD`,
+        {
+          cwd: projectPath,
+        }
+      );
+      const [localHash, localSubject, localAuthor, localDate] = localCommitInfo.trim().split('|');
+
+      // Get remote commit info (if different and we can access it)
+      commitInfo = {
+        local: {
+          hash: localHash,
+          subject: localSubject,
+          author: localAuthor,
+          date: localDate,
+        },
+        remote: {
+          hash: remoteHead,
+          // We can't get details about remote commit without fetching
+          subject: null,
+          author: null,
+          date: null,
+        },
+      };
+    } catch (error) {
+      console.log('Error getting commit info:', error.message);
+    }
+
+    res.json({
+      hasRemote: true,
+      hasUpstream: true,
+      branch,
+      remoteBranch: trackingBranch,
+      remoteName,
+      localHead,
+      remoteHead,
+      remoteChanges: hasRemoteChanges,
+      needsFetch: hasRemoteChanges,
+      message: hasRemoteChanges
+        ? `Remote changes detected on branch "${branch}"`
+        : `Branch "${branch}" is up to date with remote`,
+      commitInfo,
+    });
+  } catch (error) {
+    console.error('Git check-remote-changes error:', error);
+    res.json({
+      error: error.message,
+      needsFetch: false,
+      remoteChanges: null,
+    });
   }
 });
 
