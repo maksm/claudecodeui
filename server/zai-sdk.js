@@ -44,11 +44,18 @@ function getZaiApiKey() {
   );
 }
 
-// Configure Zai client with environment variables
-const zaiClient = new Anthropic({
-  apiKey: getZaiApiKey(),
-  baseURL: process.env.ZAI_BASE_URL || 'https://api.zai.com/v1', // Default Zai endpoint
-});
+// Lazy-initialize Zai client only when needed
+let zaiClient = null;
+
+function getZaiClient() {
+  if (!zaiClient) {
+    zaiClient = new Anthropic({
+      apiKey: getZaiApiKey(),
+      baseURL: process.env.ZAI_BASE_URL || 'https://api.zai.com/v1', // Default Zai endpoint
+    });
+  }
+  return zaiClient;
+}
 
 /**
  * Maps CLI options to Zai-compatible options format
@@ -286,7 +293,7 @@ async function queryZaiSDK(command, options = {}, ws) {
     // Make API request with streaming
     console.log(`🔄 [Zai] Starting query for session: ${capturedSessionId}`);
 
-    const stream = await zaiClient.messages.create(
+    const stream = await getZaiClient().messages.create(
       {
         model: zaiOptions.model,
         max_tokens: zaiOptions.maxTokens,
