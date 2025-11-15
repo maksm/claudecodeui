@@ -271,7 +271,13 @@ const notificationSettingsDb = {
         'SELECT agent_completion, ci_completion, browser_notifications FROM notification_settings WHERE user_id = ?'
       )
       .get(userId);
-    return row || null;
+    if (!row) return null;
+    // Convert SQLite integers (0/1) to JavaScript booleans
+    return {
+      agent_completion: Boolean(row.agent_completion),
+      ci_completion: Boolean(row.ci_completion),
+      browser_notifications: Boolean(row.browser_notifications),
+    };
   },
 
   // Create or update notification settings for a user

@@ -13,6 +13,8 @@ const mockAuthMiddleware = (req, res, next) => {
 
 describe('Notification Settings', () => {
   let app;
+  let testUser;
+  let testUser2;
 
   beforeAll(async () => {
     // Initialize database with schema (using :memory: from test environment)
@@ -20,14 +22,30 @@ describe('Notification Settings', () => {
 
     // Create a test user for foreign key constraints
     const hashedPassword = 'test-password-hash';
-    userDb.createUser('testuser', hashedPassword);
+    testUser = userDb.createUser('testuser', hashedPassword);
+    console.log('Created test user:', testUser);
+
+    // Create a second test user for multi-user tests
+    testUser2 = userDb.createUser('testuser2', hashedPassword);
+    console.log('Created second test user:', testUser2);
+
+    // Verify users were created
+    const user = userDb.getUserById(testUser.id);
+    const user2 = userDb.getUserById(testUser2.id);
+    if (!user || !user2) {
+      throw new Error('Failed to create test users');
+    }
   });
 
   beforeEach(() => {
     // Create Express app with settings routes
     app = express();
     app.use(express.json());
-    app.use(mockAuthMiddleware);
+    // Use the actual user ID from the created test user
+    app.use((req, res, next) => {
+      req.user = { id: testUser.id, username: 'testuser' };
+      next();
+    });
     app.use('/api/settings', settingsRoutes);
 
     // Clear notification_settings before each test
@@ -47,7 +65,7 @@ describe('Notification Settings', () => {
 
     test('should return existing settings', async () => {
       // Create settings first
-      notificationSettingsDb.upsertSettings(1, {
+      notificationSettingsDb.upsertSettings(testUser.id, {
         agentCompletion: false,
         ciCompletion: true,
         browserNotifications: true,
@@ -77,7 +95,7 @@ describe('Notification Settings', () => {
       expect(response.body.success).toBe(true);
 
       // Verify settings were saved
-      const settings = notificationSettingsDb.getSettings(1);
+      const settings = notificationSettingsDb.getSettings(testUser.id);
       expect(settings).toEqual({
         agent_completion: true,
         ci_completion: false,
@@ -87,7 +105,7 @@ describe('Notification Settings', () => {
 
     test('should update existing notification settings', async () => {
       // Create initial settings
-      notificationSettingsDb.upsertSettings(1, {
+      notificationSettingsDb.upsertSettings(testUser.id, {
         agentCompletion: true,
         ciCompletion: true,
         browserNotifications: false,
@@ -106,7 +124,7 @@ describe('Notification Settings', () => {
       expect(response.body.success).toBe(true);
 
       // Verify settings were updated
-      const settings = notificationSettingsDb.getSettings(1);
+      const settings = notificationSettingsDb.getSettings(testUser.id);
       expect(settings).toEqual({
         agent_completion: false,
         ci_completion: false,
@@ -151,7 +169,7 @@ describe('Notification Settings', () => {
 
       expect(response.body.success).toBe(true);
 
-      const settings = notificationSettingsDb.getSettings(1);
+      const settings = notificationSettingsDb.getSettings(testUser.id);
       expect(settings).toEqual({
         agent_completion: false,
         ci_completion: false,
@@ -171,7 +189,7 @@ describe('Notification Settings', () => {
 
       expect(response.body.success).toBe(true);
 
-      const settings = notificationSettingsDb.getSettings(1);
+      const settings = notificationSettingsDb.getSettings(testUser.id);
       expect(settings).toEqual({
         agent_completion: true,
         ci_completion: true,
@@ -182,7 +200,7 @@ describe('Notification Settings', () => {
 
   describe('Database Operations', () => {
     test('should create settings for new user', () => {
-      const success = notificationSettingsDb.upsertSettings(1, {
+      const success = notificationSettingsDb.upsertSettings(testUser.id, {
         agentCompletion: true,
         ciCompletion: false,
         browserNotifications: true,
@@ -190,7 +208,7 @@ describe('Notification Settings', () => {
 
       expect(success).toBe(true);
 
-      const settings = notificationSettingsDb.getSettings(1);
+      const settings = notificationSettingsDb.getSettings(testUser.id);
       expect(settings).toEqual({
         agent_completion: true,
         ci_completion: false,
@@ -200,14 +218,14 @@ describe('Notification Settings', () => {
 
     test('should update settings for existing user', () => {
       // Create initial settings
-      notificationSettingsDb.upsertSettings(1, {
+      notificationSettingsDb.upsertSettings(testUser.id, {
         agentCompletion: true,
         ciCompletion: true,
         browserNotifications: false,
       });
 
       // Update settings
-      const success = notificationSettingsDb.upsertSettings(1, {
+      const success = notificationSettingsDb.upsertSettings(testUser.id, {
         agentCompletion: false,
         ciCompletion: true,
         browserNotifications: true,
@@ -215,7 +233,7 @@ describe('Notification Settings', () => {
 
       expect(success).toBe(true);
 
-      const settings = notificationSettingsDb.getSettings(1);
+      const settings = notificationSettingsDb.getSettings(testUser.id);
       expect(settings).toEqual({
         agent_completion: false,
         ci_completion: true,
@@ -230,14 +248,14 @@ describe('Notification Settings', () => {
 
     test('should enforce unique user_id constraint', () => {
       // Create settings
-      notificationSettingsDb.upsertSettings(1, {
+      notificationSettingsDb.upsertSettings(testUser.id, {
         agentCompletion: true,
         ciCompletion: true,
         browserNotifications: false,
       });
 
       // Try to create again - should update instead
-      const success = notificationSettingsDb.upsertSettings(1, {
+      const success = notificationSettingsDb.upsertSettings(testUser.id, {
         agentCompletion: false,
         ciCompletion: false,
         browserNotifications: true,
@@ -246,7 +264,7 @@ describe('Notification Settings', () => {
       expect(success).toBe(true);
 
       // Should have only one record
-      const settings = notificationSettingsDb.getSettings(1);
+      const settings = notificationSettingsDb.getSettings(testUser.id);
       expect(settings).toEqual({
         agent_completion: false,
         ci_completion: false,
@@ -256,21 +274,21 @@ describe('Notification Settings', () => {
 
     test('should handle multiple users independently', () => {
       // Create settings for user 1
-      notificationSettingsDb.upsertSettings(1, {
+      notificationSettingsDb.upsertSettings(testUser.id, {
         agentCompletion: true,
         ciCompletion: false,
         browserNotifications: false,
       });
 
       // Create settings for user 2
-      notificationSettingsDb.upsertSettings(2, {
+      notificationSettingsDb.upsertSettings(testUser2.id, {
         agentCompletion: false,
         ciCompletion: true,
         browserNotifications: true,
       });
 
       // Verify user 1 settings
-      const settings1 = notificationSettingsDb.getSettings(1);
+      const settings1 = notificationSettingsDb.getSettings(testUser.id);
       expect(settings1).toEqual({
         agent_completion: true,
         ci_completion: false,
@@ -278,7 +296,7 @@ describe('Notification Settings', () => {
       });
 
       // Verify user 2 settings
-      const settings2 = notificationSettingsDb.getSettings(2);
+      const settings2 = notificationSettingsDb.getSettings(testUser2.id);
       expect(settings2).toEqual({
         agent_completion: false,
         ci_completion: true,
