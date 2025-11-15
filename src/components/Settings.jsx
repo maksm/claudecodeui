@@ -2856,7 +2856,8 @@ function NotificationsTab() {
                   Browser notifications are not supported in your browser
                 </div>
               )}
-              {Notification.permission === 'denied' && (
+              {/* eslint-disable-next-line no-undef */}
+              {'Notification' in window && Notification.permission === 'denied' && (
                 <div className="text-xs text-red-600 dark:text-red-400 mt-1">
                   Notifications are blocked. Please enable them in your browser settings.
                 </div>
