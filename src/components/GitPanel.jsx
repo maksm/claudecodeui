@@ -273,6 +273,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
         // Refresh status after successful fetch
         fetchGitStatus();
         fetchRemoteStatus();
+        checkRemoteChanges(); // Check remote changes after fetch
       } else {
         console.error('Fetch failed:', data.error);
       }
@@ -299,6 +300,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
         // Refresh status after successful pull
         fetchGitStatus();
         fetchRemoteStatus();
+        checkRemoteChanges(); // Check remote changes again after pull
       } else {
         console.error('Pull failed:', data.error);
         // TODO: Show user-friendly error message
@@ -326,6 +328,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
         // Refresh status after successful push
         fetchGitStatus();
         fetchRemoteStatus();
+        checkRemoteChanges(); // Check remote changes after push
         checkForPR(); // Check for PR after pushing
       } else {
         console.error('Push failed:', data.error);
@@ -355,6 +358,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
         // Refresh status after successful publish
         fetchGitStatus();
         fetchRemoteStatus();
+        checkRemoteChanges(); // Check remote changes after publish
         checkForPR(); // Check for PR after publishing
       } else {
         console.error('Publish failed:', data.error);
@@ -1106,16 +1110,21 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
             </>
           )}
 
-          {/* Remote Changes Indicator */}
-          {remoteChangesStatus?.remoteChanges === true && (
+          {/* Remote Changes Indicator - Show Pull button when remote changes detected */}
+          {remoteChangesStatus?.remoteChanges === true && remoteChangesStatus?.hasUpstream && (
             <button
-              onClick={checkRemoteChanges}
-              disabled={isCheckingRemoteChanges}
-              className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
-              title="Remote changes detected - Click to check again"
+              onClick={() =>
+                setConfirmAction({
+                  type: 'pull',
+                  message: `Pull remote changes from ${remoteChangesStatus.remoteName}/${remoteChangesStatus.branch}?\n\nRemote commit: ${remoteChangesStatus.remoteHead?.substring(0, 7)}\nLocal commit: ${remoteChangesStatus.localHead?.substring(0, 7)}`,
+                })
+              }
+              disabled={isPulling}
+              className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1 animate-pulse"
+              title={`Pull remote changes from ${remoteChangesStatus.remoteName}/${remoteChangesStatus.branch}`}
             >
-              <Info className={`w-3 h-3 ${isCheckingRemoteChanges ? 'animate-pulse' : ''}`} />
-              <span>{isCheckingRemoteChanges ? 'Checking...' : 'Remote Changes'}</span>
+              <Download className={`w-3 h-3 ${isPulling ? 'animate-spin' : ''}`} />
+              <span>{isPulling ? 'Pulling...' : 'Pull Changes'}</span>
             </button>
           )}
 
