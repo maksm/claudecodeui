@@ -1,14 +1,14 @@
 name: Docker Build and Publish
 
-# Disabled automatic builds on main - only run on tags and manual trigger
-# Re-enable after Docker Hub credentials are configured
+# Builds Docker images on:
+# - Push to main branch (latest tag + git SHA)
+# - Version tags (semantic versioning)
+# - Manual workflow dispatch
 on:
-  workflow_dispatch: # Manual trigger only
+  workflow_dispatch: # Manual trigger
   push:
-    # branches: [ main ]  # Disabled: requires Docker Hub secrets
-    tags: ['v*'] # Still run on version tags
-  # pull_request:
-  #   branches: [ main ]
+    branches: [main]
+    tags: ['v*'] # Version tags (e.g., v1.2.3)
 
 jobs:
   build:
