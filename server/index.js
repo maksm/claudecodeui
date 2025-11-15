@@ -98,6 +98,7 @@ import ciRoutes from './routes/ci.js';
 import { initializeDatabase } from './database/db.js';
 import { validateApiKey, authenticateToken, authenticateWebSocket } from './middleware/auth.js';
 import { validateEnvironment } from './utils/validateEnv.js';
+import { getProviderStats, getDefaultProvider } from './provider-router.js';
 
 // File system watcher for projects folder
 let projectsWatcher = null;
@@ -280,6 +281,36 @@ app.get('/health', (req, res) => {
   res.json({
     status: 'ok',
     timestamp: new Date().toISOString(),
+  });
+});
+
+// Server status endpoint with monitoring information (no authentication required)
+app.get('/api/status', (req, res) => {
+  const providerStats = getProviderStats();
+  const uptime = process.uptime();
+
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: {
+      seconds: Math.floor(uptime),
+      formatted: `${Math.floor(uptime / 3600)}h ${Math.floor((uptime % 3600) / 60)}m ${Math.floor(uptime % 60)}s`,
+    },
+    memory: {
+      used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+      total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+      unit: 'MB',
+    },
+    sessions: {
+      active: providerStats.totalSessions,
+      byProvider: providerStats.byProvider,
+      defaultProvider: providerStats.defaultProvider,
+    },
+    environment: {
+      nodeVersion: process.version,
+      platform: process.platform,
+      port: PORT,
+    },
   });
 });
 

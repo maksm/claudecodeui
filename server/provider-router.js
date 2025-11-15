@@ -142,6 +142,7 @@ function unmapSession(sessionId) {
 function cleanupStaleSessions() {
   const now = Date.now();
   let cleanedCount = 0;
+  const totalSessions = sessionProviderMap.size;
 
   for (const [sessionId, timestamp] of sessionTimestamps.entries()) {
     if (now - timestamp > SESSION_TTL) {
@@ -151,11 +152,21 @@ function cleanupStaleSessions() {
     }
   }
 
+  // Log stats periodically, even if no cleanup occurred
   if (cleanedCount > 0) {
     console.log(
       `🧹 [Provider Router] Cleaned up ${cleanedCount} stale sessions. ` +
-        `Active sessions: ${sessionProviderMap.size}`
+        `Active sessions: ${sessionProviderMap.size}/${MAX_SESSION_MAP_SIZE}`
     );
+  } else if (totalSessions > 0) {
+    // Log active session count every hour if there are active sessions
+    const hoursSinceStart = Math.floor((now - (cleanupInterval._idleStart || now)) / (60 * 60 * 1000));
+    if (hoursSinceStart % 6 === 0) { // Every ~6 cleanup cycles (1 hour)
+      console.log(
+        `📊 [Provider Router] Active sessions: ${totalSessions}/${MAX_SESSION_MAP_SIZE} ` +
+          `(TTL: ${SESSION_TTL / 1000 / 60} min)`
+      );
+    }
   }
 }
 
