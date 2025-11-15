@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Project Management - Critical Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('#root > *', { timeout: 10000 });
   });
 
   test('should display projects list', async ({ page }) => {

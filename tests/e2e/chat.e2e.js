@@ -61,7 +61,7 @@ test.describe('Chat Interface - Critical Tests', () => {
 
     // Reload page
     await page.reload();
-    await page.waitForLoadState('networkidle');
+    await page.waitForSelector('#root > *', { timeout: 10000 });
 
     // Message should still be visible in history
     await expect(page.locator('text=Test message for history')).toBeVisible({ timeout: 10000 });

@@ -55,7 +55,7 @@ test.describe('Authentication - Critical Tests', () => {
 
     if (isLoggedIn) {
       await page.reload();
-      await page.waitForLoadState('networkidle');
+      await page.waitForSelector('#root > *', { timeout: 10000 });
 
       // Should still be logged in
       await expect(mainInterface).toBeVisible({ timeout: 10000 });
