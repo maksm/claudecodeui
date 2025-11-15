@@ -5718,6 +5718,7 @@ function ChatInterface({
               <input {...getInputProps()} />
               <textarea
                 ref={textareaRef}
+                data-testid="message-input"
                 value={input}
                 onChange={handleInputChange}
                 onClick={handleTextareaClick}
@@ -5787,6 +5788,7 @@ function ChatInterface({
               {/* Send button */}
               <button
                 type="submit"
+                data-testid="send-button"
                 disabled={!input.trim() || isLoading}
                 onMouseDown={e => {
                   e.preventDefault();
