@@ -429,6 +429,7 @@ jobs:
 
       - name: Upload comprehensive reports
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: comprehensive-test-reports
           path: |
@@ -437,6 +438,7 @@ jobs:
             test-results/visual-comparisons/
             test-results/visual-baselines/
           retention-days: 30
+          if-no-files-found: warn
 
   test-summary:
     name: Test Summary
@@ -446,6 +448,7 @@ jobs:
     steps:
       - name: Download comprehensive reports
         uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: comprehensive-test-reports
 
