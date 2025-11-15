@@ -40,6 +40,11 @@ async function resolveWorkingDirectory(projectPath, requestedDir) {
 
 // Helper function to get the actual project path
 async function getActualProjectPath(projectName) {
+  // Validate project name before processing
+  if (!projectName || typeof projectName !== 'string' || projectName.trim() === '') {
+    throw new Error('Project name is required and must be a non-empty string');
+  }
+
   const projectPath = await extractProjectDirectory(projectName);
   const validation = await validatePathComprehensive(projectPath, {
     checkSensitive: true,
@@ -66,8 +71,8 @@ async function getActualProjectPath(projectName) {
 router.get('/workflows', async (req, res) => {
   const { project } = req.query;
 
-  if (!project) {
-    return res.status(400).json({ error: 'Project name is required' });
+  if (!project || typeof project !== 'string' || project.trim() === '') {
+    return res.status(400).json({ error: 'Project name is required and must be a non-empty string' });
   }
 
   try {
@@ -114,8 +119,8 @@ router.get('/workflow/:workflowFile', async (req, res) => {
   const { project } = req.query;
   const { workflowFile } = req.params;
 
-  if (!project) {
-    return res.status(400).json({ error: 'Project name is required' });
+  if (!project || typeof project !== 'string' || project.trim() === '') {
+    return res.status(400).json({ error: 'Project name is required and must be a non-empty string' });
   }
 
   try {
@@ -163,8 +168,12 @@ router.get('/workflow/:workflowFile', async (req, res) => {
 router.post('/run', async (req, res) => {
   const { project, workflowFile, selectedSteps, env } = req.body;
 
-  if (!project || !workflowFile) {
-    return res.status(400).json({ error: 'Project and workflow file are required' });
+  if (!project || typeof project !== 'string' || project.trim() === '') {
+    return res.status(400).json({ error: 'Project name is required and must be a non-empty string' });
+  }
+
+  if (!workflowFile) {
+    return res.status(400).json({ error: 'Workflow file is required' });
   }
 
   try {
@@ -609,8 +618,8 @@ router.get('/run/:runId', async (req, res) => {
 router.get('/runs', async (req, res) => {
   const { project } = req.query;
 
-  if (!project) {
-    return res.status(400).json({ error: 'Project name is required' });
+  if (!project || typeof project !== 'string' || project.trim() === '') {
+    return res.status(400).json({ error: 'Project name is required and must be a non-empty string' });
   }
 
   const projectRuns = Array.from(activeRuns.values())
@@ -657,8 +666,8 @@ router.post('/run/:runId/cancel', async (req, res) => {
 router.delete('/runs', async (req, res) => {
   const { project } = req.query;
 
-  if (!project) {
-    return res.status(400).json({ error: 'Project name is required' });
+  if (!project || typeof project !== 'string' || project.trim() === '') {
+    return res.status(400).json({ error: 'Project name is required and must be a non-empty string' });
   }
 
   // Remove completed runs for the project
