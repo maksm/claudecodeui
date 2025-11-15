@@ -22,6 +22,7 @@
     "url": "https://github.com/siteboon/claudecodeui/issues"
   },
   "scripts": {
+    "setup": "node scripts/setup.js",
     "dev": "concurrently --kill-others \"npm run server:dev\" \"npm run client\"",
     "server": "node server/index.js",
     "server:dev": "nodemon --watch server --watch .env server/index.js",
