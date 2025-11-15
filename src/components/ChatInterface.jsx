@@ -2198,7 +2198,9 @@ function ChatInterface({
   const [chatMessages, setChatMessages] = useState(() => {
     if (typeof window !== 'undefined' && selectedProject && selectedSession) {
       // Scope localStorage to both project and session for proper isolation
-      const saved = safeLocalStorage.getItem(`chat_messages_${selectedProject.name}_${selectedSession.id}`);
+      const saved = safeLocalStorage.getItem(
+        `chat_messages_${selectedProject.name}_${selectedSession.id}`
+      );
       return saved ? JSON.parse(saved) : [];
     }
     return [];
@@ -3446,7 +3448,7 @@ function ChatInterface({
   useEffect(() => {
     return () => {
       // Clear all pending timers
-      streamBuffersRef.current.forEach((buffers) => {
+      streamBuffersRef.current.forEach(buffers => {
         if (buffers?.timer) {
           clearTimeout(buffers.timer);
         }
@@ -3679,11 +3681,19 @@ function ChatInterface({
                   if (!chunk) return;
 
                   // Only update chat if this is still the active session
-                  if (currentSessionIdRef.current === sessionId || (!currentSessionIdRef.current && sessionId === 'default')) {
+                  if (
+                    currentSessionIdRef.current === sessionId ||
+                    (!currentSessionIdRef.current && sessionId === 'default')
+                  ) {
                     setChatMessages(prev => {
                       const updated = [...prev];
                       const last = updated[updated.length - 1];
-                      if (last && last.type === 'assistant' && !last.isToolUse && last.isStreaming) {
+                      if (
+                        last &&
+                        last.type === 'assistant' &&
+                        !last.isToolUse &&
+                        last.isStreaming
+                      ) {
                         last.content = (last.content || '') + chunk;
                       } else {
                         updated.push({
@@ -3888,28 +3898,51 @@ function ChatInterface({
           {
             const cleaned = String(latestMessage.data || '');
             if (cleaned.trim()) {
-              streamBufferRef.current += streamBufferRef.current ? `\n${cleaned}` : cleaned;
-              if (!streamTimerRef.current) {
-                streamTimerRef.current = setTimeout(() => {
-                  const chunk = streamBufferRef.current;
-                  streamBufferRef.current = '';
-                  streamTimerRef.current = null;
+              // Session-scoped streaming: Each session gets its own buffer
+              const sessionId = activeSessionId || 'default';
+
+              // Get or create session buffer
+              let sessionBuffers = streamBuffersRef.current.get(sessionId);
+              if (!sessionBuffers) {
+                sessionBuffers = { buffer: '', timer: null };
+                streamBuffersRef.current.set(sessionId, sessionBuffers);
+              }
+
+              sessionBuffers.buffer += sessionBuffers.buffer ? `\n${cleaned}` : cleaned;
+
+              if (!sessionBuffers.timer) {
+                sessionBuffers.timer = setTimeout(() => {
+                  const chunk = sessionBuffers.buffer;
+                  sessionBuffers.buffer = '';
+                  sessionBuffers.timer = null;
                   if (!chunk) return;
-                  setChatMessages(prev => {
-                    const updated = [...prev];
-                    const last = updated[updated.length - 1];
-                    if (last && last.type === 'assistant' && !last.isToolUse && last.isStreaming) {
-                      last.content = last.content ? `${last.content}\n${chunk}` : chunk;
-                    } else {
-                      updated.push({
-                        type: 'assistant',
-                        content: chunk,
-                        timestamp: new Date(),
-                        isStreaming: true,
-                      });
-                    }
-                    return updated;
-                  });
+
+                  // Only update chat if this is still the active session
+                  if (
+                    currentSessionIdRef.current === sessionId ||
+                    (!currentSessionIdRef.current && sessionId === 'default')
+                  ) {
+                    setChatMessages(prev => {
+                      const updated = [...prev];
+                      const last = updated[updated.length - 1];
+                      if (
+                        last &&
+                        last.type === 'assistant' &&
+                        !last.isToolUse &&
+                        last.isStreaming
+                      ) {
+                        last.content = last.content ? `${last.content}\n${chunk}` : chunk;
+                      } else {
+                        updated.push({
+                          type: 'assistant',
+                          content: chunk,
+                          timestamp: new Date(),
+                          isStreaming: true,
+                        });
+                      }
+                      return updated;
+                    });
+                  }
                 }, 100);
               }
             }
@@ -4033,12 +4066,18 @@ function ChatInterface({
               const r = latestMessage.data || {};
               const textResult = typeof r.result === 'string' ? r.result : '';
               // Flush buffered deltas before finalizing
-              if (streamTimerRef.current) {
-                clearTimeout(streamTimerRef.current);
-                streamTimerRef.current = null;
+              const sessionId = activeSessionId || 'default';
+              const sessionBuffers = streamBuffersRef.current.get(sessionId);
+              let pendingChunk = '';
+
+              if (sessionBuffers) {
+                if (sessionBuffers.timer) {
+                  clearTimeout(sessionBuffers.timer);
+                  sessionBuffers.timer = null;
+                }
+                pendingChunk = sessionBuffers.buffer;
+                sessionBuffers.buffer = '';
               }
-              const pendingChunk = streamBufferRef.current;
-              streamBufferRef.current = '';
 
               setChatMessages(prev => {
                 const updated = [...prev];
@@ -4097,28 +4136,51 @@ function ChatInterface({
               .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
               .trim();
             if (cleaned) {
-              streamBufferRef.current += streamBufferRef.current ? `\n${cleaned}` : cleaned;
-              if (!streamTimerRef.current) {
-                streamTimerRef.current = setTimeout(() => {
-                  const chunk = streamBufferRef.current;
-                  streamBufferRef.current = '';
-                  streamTimerRef.current = null;
+              // Session-scoped streaming: Each session gets its own buffer
+              const sessionId = activeSessionId || 'default';
+
+              // Get or create session buffer
+              let sessionBuffers = streamBuffersRef.current.get(sessionId);
+              if (!sessionBuffers) {
+                sessionBuffers = { buffer: '', timer: null };
+                streamBuffersRef.current.set(sessionId, sessionBuffers);
+              }
+
+              sessionBuffers.buffer += sessionBuffers.buffer ? `\n${cleaned}` : cleaned;
+
+              if (!sessionBuffers.timer) {
+                sessionBuffers.timer = setTimeout(() => {
+                  const chunk = sessionBuffers.buffer;
+                  sessionBuffers.buffer = '';
+                  sessionBuffers.timer = null;
                   if (!chunk) return;
-                  setChatMessages(prev => {
-                    const updated = [...prev];
-                    const last = updated[updated.length - 1];
-                    if (last && last.type === 'assistant' && !last.isToolUse && last.isStreaming) {
-                      last.content = last.content ? `${last.content}\n${chunk}` : chunk;
-                    } else {
-                      updated.push({
-                        type: 'assistant',
-                        content: chunk,
-                        timestamp: new Date(),
-                        isStreaming: true,
-                      });
-                    }
-                    return updated;
-                  });
+
+                  // Only update chat if this is still the active session
+                  if (
+                    currentSessionIdRef.current === sessionId ||
+                    (!currentSessionIdRef.current && sessionId === 'default')
+                  ) {
+                    setChatMessages(prev => {
+                      const updated = [...prev];
+                      const last = updated[updated.length - 1];
+                      if (
+                        last &&
+                        last.type === 'assistant' &&
+                        !last.isToolUse &&
+                        last.isStreaming
+                      ) {
+                        last.content = last.content ? `${last.content}\n${chunk}` : chunk;
+                      } else {
+                        updated.push({
+                          type: 'assistant',
+                          content: chunk,
+                          timestamp: new Date(),
+                          isStreaming: true,
+                        });
+                      }
+                      return updated;
+                    });
+                  }
                 }, 100);
               }
             }
@@ -4181,7 +4243,9 @@ function ChatInterface({
           // Clear persisted chat messages after successful completion
           if (selectedProject && completedSessionId && latestMessage.exitCode === 0) {
             // Scope localStorage to both project and session for proper isolation
-            safeLocalStorage.removeItem(`chat_messages_${selectedProject.name}_${completedSessionId}`);
+            safeLocalStorage.removeItem(
+              `chat_messages_${selectedProject.name}_${completedSessionId}`
+            );
           }
           break;
         }
