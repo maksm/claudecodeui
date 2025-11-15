@@ -22,8 +22,9 @@
     "url": "https://github.com/siteboon/claudecodeui/issues"
   },
   "scripts": {
-    "dev": "concurrently --kill-others \"npm run server\" \"npm run client\"",
+    "dev": "concurrently --kill-others \"npm run server:dev\" \"npm run client\"",
     "server": "node server/index.js",
+    "server:dev": "nodemon --watch server --watch .env server/index.js",
     "client": "vite --host",
     "build": "vite build",
     "preview": "vite preview",
@@ -168,6 +169,7 @@
     "lint-staged": "^16.2.6",
     "msw": "^2.12.1",
     "node-gyp": "^10.0.0",
+    "nodemon": "^3.1.11",
     "postcss": "^8.4.32",
     "prettier": "^3.6.2",
     "release-it": "^19.0.5",
