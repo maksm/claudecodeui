@@ -35,6 +35,18 @@ import { api, authenticatedFetch } from '../utils/api';
 import Fuse from 'fuse.js';
 import CommandMenu from './CommandMenu';
 
+// Dynamically load KaTeX CSS on first render
+let katexCssLoaded = false;
+function loadKatexCss() {
+  if (katexCssLoaded || document.getElementById('katex-css')) return;
+  katexCssLoaded = true;
+  const link = document.createElement('link');
+  link.id = 'katex-css';
+  link.rel = 'stylesheet';
+  link.href = '/node_modules/katex/dist/katex.min.css';
+  document.head.appendChild(link);
+}
+
 // Helper function to decode HTML entities in text
 function decodeHtmlEntities(text) {
   if (!text) return text;
@@ -2265,6 +2277,12 @@ function ChatInterface({
   const [claudeBackend, setClaudeBackend] = useState(() => {
     return localStorage.getItem('claude-backend') || 'claude';
   });
+
+  // Load KaTeX CSS dynamically on component mount
+  useEffect(() => {
+    loadKatexCss();
+  }, []);
+
   // Load permission mode for the current session
   useEffect(() => {
     if (selectedSession?.id) {

@@ -26,7 +26,7 @@ export default defineConfig(({ command, mode }) => {
     },
     build: {
       outDir: 'dist',
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 300, // Reduced from 1000 to industry standard for better bundle monitoring
       rollupOptions: {
         output: {
           manualChunks: {
