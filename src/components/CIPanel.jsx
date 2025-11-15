@@ -124,7 +124,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   }, [activeRun, selectedWorkflow, previousRunStatus, notifyCICompletion]);
 
   const fetchChangedFiles = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject?.name) return;
 
     try {
       const response = await authenticatedFetch(
@@ -147,7 +147,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   };
 
   const fetchWorkflows = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject?.name) return;
 
     setIsLoading(true);
     try {
@@ -158,6 +158,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
 
       if (data.error) {
         console.error('Error fetching workflows:', data.error);
+        setWorkflows([]);
       } else {
         setWorkflows(data.workflows || []);
         // Auto-select first workflow
@@ -167,6 +168,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
       }
     } catch (error) {
       console.error('Error fetching workflows:', error);
+      setWorkflows([]);
     } finally {
       setIsLoading(false);
     }
@@ -201,7 +203,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   };
 
   const fetchRuns = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject?.name) return;
 
     try {
       const response = await authenticatedFetch(
@@ -302,7 +304,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   };
 
   const clearRuns = async () => {
-    if (!selectedProject) return;
+    if (!selectedProject?.name) return;
 
     try {
       const response = await authenticatedFetch(
@@ -428,7 +430,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
     }
   };
 
-  if (!selectedProject) {
+  if (!selectedProject?.name) {
     return (
       <div className="h-full flex items-center justify-center p-8 text-center">
         <div className="text-gray-500 dark:text-gray-400">
