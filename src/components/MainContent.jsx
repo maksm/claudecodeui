@@ -17,6 +17,7 @@ import FileTree from './FileTree';
 import CodeEditor from './CodeEditor';
 import StandaloneShell from './StandaloneShell';
 import GitPanel from './GitPanel';
+import CIPanel from './CIPanel';
 import ErrorBoundary from './ErrorBoundary';
 import ClaudeLogo from './ClaudeLogo';
 import CursorLogo from './CursorLogo';
@@ -373,9 +374,11 @@ function MainContent({
                         ? 'Project Files'
                         : activeTab === 'git'
                           ? 'Source Control'
-                          : activeTab === 'tasks' && shouldShowTasksTab
-                            ? 'TaskMaster'
-                            : 'Project'}
+                          : activeTab === 'ci'
+                            ? 'CI/CD'
+                            : activeTab === 'tasks' && shouldShowTasksTab
+                              ? 'TaskMaster'
+                              : 'Project'}
                     </h2>
                     <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                       {selectedProject.displayName}
@@ -497,6 +500,33 @@ function MainContent({
                   </span>
                 </button>
               </Tooltip>
+              <Tooltip content="CI/CD" position="bottom">
+                <button
+                  onClick={() => setActiveTab('ci')}
+                  className={`relative px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium rounded-md transition-all duration-200 ${
+                    activeTab === 'ci'
+                      ? 'bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <span className="flex items-center gap-1 sm:gap-1.5">
+                    <svg
+                      className="w-3 sm:w-3.5 h-3 sm:h-3.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle cx="12" cy="12" r="10" strokeWidth={2} />
+                      <polygon
+                        points="10 8 16 12 10 16"
+                        fill="currentColor"
+                        strokeWidth={2}
+                      />
+                    </svg>
+                    <span className="hidden md:hidden lg:inline">CI/CD</span>
+                  </span>
+                </button>
+              </Tooltip>
               {shouldShowTasksTab && (
                 <Tooltip content="Tasks" position="bottom">
                   <button
@@ -596,6 +626,24 @@ function MainContent({
               selectedProject={selectedProject}
               isMobile={isMobile}
               onFileOpen={handleFileOpen}
+            />
+          </div>
+          <div className={`h-full overflow-hidden ${activeTab === 'ci' ? 'block' : 'hidden'}`}>
+            <CIPanel
+              selectedProject={selectedProject}
+              isMobile={isMobile}
+              onSendToChat={(message) => {
+                setActiveTab('chat');
+                // Use a small delay to ensure chat tab is rendered before sending message
+                setTimeout(() => {
+                  const textarea = document.querySelector('textarea[placeholder*="Ask"]');
+                  if (textarea) {
+                    textarea.value = message;
+                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                    textarea.focus();
+                  }
+                }, 100);
+              }}
             />
           </div>
           {shouldShowTasksTab && (

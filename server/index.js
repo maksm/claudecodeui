@@ -94,6 +94,7 @@ import commandsRoutes from './routes/commands.js';
 import settingsRoutes from './routes/settings.js';
 import agentRoutes from './routes/agent.js';
 import projectsRoutes from './routes/projects.js';
+import ciRoutes from './routes/ci.js';
 import { initializeDatabase } from './database/db.js';
 import { validateApiKey, authenticateToken, authenticateWebSocket } from './middleware/auth.js';
 
@@ -292,6 +293,9 @@ app.use('/api/projects', authenticateToken, projectsRoutes);
 
 // Git API Routes (protected)
 app.use('/api/git', authenticateToken, gitRoutes);
+
+// CI API Routes (protected)
+app.use('/api/ci', authenticateToken, ciRoutes);
 
 // MCP API Routes (protected)
 app.use('/api/mcp', authenticateToken, mcpRoutes);
