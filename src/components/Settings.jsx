@@ -2709,8 +2709,8 @@ function NotificationsTab() {
     setLocalSettings(settings);
   }, [settings]);
 
-  const handleToggle = (key) => {
-    setLocalSettings((prev) => ({
+  const handleToggle = key => {
+    setLocalSettings(prev => ({
       ...prev,
       [key]: !prev[key],
     }));
@@ -2721,7 +2721,9 @@ function NotificationsTab() {
       // Request permission first
       const granted = await requestBrowserPermission();
       if (!granted) {
-        alert('Browser notifications require permission. Please allow notifications in your browser settings.');
+        alert(
+          'Browser notifications require permission. Please allow notifications in your browser settings.'
+        );
         return;
       }
     }
@@ -2789,9 +2791,7 @@ function NotificationsTab() {
             <button
               onClick={() => handleToggle('agentCompletion')}
               className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
-                localSettings.agentCompletion
-                  ? 'bg-blue-600'
-                  : 'bg-gray-200 dark:bg-gray-700'
+                localSettings.agentCompletion ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
               }`}
               role="switch"
               aria-checked={localSettings.agentCompletion}
@@ -2822,9 +2822,7 @@ function NotificationsTab() {
             <button
               onClick={() => handleToggle('ciCompletion')}
               className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
-                localSettings.ciCompletion
-                  ? 'bg-blue-600'
-                  : 'bg-gray-200 dark:bg-gray-700'
+                localSettings.ciCompletion ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
               }`}
               role="switch"
               aria-checked={localSettings.ciCompletion}
@@ -2867,9 +2865,7 @@ function NotificationsTab() {
               onClick={handleBrowserNotificationToggle}
               disabled={!('Notification' in window)}
               className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
-                localSettings.browserNotifications
-                  ? 'bg-blue-600'
-                  : 'bg-gray-200 dark:bg-gray-700'
+                localSettings.browserNotifications ? 'bg-blue-600' : 'bg-gray-200 dark:bg-gray-700'
               } ${!('Notification' in window) ? 'opacity-50 cursor-not-allowed' : ''}`}
               role="switch"
               aria-checked={localSettings.browserNotifications}

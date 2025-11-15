@@ -37,6 +37,20 @@ describe('Notification Settings', () => {
     }
   });
 
+  afterAll(async () => {
+    // Close database connection to allow Jest to exit gracefully
+    if (db && typeof db.close === 'function') {
+      try {
+        db.close();
+        // Small delay to ensure cleanup completes
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (error) {
+        // Database might already be closed, ignore error
+        console.log('Database cleanup:', error.message);
+      }
+    }
+  });
+
   beforeEach(() => {
     // Create Express app with settings routes
     app = express();

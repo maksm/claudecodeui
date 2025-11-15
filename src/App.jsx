@@ -1103,7 +1103,10 @@ function App() {
                   >
                     <Routes>
                       <Route path="/" element={<AppContentWithSessionManager />} />
-                      <Route path="/session/:sessionId" element={<AppContentWithSessionManager />} />
+                      <Route
+                        path="/session/:sessionId"
+                        element={<AppContentWithSessionManager />}
+                      />
                     </Routes>
                   </Router>
                 </ProtectedRoute>
