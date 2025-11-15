@@ -517,11 +517,7 @@ function MainContent({
                       viewBox="0 0 24 24"
                     >
                       <circle cx="12" cy="12" r="10" strokeWidth={2} />
-                      <polygon
-                        points="10 8 16 12 10 16"
-                        fill="currentColor"
-                        strokeWidth={2}
-                      />
+                      <polygon points="10 8 16 12 10 16" fill="currentColor" strokeWidth={2} />
                     </svg>
                     <span className="hidden md:hidden lg:inline">CI/CD</span>
                   </span>
@@ -577,7 +573,7 @@ function MainContent({
       </div>
 
       {/* Content Area with Right Sidebar */}
-      <div className="flex-1 flex min-h-0 overflow-hidden">
+      <div className="flex-1 flex min-h-0 overflow-hidden pb-16 sm:pb-0">
         {/* Main Content */}
         <div
           className={`flex-1 flex flex-col min-h-0 overflow-hidden ${editingFile ? 'mr-0' : ''} ${editorExpanded ? 'hidden' : ''}`}
@@ -631,8 +627,7 @@ function MainContent({
           <div className={`h-full overflow-hidden ${activeTab === 'ci' ? 'block' : 'hidden'}`}>
             <CIPanel
               selectedProject={selectedProject}
-              isMobile={isMobile}
-              onSendToChat={(message) => {
+              onSendToChat={message => {
                 setActiveTab('chat');
                 // Use a small delay to ensure chat tab is rendered before sending message
                 setTimeout(() => {

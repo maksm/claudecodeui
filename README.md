@@ -192,6 +192,15 @@ npm run dev
 
 The application will start at the port you specified in your .env
 
+#### Optional Zai Provider
+
+The Zai backend is completely optional. If you leave the `ZAI_*` variables unset
+in `.env`, the server will still boot and the Claude backend remains available.
+Only when you explicitly switch the backend to `zai` will the server attempt to
+load `ZAI_API_KEY` (falling back to `ANTHROPIC_API_KEY` with a warning). Refer
+to `.env.example` for the available knobs (`ZAI_API_KEY`, `ZAI_BASE_URL`,
+`ZAI_MODEL`).
+
 5. **Open your browser:**
    - Development: `http://localhost:3001`
 
