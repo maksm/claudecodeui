@@ -3,6 +3,8 @@ import { test, expect } from '@playwright/test';
 test.describe('Authentication - Critical Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+    await page.waitForSelector('.bg-background', { timeout: 10000 });
   });
 
   test('should load application', async ({ page }) => {
