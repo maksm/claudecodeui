@@ -34,9 +34,12 @@ const MAX_SESSION_MAP_SIZE = parseInt(process.env.MAX_SESSION_MAP_SIZE) || 1000;
 let defaultProvider = process.env.DEFAULT_PROVIDER || PROVIDERS.CLAUDE;
 
 // Cleanup interval for stale sessions
-const cleanupInterval = setInterval(() => {
-  cleanupStaleSessions();
-}, 10 * 60 * 1000); // Run every 10 minutes
+const cleanupInterval = setInterval(
+  () => {
+    cleanupStaleSessions();
+  },
+  10 * 60 * 1000
+); // Run every 10 minutes
 
 // Ensure cleanup runs on process exit
 process.on('SIGINT', () => {
@@ -93,9 +96,9 @@ function mapSessionToProvider(sessionId, provider) {
   // Enforce maximum size limit with LRU eviction
   if (sessionProviderMap.size >= MAX_SESSION_MAP_SIZE) {
     // Find and remove oldest session
-    const oldestSession = Array.from(sessionTimestamps.entries()).sort((a, b) => a[1] - b[1])[0]?.[
-      0
-    ];
+    const oldestSession = Array.from(sessionTimestamps.entries()).sort(
+      (a, b) => a[1] - b[1]
+    )[0]?.[0];
 
     if (oldestSession) {
       console.warn(

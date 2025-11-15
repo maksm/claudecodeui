@@ -1,19 +1,19 @@
 # High Priority Issues - Code Review
 
-This document contains detailed high-priority issues identified during code review of changes between origin and upstream.
+This document contains detailed high-priority issues identified during code
+review of changes between origin and upstream.
 
 ---
 
 ## Issue #1: API Key Fallback Security Concern
 
-**Priority:** 🔴 High
-**Type:** Security
-**Component:** Zai SDK Integration
+**Priority:** 🔴 High **Type:** Security **Component:** Zai SDK Integration
 **File:** `server/zai-sdk.js:24`
 
 ### Description
 
-The Zai SDK configuration uses a fallback pattern that could lead to unintended API usage and potential security issues:
+The Zai SDK configuration uses a fallback pattern that could lead to unintended
+API usage and potential security issues:
 
 ```javascript
 const zaiClient = new Anthropic({
@@ -24,9 +24,13 @@ const zaiClient = new Anthropic({
 
 ### Problem
 
-1. **Unintended Provider Usage**: If `ZAI_API_KEY` is not set, the code silently falls back to `ANTHROPIC_API_KEY`, which may route requests to the wrong provider
-2. **Cost Implications**: Using the wrong API key could result in unexpected billing
-3. **Security Risk**: API keys are provider-specific and should not be interchangeable
+1. **Unintended Provider Usage**: If `ZAI_API_KEY` is not set, the code silently
+   falls back to `ANTHROPIC_API_KEY`, which may route requests to the wrong
+   provider
+2. **Cost Implications**: Using the wrong API key could result in unexpected
+   billing
+3. **Security Risk**: API keys are provider-specific and should not be
+   interchangeable
 4. **Silent Failures**: No warning is logged when falling back to the wrong key
 
 ### Impact
@@ -39,16 +43,22 @@ const zaiClient = new Anthropic({
 ### Recommended Solution
 
 **Option 1: Fail Fast (Recommended)**
+
 ```javascript
 const zaiClient = new Anthropic({
-  apiKey: process.env.ZAI_API_KEY || (() => {
-    throw new Error('ZAI_API_KEY environment variable is required for Zai provider');
-  })(),
+  apiKey:
+    process.env.ZAI_API_KEY ||
+    (() => {
+      throw new Error(
+        'ZAI_API_KEY environment variable is required for Zai provider'
+      );
+    })(),
   baseURL: process.env.ZAI_BASE_URL || 'https://api.zai.com/v1',
 });
 ```
 
 **Option 2: Explicit Warning**
+
 ```javascript
 const getZaiApiKey = () => {
   if (process.env.ZAI_API_KEY) {
@@ -56,11 +66,15 @@ const getZaiApiKey = () => {
   }
 
   if (process.env.ANTHROPIC_API_KEY) {
-    console.warn('⚠️  ZAI_API_KEY not found, falling back to ANTHROPIC_API_KEY. This may cause unexpected behavior.');
+    console.warn(
+      '⚠️  ZAI_API_KEY not found, falling back to ANTHROPIC_API_KEY. This may cause unexpected behavior.'
+    );
     return process.env.ANTHROPIC_API_KEY;
   }
 
-  throw new Error('Neither ZAI_API_KEY nor ANTHROPIC_API_KEY environment variable is set');
+  throw new Error(
+    'Neither ZAI_API_KEY nor ANTHROPIC_API_KEY environment variable is set'
+  );
 };
 
 const zaiClient = new Anthropic({
@@ -87,14 +101,13 @@ const zaiClient = new Anthropic({
 
 ## Issue #2: Session Mapping Memory Leak Risk
 
-**Priority:** 🟡 Medium-High
-**Type:** Bug / Performance
-**Component:** Provider Router
-**File:** `server/provider-router.js:26, 69-95, 141-152`
+**Priority:** 🟡 Medium-High **Type:** Bug / Performance **Component:** Provider
+Router **File:** `server/provider-router.js:26, 69-95, 141-152`
 
 ### Description
 
-The session-to-provider mapping uses an in-memory Map without timeout-based cleanup, which could lead to memory leaks if sessions don't complete normally.
+The session-to-provider mapping uses an in-memory Map without timeout-based
+cleanup, which could lead to memory leaks if sessions don't complete normally.
 
 ```javascript
 // Session to provider mapping
@@ -111,8 +124,10 @@ if (options.sessionId) {
 
 ### Problem
 
-1. **Stuck Sessions**: If a session crashes, times out, or the WebSocket disconnects unexpectedly, the mapping is never cleaned up
-2. **Memory Growth**: Long-running servers will accumulate orphaned session mappings
+1. **Stuck Sessions**: If a session crashes, times out, or the WebSocket
+   disconnects unexpectedly, the mapping is never cleaned up
+2. **Memory Growth**: Long-running servers will accumulate orphaned session
+   mappings
 3. **No TTL**: Sessions have no expiration time
 4. **No Maximum Size**: Map can grow unbounded
 
@@ -181,10 +196,13 @@ function mapSessionToProvider(sessionId, provider) {
 
   // If at capacity, remove oldest session
   if (sessionProviderMap.size >= MAX_SESSION_MAP_SIZE) {
-    const oldestSession = Array.from(sessionTimestamps.entries())
-      .sort((a, b) => a[1] - b[1])[0]?.[0];
+    const oldestSession = Array.from(sessionTimestamps.entries()).sort(
+      (a, b) => a[1] - b[1]
+    )[0]?.[0];
     if (oldestSession) {
-      console.warn(`⚠️  Session map at capacity, removing oldest: ${oldestSession}`);
+      console.warn(
+        `⚠️  Session map at capacity, removing oldest: ${oldestSession}`
+      );
       unmapSession(oldestSession);
     }
   }
@@ -214,14 +232,14 @@ function mapSessionToProvider(sessionId, provider) {
 
 ## Issue #3: Path Validation Logic Missing in Production Code
 
-**Priority:** 🟡 Medium
-**Type:** Security / Architecture
-**Component:** Testing Infrastructure
-**File:** `tests/security.test.js:597-629`
+**Priority:** 🟡 Medium **Type:** Security / Architecture **Component:** Testing
+Infrastructure **File:** `tests/security.test.js:597-629`
 
 ### Description
 
-Critical path validation logic exists only in test files as helper functions, but is not implemented in the actual production codebase. This creates a test-only security check that doesn't protect the application at runtime.
+Critical path validation logic exists only in test files as helper functions,
+but is not implemented in the actual production codebase. This creates a
+test-only security check that doesn't protect the application at runtime.
 
 ```javascript
 // tests/security.test.js:597
@@ -236,12 +254,15 @@ function validatePath(requestedPath) {
 
 1. **Test-Only Security**: Security checks only run in tests, not in production
 2. **False Sense of Security**: Tests pass, but production code is unprotected
-3. **Missing Implementation**: No corresponding validation in `server/projects.js` or other route handlers
-4. **Architecture Issue**: Security logic should be in production code, not duplicated in tests
+3. **Missing Implementation**: No corresponding validation in
+   `server/projects.js` or other route handlers
+4. **Architecture Issue**: Security logic should be in production code, not
+   duplicated in tests
 
 ### Impact
 
-- Production application may accept dangerous paths (e.g., `/etc/passwd`, `/root`)
+- Production application may accept dangerous paths (e.g., `/etc/passwd`,
+  `/root`)
 - Security vulnerability: potential unauthorized file access
 - Test coverage metrics are misleading
 - Code maintenance burden (logic in wrong place)
@@ -249,6 +270,7 @@ function validatePath(requestedPath) {
 ### Current Test Coverage
 
 The test file covers:
+
 - System directory rejection (`/etc`, `/bin`, `/sys`, etc.)
 - Path traversal prevention (`../../../etc/passwd`)
 - Symlink validation
@@ -266,14 +288,25 @@ import path from 'path';
 import { promises as fs } from 'fs';
 
 const FORBIDDEN_PATHS = [
-  '/', '/etc', '/bin', '/sbin', '/usr', '/dev', '/proc',
-  '/sys', '/var', '/boot', '/root', '/lib', '/lib64', '/opt', '/tmp', '/run'
+  '/',
+  '/etc',
+  '/bin',
+  '/sbin',
+  '/usr',
+  '/dev',
+  '/proc',
+  '/sys',
+  '/var',
+  '/boot',
+  '/root',
+  '/lib',
+  '/lib64',
+  '/opt',
+  '/tmp',
+  '/run',
 ];
 
-const SAFE_EXCEPTIONS = [
-  '/var/tmp',
-  '/var/folders',
-];
+const SAFE_EXCEPTIONS = ['/var/tmp', '/var/folders'];
 
 export async function validatePath(requestedPath, workspaceRoot = null) {
   // Normalize and resolve path
@@ -281,7 +314,10 @@ export async function validatePath(requestedPath, workspaceRoot = null) {
 
   // Check against forbidden paths
   for (const forbidden of FORBIDDEN_PATHS) {
-    if (normalizedPath === forbidden || normalizedPath.startsWith(forbidden + path.sep)) {
+    if (
+      normalizedPath === forbidden ||
+      normalizedPath.startsWith(forbidden + path.sep)
+    ) {
       // Check safe exceptions
       const isSafeException = SAFE_EXCEPTIONS.some(safe =>
         normalizedPath.startsWith(safe + path.sep)
@@ -290,7 +326,7 @@ export async function validatePath(requestedPath, workspaceRoot = null) {
       if (!isSafeException) {
         return {
           valid: false,
-          error: `Cannot create workspace in system directory: ${forbidden}`
+          error: `Cannot create workspace in system directory: ${forbidden}`,
         };
       }
     }
@@ -302,7 +338,7 @@ export async function validatePath(requestedPath, workspaceRoot = null) {
     if (!normalizedPath.startsWith(resolvedRoot + path.sep)) {
       return {
         valid: false,
-        error: `Path must be within workspace root: ${workspaceRoot}`
+        error: `Path must be within workspace root: ${workspaceRoot}`,
       };
     }
   }
@@ -320,14 +356,14 @@ export async function validatePath(requestedPath, workspaceRoot = null) {
     if (error.code !== 'ENOENT') {
       return {
         valid: false,
-        error: `Path validation error: ${error.message}`
+        error: `Path validation error: ${error.message}`,
       };
     }
   }
 
   return {
     valid: true,
-    resolvedPath: normalizedPath
+    resolvedPath: normalizedPath,
   };
 }
 
@@ -335,7 +371,7 @@ export async function validatePathLength(pathString, maxLength = 4096) {
   if (pathString.length > maxLength) {
     return {
       valid: false,
-      error: `Path length ${pathString.length} exceeds maximum ${maxLength}`
+      error: `Path length ${pathString.length} exceeds maximum ${maxLength}`,
     };
   }
   return { valid: true };
@@ -353,7 +389,10 @@ router.post('/create-project', async (req, res) => {
   const { projectPath, name } = req.body;
 
   // Validate path
-  const validation = await validatePath(projectPath, process.env.WORKSPACES_ROOT);
+  const validation = await validatePath(
+    projectPath,
+    process.env.WORKSPACES_ROOT
+  );
   if (!validation.valid) {
     return res.status(400).json({ error: validation.error });
   }
@@ -396,7 +435,8 @@ describe('File System Security and Path Validation', () => {
 ### Action Items
 
 - [ ] Create `server/utils/path-validator.js` with production validation logic
-- [ ] Identify all routes that accept file paths (projects, git, file operations)
+- [ ] Identify all routes that accept file paths (projects, git, file
+      operations)
 - [ ] Add validation to all relevant route handlers
 - [ ] Update tests to import and test production code
 - [ ] Remove duplicate validation logic from test files
@@ -414,14 +454,14 @@ describe('File System Security and Path Validation', () => {
 
 ## Issue #4: GitHub CLI Dependency Not Gracefully Handled
 
-**Priority:** 🔵 Low-Medium
-**Type:** User Experience
-**Component:** Git Integration
-**File:** `server/routes/git.js:1132-1141`
+**Priority:** 🔵 Low-Medium **Type:** User Experience **Component:** Git
+Integration **File:** `server/routes/git.js:1132-1141`
 
 ### Description
 
-The GitHub PR detection feature depends on GitHub CLI (`gh`) being installed, but handles the missing dependency by returning a JSON response without properly communicating the limitation to users.
+The GitHub PR detection feature depends on GitHub CLI (`gh`) being installed,
+but handles the missing dependency by returning a JSON response without properly
+communicating the limitation to users.
 
 ```javascript
 // Check if gh CLI is available
@@ -438,9 +478,11 @@ try {
 
 ### Problem
 
-1. **Silent Degradation**: Feature silently doesn't work if `gh` is not installed
+1. **Silent Degradation**: Feature silently doesn't work if `gh` is not
+   installed
 2. **Poor User Experience**: No guidance on how to install or configure `gh`
-3. **Inconsistent Error Handling**: Error field in successful response (200 status) is confusing
+3. **Inconsistent Error Handling**: Error field in successful response (200
+   status) is confusing
 4. **No Startup Validation**: Server doesn't check for `gh` on startup
 5. **Documentation Gap**: No mention of `gh` as a dependency
 
@@ -546,11 +588,13 @@ const checkForPR = async () => {
 ### Action Items
 
 - [ ] Add optional dependency check on server startup
-- [ ] Improve error response structure (add `available`, `message`, `installUrl` fields)
+- [ ] Improve error response structure (add `available`, `message`, `installUrl`
+      fields)
 - [ ] Update frontend to show helpful message when `gh` is not available
 - [ ] Add `gh` to documentation as optional dependency
 - [ ] Consider adding `gh` to Docker image (if applicable)
-- [ ] Add environment variable to disable PR check if needed: `ENABLE_PR_DETECTION`
+- [ ] Add environment variable to disable PR check if needed:
+      `ENABLE_PR_DETECTION`
 
 ### Related Files
 
@@ -580,6 +624,7 @@ const checkForPR = async () => {
 ### Testing Requirements
 
 Each fix should include:
+
 - Unit tests for the fix
 - Integration tests where applicable
 - Manual testing in development environment
@@ -587,6 +632,5 @@ Each fix should include:
 
 ---
 
-**Generated:** 2025-11-14
-**Review Version:** 1.0
-**Reviewer:** Claude Code Review Assistant
+**Generated:** 2025-11-14 **Review Version:** 1.0 **Reviewer:** Claude Code
+Review Assistant
