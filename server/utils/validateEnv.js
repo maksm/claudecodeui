@@ -137,9 +137,7 @@ export async function validateEnvironment() {
   } else if (provider === 'zai') {
     // For Zai, check API key
     if (!process.env.ZAI_API_KEY) {
-      warnings.push(
-        'ZAI_API_KEY not set. Zai provider requires an API key in .env file.'
-      );
+      warnings.push('ZAI_API_KEY not set. Zai provider requires an API key in .env file.');
       console.log(`  ${c.warn('⚠')} ZAI_API_KEY not set - Zai provider may not work`);
     } else {
       console.log(`  ${c.ok('✓')} ZAI_API_KEY is configured`);

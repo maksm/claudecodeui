@@ -160,8 +160,11 @@ function cleanupStaleSessions() {
     );
   } else if (totalSessions > 0) {
     // Log active session count every hour if there are active sessions
-    const hoursSinceStart = Math.floor((now - (cleanupInterval._idleStart || now)) / (60 * 60 * 1000));
-    if (hoursSinceStart % 6 === 0) { // Every ~6 cleanup cycles (1 hour)
+    const hoursSinceStart = Math.floor(
+      (now - (cleanupInterval._idleStart || now)) / (60 * 60 * 1000)
+    );
+    if (hoursSinceStart % 6 === 0) {
+      // Every ~6 cleanup cycles (1 hour)
       console.log(
         `📊 [Provider Router] Active sessions: ${totalSessions}/${MAX_SESSION_MAP_SIZE} ` +
           `(TTL: ${SESSION_TTL / 1000 / 60} min)`

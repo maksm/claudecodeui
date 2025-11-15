@@ -23,10 +23,7 @@
         "editor.codeActionsOnSave": {
           "source.fixAll.eslint": "explicit"
         },
-        "eslint.validate": [
-          "javascript",
-          "javascriptreact"
-        ],
+        "eslint.validate": ["javascript", "javascriptreact"],
         "typescript.tsdk": "node_modules/typescript/lib",
         "tailwindCSS.experimental.classRegex": [
           ["clsx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]

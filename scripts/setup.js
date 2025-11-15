@@ -113,9 +113,7 @@ async function setupEnvFile() {
   // Check if .env already exists
   if (fs.existsSync(envPath)) {
     console.log(c.info('[INFO]') + ' .env file already exists');
-    const overwrite = await question(
-      c.bright('       Do you want to reconfigure it? (y/N): ')
-    );
+    const overwrite = await question(c.bright('       Do you want to reconfigure it? (y/N): '));
 
     if (overwrite.toLowerCase() !== 'y') {
       console.log(c.info('[INFO]') + ' Keeping existing .env file');
@@ -134,7 +132,7 @@ async function setupEnvFile() {
   }
 
   console.log('');
-  console.log(c.bright('Let\'s configure your environment:'));
+  console.log(c.bright("Let's configure your environment:"));
   console.log(c.dim('(Press Enter to use default values)'));
   console.log('');
 
@@ -178,9 +176,7 @@ async function setupEnvFile() {
   // 4. Configure CLI path if needed
   if (provider === 'claude') {
     console.log('');
-    const cliPath = await question(
-      c.bright('4. Claude CLI path (default: claude): ')
-    );
+    const cliPath = await question(c.bright('4. Claude CLI path (default: claude): '));
     const cliPathValue = cliPath || 'claude';
     updateEnvVar('CLAUDE_CLI_PATH', cliPathValue);
 
@@ -188,10 +184,7 @@ async function setupEnvFile() {
     const claudeAvailable = await checkCliAvailable(cliPathValue);
     if (!claudeAvailable) {
       console.log('');
-      console.log(
-        c.warn('[WARN]') +
-          ` Claude CLI not found at "${cliPathValue}"`
-      );
+      console.log(c.warn('[WARN]') + ` Claude CLI not found at "${cliPathValue}"`);
       console.log(
         '       ' +
           c.dim('Make sure Claude CLI is installed: https://github.com/anthropics/claude-cli')
@@ -235,9 +228,7 @@ async function setupEnvFile() {
 
   // 5. Context window
   console.log('');
-  const contextWindow = await question(
-    c.bright('Context window size (default: 160000): ')
-  );
+  const contextWindow = await question(c.bright('Context window size (default: 160000): '));
   const contextValue = contextWindow || '160000';
   updateEnvVar('CONTEXT_WINDOW', contextValue);
   updateEnvVar('VITE_CONTEXT_WINDOW', contextValue);
@@ -334,9 +325,7 @@ async function setup() {
     // 3. Check and install dependencies
     const needsInstall = checkNpmInstall();
     if (needsInstall) {
-      const install = await question(
-        c.bright('Run npm install now? (Y/n): ')
-      );
+      const install = await question(c.bright('Run npm install now? (Y/n): '));
 
       if (install.toLowerCase() !== 'n') {
         await runNpmInstall();
