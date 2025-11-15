@@ -94,6 +94,8 @@ import commandsRoutes from './routes/commands.js';
 import settingsRoutes from './routes/settings.js';
 import agentRoutes from './routes/agent.js';
 import projectsRoutes from './routes/projects.js';
+import ciRunnerRoutes from './routes/ci-runner.js';
+import workflowRoutes from './routes/workflow.js';
 import { initializeDatabase } from './database/db.js';
 import { validateApiKey, authenticateToken, authenticateWebSocket } from './middleware/auth.js';
 
@@ -268,6 +270,7 @@ const wss = new WebSocketServer({
 
 // Make WebSocket server available to routes
 app.locals.wss = wss;
+app.set('wss', wss);
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -292,6 +295,12 @@ app.use('/api/projects', authenticateToken, projectsRoutes);
 
 // Git API Routes (protected)
 app.use('/api/git', authenticateToken, gitRoutes);
+
+// CI Runner API Routes (protected)
+app.use('/api/ci', authenticateToken, ciRunnerRoutes);
+
+// Workflow API Routes (protected)
+app.use('/api/workflow', authenticateToken, workflowRoutes);
 
 // MCP API Routes (protected)
 app.use('/api/mcp', authenticateToken, mcpRoutes);
