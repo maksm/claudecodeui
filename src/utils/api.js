@@ -133,6 +133,15 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(updates),
       }),
+
+    // Reset TaskMaster setup
+    reset: (projectName, { fullReset = false, confirm = true } = {}) =>
+      authenticatedFetch(
+        `/api/taskmaster/reset/${projectName}?fullReset=${fullReset}&confirm=${confirm}`,
+        {
+          method: 'DELETE',
+        }
+      ),
   },
 
   // Browse filesystem for project suggestions
