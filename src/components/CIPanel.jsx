@@ -15,8 +15,10 @@ import {
   Trash2,
 } from 'lucide-react';
 import { authenticatedFetch } from '../utils/api';
+import { useNotification } from '../contexts/NotificationContext';
 
 function CIPanel({ selectedProject, onSendToChat }) {
+  const { notifyCICompletion } = useNotification();
   const [workflows, setWorkflows] = useState([]);
   const [selectedWorkflow, setSelectedWorkflow] = useState(null);
   const [workflowDetails, setWorkflowDetails] = useState(null);
@@ -28,6 +30,7 @@ function CIPanel({ selectedProject, onSendToChat }) {
   const [runScope, setRunScope] = useState('all'); // 'all' or 'changes'
   const [changedFiles, setChangedFiles] = useState([]);
   const [isStepSelectorCollapsed, setIsStepSelectorCollapsed] = useState(false);
+  const [previousRunStatus, setPreviousRunStatus] = useState(null);
   const pollIntervalRef = useRef(null);
 
   const totalExecutableSteps = useMemo(() => {
@@ -103,6 +106,22 @@ function CIPanel({ selectedProject, onSendToChat }) {
       clearInterval(pollIntervalRef.current);
     }
   }, [activeRun]);
+
+  // Notify when CI run completes
+  useEffect(() => {
+    if (activeRun && activeRun.status && selectedWorkflow) {
+      // Check if status changed from 'running' to a terminal state
+      if (
+        previousRunStatus === 'running' &&
+        (activeRun.status === 'success' || activeRun.status === 'failed')
+      ) {
+        const success = activeRun.status === 'success';
+        const workflowName = selectedWorkflow.name || selectedWorkflow.file;
+        notifyCICompletion(workflowName, success);
+      }
+      setPreviousRunStatus(activeRun.status);
+    }
+  }, [activeRun, selectedWorkflow, previousRunStatus, notifyCICompletion]);
 
   const fetchChangedFiles = async () => {
     if (!selectedProject) return;

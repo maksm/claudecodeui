@@ -262,6 +262,53 @@ const githubTokensDb = {
   },
 };
 
+// Notification settings database operations
+const notificationSettingsDb = {
+  // Get notification settings for a user
+  getSettings: userId => {
+    const row = db
+      .prepare(
+        'SELECT agent_completion, ci_completion, browser_notifications FROM notification_settings WHERE user_id = ?'
+      )
+      .get(userId);
+    return row || null;
+  },
+
+  // Create or update notification settings for a user
+  upsertSettings: (userId, settings) => {
+    const { agentCompletion, ciCompletion, browserNotifications } = settings;
+
+    // Check if settings exist
+    const existing = notificationSettingsDb.getSettings(userId);
+
+    if (existing) {
+      // Update existing settings
+      const stmt = db.prepare(
+        'UPDATE notification_settings SET agent_completion = ?, ci_completion = ?, browser_notifications = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?'
+      );
+      const result = stmt.run(
+        agentCompletion ? 1 : 0,
+        ciCompletion ? 1 : 0,
+        browserNotifications ? 1 : 0,
+        userId
+      );
+      return result.changes > 0;
+    } else {
+      // Insert new settings
+      const stmt = db.prepare(
+        'INSERT INTO notification_settings (user_id, agent_completion, ci_completion, browser_notifications) VALUES (?, ?, ?, ?)'
+      );
+      const result = stmt.run(
+        userId,
+        agentCompletion ? 1 : 0,
+        ciCompletion ? 1 : 0,
+        browserNotifications ? 1 : 0
+      );
+      return result.lastInsertRowid > 0;
+    }
+  },
+};
+
 export {
   db,
   initializeDatabase,
@@ -269,4 +316,5 @@ export {
   apiKeysDb,
   credentialsDb,
   githubTokensDb, // Backward compatibility
+  notificationSettingsDb,
 };

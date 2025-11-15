@@ -19,9 +19,11 @@ import {
   FolderOpen,
   LogIn,
   Key,
+  Bell,
 } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { useTasksSettings } from '../contexts/TasksSettingsContext';
+import { useNotification } from '../contexts/NotificationContext';
 import StandaloneShell from './StandaloneShell';
 import ClaudeLogo from './ClaudeLogo';
 import CursorLogo from './CursorLogo';
@@ -800,6 +802,17 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
                 }`}
               >
                 Tasks
+              </button>
+              <button
+                onClick={() => setActiveTab('notifications')}
+                className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'notifications'
+                    ? 'border-blue-600 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                <Bell className="w-4 h-4 inline mr-2" />
+                Notifications
               </button>
               <button
                 onClick={() => setActiveTab('api')}
@@ -2589,6 +2602,9 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
               </div>
             )}
 
+            {/* Notifications Tab */}
+            {activeTab === 'notifications' && <NotificationsTab />}
+
             {/* API & Tokens Tab */}
             {activeTab === 'api' && (
               <div className="space-y-6 md:space-y-8">
@@ -2678,6 +2694,238 @@ function Settings({ isOpen, onClose, projects = [], initialTab = 'tools' }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Notifications Tab Component
+function NotificationsTab() {
+  const { settings, updateSettings, requestBrowserPermission } = useNotification();
+  const [localSettings, setLocalSettings] = useState(settings);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState(null);
+
+  useEffect(() => {
+    setLocalSettings(settings);
+  }, [settings]);
+
+  const handleToggle = (key) => {
+    setLocalSettings((prev) => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+  };
+
+  const handleBrowserNotificationToggle = async () => {
+    if (!localSettings.browserNotifications) {
+      // Request permission first
+      const granted = await requestBrowserPermission();
+      if (!granted) {
+        alert('Browser notifications require permission. Please allow notifications in your browser settings.');
+        return;
+      }
+    }
+    handleToggle('browserNotifications');
+  };
+
+  const handleSave = async () => {
+    setIsSaving(true);
+    setSaveStatus(null);
+
+    try {
+      // Save to context (localStorage)
+      updateSettings(localSettings);
+
+      // Save to backend
+      const response = await fetch('/api/settings/notifications', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          agentCompletion: localSettings.agentCompletion,
+          ciCompletion: localSettings.ciCompletion,
+          browserNotifications: localSettings.browserNotifications,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save notification settings');
+      }
+
+      setSaveStatus('success');
+      setTimeout(() => setSaveStatus(null), 3000);
+    } catch (error) {
+      console.error('Error saving notification settings:', error);
+      setSaveStatus('error');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6 md:space-y-8">
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-foreground">Notification Preferences</h3>
+        <p className="text-sm text-muted-foreground">
+          Choose when you want to receive notifications about important events.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        {/* Agent Completion Notifications */}
+        <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="font-medium text-foreground flex items-center gap-2">
+                <Bell className="w-4 h-4" />
+                Agent Completion
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Get notified when an agent finishes processing your request
+              </div>
+            </div>
+            <button
+              onClick={() => handleToggle('agentCompletion')}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                localSettings.agentCompletion
+                  ? 'bg-blue-600'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+              role="switch"
+              aria-checked={localSettings.agentCompletion}
+              aria-label="Toggle agent completion notifications"
+            >
+              <span className="sr-only">Toggle agent completion notifications</span>
+              <span
+                className={`${
+                  localSettings.agentCompletion ? 'translate-x-7' : 'translate-x-1'
+                } inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform duration-200`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* CI Completion Notifications */}
+        <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="font-medium text-foreground flex items-center gap-2">
+                <Zap className="w-4 h-4" />
+                CI Completion
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Get notified when a CI workflow completes (success or failure)
+              </div>
+            </div>
+            <button
+              onClick={() => handleToggle('ciCompletion')}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                localSettings.ciCompletion
+                  ? 'bg-blue-600'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              }`}
+              role="switch"
+              aria-checked={localSettings.ciCompletion}
+              aria-label="Toggle CI completion notifications"
+            >
+              <span className="sr-only">Toggle CI completion notifications</span>
+              <span
+                className={`${
+                  localSettings.ciCompletion ? 'translate-x-7' : 'translate-x-1'
+                } inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform duration-200`}
+              />
+            </button>
+          </div>
+        </div>
+
+        {/* Browser Notifications */}
+        <div className="bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="font-medium text-foreground flex items-center gap-2">
+                <Globe className="w-4 h-4" />
+                Browser Notifications
+              </div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Show system notifications even when the app is in the background
+              </div>
+              {!('Notification' in window) && (
+                <div className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                  Browser notifications are not supported in your browser
+                </div>
+              )}
+              {Notification.permission === 'denied' && (
+                <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                  Notifications are blocked. Please enable them in your browser settings.
+                </div>
+              )}
+            </div>
+            <button
+              onClick={handleBrowserNotificationToggle}
+              disabled={!('Notification' in window)}
+              className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${
+                localSettings.browserNotifications
+                  ? 'bg-blue-600'
+                  : 'bg-gray-200 dark:bg-gray-700'
+              } ${!('Notification' in window) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              role="switch"
+              aria-checked={localSettings.browserNotifications}
+              aria-label="Toggle browser notifications"
+            >
+              <span className="sr-only">Toggle browser notifications</span>
+              <span
+                className={`${
+                  localSettings.browserNotifications ? 'translate-x-7' : 'translate-x-1'
+                } inline-block h-6 w-6 transform rounded-full bg-white shadow-lg transition-transform duration-200`}
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Save Button */}
+      <div className="flex items-center justify-end gap-4">
+        {saveStatus === 'success' && (
+          <div className="text-green-600 dark:text-green-400 text-sm flex items-center gap-1">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Settings saved successfully!
+          </div>
+        )}
+        {saveStatus === 'error' && (
+          <div className="text-red-600 dark:text-red-400 text-sm flex items-center gap-1">
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path
+                fillRule="evenodd"
+                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                clipRule="evenodd"
+              />
+            </svg>
+            Failed to save settings
+          </div>
+        )}
+        <Button
+          onClick={handleSave}
+          disabled={isSaving}
+          className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+        >
+          {isSaving ? (
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              Saving...
+            </div>
+          ) : (
+            'Save Notification Settings'
+          )}
+        </Button>
+      </div>
     </div>
   );
 }

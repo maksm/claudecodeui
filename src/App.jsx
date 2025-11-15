@@ -33,6 +33,8 @@ import { TaskMasterProvider } from './contexts/TaskMasterContext';
 import { TasksSettingsProvider } from './contexts/TasksSettingsContext';
 import { WebSocketProvider, useWebSocketContext } from './contexts/WebSocketContext';
 import { SessionManagerProvider, useSessionManager } from './contexts/SessionManagerContext';
+import { NotificationProvider } from './contexts/NotificationContext';
+import NotificationToast from './components/NotificationToast';
 import ProtectedRoute from './components/ProtectedRoute';
 import { useVersionCheck } from './hooks/useVersionCheck';
 import useLocalStorage from './hooks/useLocalStorage';
@@ -1068,6 +1070,9 @@ function AppContent() {
 
       {/* Version Upgrade Modal */}
       <VersionUpgradeModal />
+
+      {/* Notification Toast */}
+      <NotificationToast />
     </div>
   );
 }
@@ -1085,25 +1090,27 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <WebSocketProvider>
-          <TasksSettingsProvider>
-            <TaskMasterProvider>
-              <ProtectedRoute>
-                <Router
-                  future={{
-                    v7_startTransition: true,
-                    v7_relativeSplatPath: true,
-                  }}
-                >
-                  <Routes>
-                    <Route path="/" element={<AppContentWithSessionManager />} />
-                    <Route path="/session/:sessionId" element={<AppContentWithSessionManager />} />
-                  </Routes>
-                </Router>
-              </ProtectedRoute>
-            </TaskMasterProvider>
-          </TasksSettingsProvider>
-        </WebSocketProvider>
+        <NotificationProvider>
+          <WebSocketProvider>
+            <TasksSettingsProvider>
+              <TaskMasterProvider>
+                <ProtectedRoute>
+                  <Router
+                    future={{
+                      v7_startTransition: true,
+                      v7_relativeSplatPath: true,
+                    }}
+                  >
+                    <Routes>
+                      <Route path="/" element={<AppContentWithSessionManager />} />
+                      <Route path="/session/:sessionId" element={<AppContentWithSessionManager />} />
+                    </Routes>
+                  </Router>
+                </ProtectedRoute>
+              </TaskMasterProvider>
+            </TasksSettingsProvider>
+          </WebSocketProvider>
+        </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
   );
