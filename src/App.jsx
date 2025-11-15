@@ -18,13 +18,13 @@
  * Handles both existing sessions (with real IDs) and new sessions (with temporary IDs).
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate, useParams } from 'react-router-dom';
 import { Settings as SettingsIcon, Sparkles } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import MainContent from './components/MainContent';
 import MobileNav from './components/MobileNav';
-import Settings from './components/Settings';
+const Settings = lazy(() => import('./components/Settings'));
 import QuickSettingsPanel from './components/QuickSettingsPanel';
 
 import { ThemeProvider } from './contexts/ThemeContext';
@@ -1059,12 +1059,16 @@ function AppContent() {
       )}
 
       {/* Settings Modal */}
-      <Settings
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        projects={projects}
-        initialTab={settingsInitialTab}
-      />
+      {showSettings && (
+        <Suspense fallback={<div />}>
+          <Settings
+            isOpen={showSettings}
+            onClose={() => setShowSettings(false)}
+            projects={projects}
+            initialTab={settingsInitialTab}
+          />
+        </Suspense>
+      )}
 
       {/* Version Upgrade Modal */}
       <VersionUpgradeModal />

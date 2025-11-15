@@ -11,19 +11,19 @@
  * No session protection logic is implemented here - it's purely a props bridge.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import ChatInterface from './ChatInterface';
-import FileTree from './FileTree';
-import CodeEditor from './CodeEditor';
-import StandaloneShell from './StandaloneShell';
-import GitPanel from './GitPanel';
-import CIPanel from './CIPanel';
+import React, { useState, useEffect, useRef, Suspense, lazy } from 'react';
+const ChatInterface = lazy(() => import('./ChatInterface'));
+const FileTree = lazy(() => import('./FileTree'));
+const CodeEditor = lazy(() => import('./CodeEditor'));
+const StandaloneShell = lazy(() => import('./StandaloneShell'));
+const GitPanel = lazy(() => import('./GitPanel'));
+const CIPanel = lazy(() => import('./CIPanel'));
 import ErrorBoundary from './ErrorBoundary';
 import ClaudeLogo from './ClaudeLogo';
 import CursorLogo from './CursorLogo';
-import TaskList from './TaskList';
-import TaskDetail from './TaskDetail';
-import PRDEditor from './PRDEditor';
+const TaskList = lazy(() => import('./TaskList'));
+const TaskDetail = lazy(() => import('./TaskDetail'));
+const PRDEditor = lazy(() => import('./PRDEditor'));
 import Tooltip from './Tooltip';
 import { useTaskMaster } from '../contexts/TaskMasterContext';
 import { useTasksSettings } from '../contexts/TasksSettingsContext';
@@ -578,102 +578,160 @@ function MainContent({
         <div
           className={`flex-1 flex flex-col min-h-0 overflow-hidden ${editingFile ? 'mr-0' : ''} ${editorExpanded ? 'hidden' : ''}`}
         >
-          <div className={`h-full ${activeTab === 'chat' ? 'block' : 'hidden'}`}>
-            <ErrorBoundary showDetails={true}>
-              <ChatInterface
-                selectedProject={selectedProject}
-                selectedSession={selectedSession}
-                ws={ws}
-                sendMessage={sendMessage}
-                messages={messages}
-                onFileOpen={handleFileOpen}
-                onInputFocusChange={onInputFocusChange}
-                onSessionActive={onSessionActive}
-                onSessionInactive={onSessionInactive}
-                onSessionProcessing={onSessionProcessing}
-                onSessionNotProcessing={onSessionNotProcessing}
-                processingSessions={processingSessions}
-                onReplaceTemporarySession={onReplaceTemporarySession}
-                onNavigateToSession={onNavigateToSession}
-                onShowSettings={onShowSettings}
-                autoExpandTools={autoExpandTools}
-                showRawParameters={showRawParameters}
-                showThinking={showThinking}
-                autoScrollToBottom={autoScrollToBottom}
-                sendByCtrlEnter={sendByCtrlEnter}
-                externalMessageUpdate={externalMessageUpdate}
-                onShowAllTasks={tasksEnabled ? () => setActiveTab('tasks') : null}
-              />
-            </ErrorBoundary>
-          </div>
-          <div className={`h-full overflow-hidden ${activeTab === 'files' ? 'block' : 'hidden'}`}>
-            <FileTree selectedProject={selectedProject} />
-          </div>
-          <div className={`h-full overflow-hidden ${activeTab === 'shell' ? 'block' : 'hidden'}`}>
-            <StandaloneShell
-              project={selectedProject}
-              session={selectedSession}
-              isActive={activeTab === 'shell'}
-              showHeader={false}
-            />
-          </div>
-          <div className={`h-full overflow-hidden ${activeTab === 'git' ? 'block' : 'hidden'}`}>
-            <GitPanel
-              selectedProject={selectedProject}
-              isMobile={isMobile}
-              onFileOpen={handleFileOpen}
-            />
-          </div>
-          <div className={`h-full overflow-hidden ${activeTab === 'ci' ? 'block' : 'hidden'}`}>
-            <CIPanel
-              selectedProject={selectedProject}
-              onSendToChat={message => {
-                setActiveTab('chat');
-                // Use a small delay to ensure chat tab is rendered before sending message
-                setTimeout(() => {
-                  const textarea = document.querySelector('textarea[placeholder*="Ask"]');
-                  if (textarea) {
-                    textarea.value = message;
-                    textarea.dispatchEvent(new Event('input', { bubbles: true }));
-                    textarea.focus();
-                  }
-                }, 100);
-              }}
-            />
-          </div>
-          {shouldShowTasksTab && (
-            <div className={`h-full ${activeTab === 'tasks' ? 'block' : 'hidden'}`}>
-              <div className="h-full flex flex-col overflow-hidden">
-                <TaskList
-                  tasks={tasks || []}
-                  onTaskClick={handleTaskClick}
-                  showParentTasks={true}
-                  className="flex-1 overflow-y-auto p-4"
-                  currentProject={currentProject}
-                  onTaskCreated={refreshTasks}
-                  onShowPRDEditor={(prd = null) => {
-                    setSelectedPRD(prd);
-                    setShowPRDEditor(true);
-                  }}
-                  existingPRDs={existingPRDs}
-                  onRefreshPRDs={(showNotification = false) => {
-                    // Reload existing PRDs
-                    if (currentProject?.name) {
-                      api
-                        .get(`/taskmaster/prd/${encodeURIComponent(currentProject.name)}`)
-                        .then(response => (response.ok ? response.json() : Promise.reject()))
-                        .then(data => {
-                          setExistingPRDs(data.prdFiles || []);
-                          if (showNotification) {
-                            setPRDNotification('PRD saved successfully!');
-                            setTimeout(() => setPRDNotification(null), 3000);
-                          }
-                        })
-                        .catch(error => console.error('Failed to refresh PRDs:', error));
-                    }
+          {activeTab === 'chat' && (
+            <div className="h-full">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                }
+              >
+                <ErrorBoundary showDetails={true}>
+                  <ChatInterface
+                    selectedProject={selectedProject}
+                    selectedSession={selectedSession}
+                    ws={ws}
+                    sendMessage={sendMessage}
+                    messages={messages}
+                    onFileOpen={handleFileOpen}
+                    onInputFocusChange={onInputFocusChange}
+                    onSessionActive={onSessionActive}
+                    onSessionInactive={onSessionInactive}
+                    onSessionProcessing={onSessionProcessing}
+                    onSessionNotProcessing={onSessionNotProcessing}
+                    processingSessions={processingSessions}
+                    onReplaceTemporarySession={onReplaceTemporarySession}
+                    onNavigateToSession={onNavigateToSession}
+                    onShowSettings={onShowSettings}
+                    autoExpandTools={autoExpandTools}
+                    showRawParameters={showRawParameters}
+                    showThinking={showThinking}
+                    autoScrollToBottom={autoScrollToBottom}
+                    sendByCtrlEnter={sendByCtrlEnter}
+                    externalMessageUpdate={externalMessageUpdate}
+                    onShowAllTasks={tasksEnabled ? () => setActiveTab('tasks') : null}
+                  />
+                </ErrorBoundary>
+              </Suspense>
+            </div>
+          )}
+          {activeTab === 'files' && (
+            <div className="h-full overflow-hidden">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                }
+              >
+                <FileTree selectedProject={selectedProject} />
+              </Suspense>
+            </div>
+          )}
+          {activeTab === 'shell' && (
+            <div className="h-full overflow-hidden">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                }
+              >
+                <StandaloneShell
+                  project={selectedProject}
+                  session={selectedSession}
+                  isActive={activeTab === 'shell'}
+                  showHeader={false}
+                />
+              </Suspense>
+            </div>
+          )}
+          {activeTab === 'git' && (
+            <div className="h-full overflow-hidden">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                }
+              >
+                <GitPanel
+                  selectedProject={selectedProject}
+                  isMobile={isMobile}
+                  onFileOpen={handleFileOpen}
+                />
+              </Suspense>
+            </div>
+          )}
+          {activeTab === 'ci' && (
+            <div className="h-full overflow-hidden">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                }
+              >
+                <CIPanel
+                  selectedProject={selectedProject}
+                  onSendToChat={message => {
+                    setActiveTab('chat');
+                    // Use a small delay to ensure chat tab is rendered before sending message
+                    setTimeout(() => {
+                      const textarea = document.querySelector('textarea[placeholder*="Ask"]');
+                      if (textarea) {
+                        textarea.value = message;
+                        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+                        textarea.focus();
+                      }
+                    }, 100);
                   }}
                 />
-              </div>
+              </Suspense>
+            </div>
+          )}
+          {shouldShowTasksTab && activeTab === 'tasks' && (
+            <div className="h-full">
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                }
+              >
+                <div className="h-full flex flex-col overflow-hidden">
+                  <TaskList
+                    tasks={tasks || []}
+                    onTaskClick={handleTaskClick}
+                    showParentTasks={true}
+                    className="flex-1 overflow-y-auto p-4"
+                    currentProject={currentProject}
+                    onTaskCreated={refreshTasks}
+                    onShowPRDEditor={(prd = null) => {
+                      setSelectedPRD(prd);
+                      setShowPRDEditor(true);
+                    }}
+                    existingPRDs={existingPRDs}
+                    onRefreshPRDs={(showNotification = false) => {
+                      // Reload existing PRDs
+                      if (currentProject?.name) {
+                        api
+                          .get(`/taskmaster/prd/${encodeURIComponent(currentProject.name)}`)
+                          .then(response => (response.ok ? response.json() : Promise.reject()))
+                          .then(data => {
+                            setExistingPRDs(data.prdFiles || []);
+                            if (showNotification) {
+                              setPRDNotification('PRD saved successfully!');
+                              setTimeout(() => setPRDNotification(null), 3000);
+                            }
+                          })
+                          .catch(error => console.error('Failed to refresh PRDs:', error));
+                      }
+                    }}
+                  />
+                </div>
+              </Suspense>
             </div>
           )}
           <div className={`h-full overflow-hidden ${activeTab === 'preview' ? 'block' : 'hidden'}`}>
@@ -725,14 +783,22 @@ function MainContent({
               className={`flex-shrink-0 border-l border-gray-200 dark:border-gray-700 h-full overflow-hidden ${editorExpanded ? 'flex-1' : ''}`}
               style={editorExpanded ? {} : { width: `${editorWidth}px` }}
             >
-              <CodeEditor
-                file={editingFile}
-                onClose={handleCloseEditor}
-                projectPath={selectedProject?.path}
-                isSidebar={true}
-                isExpanded={editorExpanded}
-                onToggleExpand={handleToggleEditorExpand}
-              />
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-full">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                  </div>
+                }
+              >
+                <CodeEditor
+                  file={editingFile}
+                  onClose={handleCloseEditor}
+                  projectPath={selectedProject?.path}
+                  isSidebar={true}
+                  isExpanded={editorExpanded}
+                  onToggleExpand={handleToggleEditorExpand}
+                />
+              </Suspense>
             </div>
           </>
         )}
@@ -740,60 +806,72 @@ function MainContent({
 
       {/* Code Editor Modal for Mobile */}
       {editingFile && isMobile && (
-        <CodeEditor
-          file={editingFile}
-          onClose={handleCloseEditor}
-          projectPath={selectedProject?.path}
-          isSidebar={false}
-        />
+        <Suspense
+          fallback={
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          }
+        >
+          <CodeEditor
+            file={editingFile}
+            onClose={handleCloseEditor}
+            projectPath={selectedProject?.path}
+            isSidebar={false}
+          />
+        </Suspense>
       )}
 
       {/* Task Detail Modal */}
       {shouldShowTasksTab && showTaskDetail && selectedTask && (
-        <TaskDetail
-          task={selectedTask}
-          isOpen={showTaskDetail}
-          onClose={handleTaskDetailClose}
-          onStatusChange={handleTaskStatusChange}
-          onTaskClick={handleTaskClick}
-        />
+        <Suspense fallback={<div />}>
+          <TaskDetail
+            task={selectedTask}
+            isOpen={showTaskDetail}
+            onClose={handleTaskDetailClose}
+            onStatusChange={handleTaskStatusChange}
+            onTaskClick={handleTaskClick}
+          />
+        </Suspense>
       )}
       {/* PRD Editor Modal */}
       {showPRDEditor && (
-        <PRDEditor
-          project={currentProject}
-          projectPath={currentProject?.fullPath || currentProject?.path}
-          onClose={() => {
-            setShowPRDEditor(false);
-            setSelectedPRD(null);
-          }}
-          isNewFile={!selectedPRD?.isExisting}
-          file={{
-            name: selectedPRD?.name || 'prd.txt',
-            content: selectedPRD?.content || '',
-          }}
-          onSave={async () => {
-            setShowPRDEditor(false);
-            setSelectedPRD(null);
+        <Suspense fallback={<div />}>
+          <PRDEditor
+            project={currentProject}
+            projectPath={currentProject?.fullPath || currentProject?.path}
+            onClose={() => {
+              setShowPRDEditor(false);
+              setSelectedPRD(null);
+            }}
+            isNewFile={!selectedPRD?.isExisting}
+            file={{
+              name: selectedPRD?.name || 'prd.txt',
+              content: selectedPRD?.content || '',
+            }}
+            onSave={async () => {
+              setShowPRDEditor(false);
+              setSelectedPRD(null);
 
-            // Reload existing PRDs with notification
-            try {
-              const response = await api.get(
-                `/taskmaster/prd/${encodeURIComponent(currentProject.name)}`
-              );
-              if (response.ok) {
-                const data = await response.json();
-                setExistingPRDs(data.prdFiles || []);
-                setPRDNotification('PRD saved successfully!');
-                setTimeout(() => setPRDNotification(null), 3000);
+              // Reload existing PRDs with notification
+              try {
+                const response = await api.get(
+                  `/taskmaster/prd/${encodeURIComponent(currentProject.name)}`
+                );
+                if (response.ok) {
+                  const data = await response.json();
+                  setExistingPRDs(data.prdFiles || []);
+                  setPRDNotification('PRD saved successfully!');
+                  setTimeout(() => setPRDNotification(null), 3000);
+                }
+              } catch (error) {
+                console.error('Failed to refresh PRDs:', error);
               }
-            } catch (error) {
-              console.error('Failed to refresh PRDs:', error);
-            }
 
-            refreshTasks?.();
-          }}
-        />
+              refreshTasks?.();
+            }}
+          />
+        </Suspense>
       )}
       {/* PRD Notification */}
       {prdNotification && (
