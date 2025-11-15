@@ -61,6 +61,24 @@ class TestDatabase {
         FOREIGN KEY (user_id) REFERENCES users (id)
       )
     `);
+
+    // Notification settings table
+    this.db.exec(`
+      CREATE TABLE IF NOT EXISTS notification_settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        agent_completion BOOLEAN DEFAULT 1,
+        ci_completion BOOLEAN DEFAULT 1,
+        browser_notifications BOOLEAN DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        UNIQUE(user_id)
+      )
+    `);
+
+    this.db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_notification_settings_user_id ON notification_settings(user_id)
+    `);
   }
 
   async seedTestData() {

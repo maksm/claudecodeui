@@ -5,7 +5,7 @@ import { X, CheckCircle, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 const NotificationToast = () => {
   const { notifications, removeNotification } = useNotification();
 
-  const getIcon = (type) => {
+  const getIcon = type => {
     switch (type) {
       case 'success':
         return <CheckCircle className="w-5 h-5 text-green-500" />;
@@ -19,7 +19,7 @@ const NotificationToast = () => {
     }
   };
 
-  const getBackgroundColor = (type) => {
+  const getBackgroundColor = type => {
     switch (type) {
       case 'success':
         return 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800';
@@ -39,7 +39,7 @@ const NotificationToast = () => {
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm w-full pointer-events-none">
-      {notifications.map((notification) => (
+      {notifications.map(notification => (
         <Toast
           key={notification.id}
           notification={notification}
@@ -79,18 +79,14 @@ const Toast = ({ notification, onClose, getIcon, getBackgroundColor }) => {
         ${isVisible && !isExiting ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}
       `}
     >
-      <div className="flex-shrink-0 mt-0.5">
-        {getIcon(notification.type)}
-      </div>
+      <div className="flex-shrink-0 mt-0.5">{getIcon(notification.type)}</div>
       <div className="flex-1 min-w-0">
         {notification.title && (
           <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
             {notification.title}
           </h4>
         )}
-        <p className="text-sm text-gray-700 dark:text-gray-300">
-          {notification.message}
-        </p>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{notification.message}</p>
       </div>
       <button
         onClick={handleClose}

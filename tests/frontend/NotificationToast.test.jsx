@@ -33,16 +33,32 @@ const NotificationTestWrapper = ({ children }) => {
   return (
     <div>
       {children}
-      <button onClick={() => addNotification({ type: 'success', title: 'Success', message: 'Operation completed' })}>
+      <button
+        onClick={() =>
+          addNotification({ type: 'success', title: 'Success', message: 'Operation completed' })
+        }
+      >
         Add Success
       </button>
-      <button onClick={() => addNotification({ type: 'error', title: 'Error', message: 'Something went wrong' })}>
+      <button
+        onClick={() =>
+          addNotification({ type: 'error', title: 'Error', message: 'Something went wrong' })
+        }
+      >
         Add Error
       </button>
-      <button onClick={() => addNotification({ type: 'warning', title: 'Warning', message: 'Please be careful' })}>
+      <button
+        onClick={() =>
+          addNotification({ type: 'warning', title: 'Warning', message: 'Please be careful' })
+        }
+      >
         Add Warning
       </button>
-      <button onClick={() => addNotification({ type: 'info', title: 'Info', message: 'Here is some information' })}>
+      <button
+        onClick={() =>
+          addNotification({ type: 'info', title: 'Info', message: 'Here is some information' })
+        }
+      >
         Add Info
       </button>
     </div>
@@ -410,8 +426,6 @@ describe('NotificationToast Component', () => {
       act(() => {
         screen.getByText('Add Success').click();
       });
-
-      const closeButton = screen.getByLabelText('Close notification');
 
       // Tab to the close button
       await user.tab();

@@ -51,24 +51,20 @@ const TestComponent = () => {
       <div data-testid="ci-setting">{settings.ciCompletion.toString()}</div>
       <div data-testid="browser-setting">{settings.browserNotifications.toString()}</div>
 
-      <button onClick={() => addNotification({ type: 'success', title: 'Test', message: 'Test message' })}>
+      <button
+        onClick={() => addNotification({ type: 'success', title: 'Test', message: 'Test message' })}
+      >
         Add Notification
       </button>
-      <button onClick={() => updateSettings({ agentCompletion: false })}>
-        Update Settings
-      </button>
+      <button onClick={() => updateSettings({ agentCompletion: false })}>Update Settings</button>
       <button onClick={() => notifyAgentCompletion('TestProject', true)}>
         Notify Agent Success
       </button>
       <button onClick={() => notifyAgentCompletion('TestProject', false)}>
         Notify Agent Error
       </button>
-      <button onClick={() => notifyCICompletion('test-workflow', true)}>
-        Notify CI Success
-      </button>
-      <button onClick={() => notifyCICompletion('test-workflow', false)}>
-        Notify CI Error
-      </button>
+      <button onClick={() => notifyCICompletion('test-workflow', true)}>Notify CI Success</button>
+      <button onClick={() => notifyCICompletion('test-workflow', false)}>Notify CI Error</button>
       <button onClick={clearAll}>Clear All</button>
 
       <div data-testid="notifications-list">
@@ -348,7 +344,9 @@ describe('NotificationContext', () => {
       const notifications = screen.getByTestId('notifications-list');
       expect(notifications.textContent).toContain('success');
       expect(notifications.textContent).toContain('CI Completed');
-      expect(notifications.textContent).toContain('CI workflow "test-workflow" completed successfully');
+      expect(notifications.textContent).toContain(
+        'CI workflow "test-workflow" completed successfully'
+      );
     });
 
     test('should create error notification for CI failure', () => {

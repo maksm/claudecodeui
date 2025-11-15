@@ -1,7 +1,7 @@
 // Notification settings routes and database tests
 import request from 'supertest';
 import express from 'express';
-import { setupTestDatabase, cleanupTestDatabase } from './database.js';
+import { initializeDatabase, db, userDb } from '../server/database/db.js';
 import settingsRoutes from '../server/routes/settings.js';
 import { notificationSettingsDb } from '../server/database/db.js';
 
@@ -13,21 +13,25 @@ const mockAuthMiddleware = (req, res, next) => {
 
 describe('Notification Settings', () => {
   let app;
-  let mockDb;
 
-  beforeEach(async () => {
-    // Setup test database
-    mockDb = await setupTestDatabase();
+  beforeAll(async () => {
+    // Initialize database with schema (using :memory: from test environment)
+    await initializeDatabase();
 
+    // Create a test user for foreign key constraints
+    const hashedPassword = 'test-password-hash';
+    userDb.createUser('testuser', hashedPassword);
+  });
+
+  beforeEach(() => {
     // Create Express app with settings routes
     app = express();
     app.use(express.json());
     app.use(mockAuthMiddleware);
     app.use('/api/settings', settingsRoutes);
-  });
 
-  afterEach(async () => {
-    await cleanupTestDatabase();
+    // Clear notification_settings before each test
+    db.prepare('DELETE FROM notification_settings').run();
   });
 
   describe('GET /api/settings/notifications', () => {
