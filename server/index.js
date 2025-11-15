@@ -48,6 +48,10 @@ console.log('PORT from env:', process.env.PORT);
 
 import express from 'express';
 import { WebSocketServer, WebSocket } from 'ws';
+import { exec } from 'child_process';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
 import os from 'os';
 import http from 'http';
 import cors from 'cors';
@@ -1724,6 +1728,48 @@ async function getFileTree(dirPath, maxDepth = 3, currentDepth = 0, showHidden =
 
 const PORT = process.env.PORT || 3001;
 
+/**
+ * Checks for optional dependencies and logs their availability
+ * @returns {Promise<Object>} Availability status of optional dependencies
+ */
+async function checkOptionalDependencies() {
+  const dependencies = {
+    gh: {
+      name: 'GitHub CLI',
+      check: async () => {
+        try {
+          await execAsync('which gh || where gh');
+          return true;
+        } catch {
+          return false;
+        }
+      },
+      installUrl: 'https://cli.github.com/',
+      features: ['GitHub PR detection in Git panel'],
+    },
+  };
+
+  const results = {};
+
+  console.log('');
+  console.log(c.info('[INFO]') + ' Checking optional dependencies:');
+
+  for (const [key, dep] of Object.entries(dependencies)) {
+    const available = await dep.check();
+    results[key] = available;
+
+    if (available) {
+      console.log(`       ${c.ok('✓')} ${dep.name}: Available`);
+    } else {
+      console.log(`       ${c.warn('⚠')} ${dep.name}: Not found`);
+      console.log(`         ${c.dim('Features disabled: ' + dep.features.join(', '))}`);
+      console.log(`         ${c.dim('Install: ' + dep.installUrl)}`);
+    }
+  }
+
+  return results;
+}
+
 // Initialize database and start server
 async function startServer() {
   try {
@@ -1745,6 +1791,9 @@ async function startServer() {
         `${c.warn('[WARN]')} Note: Requests will be proxied to Vite dev server at ${c.dim('http://localhost:' + (process.env.VITE_PORT || 5173))}`
       );
     }
+
+    // Check for optional dependencies
+    await checkOptionalDependencies();
 
     server.listen(PORT, '0.0.0.0', async () => {
       const appInstallPath = path.join(__dirname, '..');

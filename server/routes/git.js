@@ -1131,12 +1131,15 @@ router.get('/check-pr', async (req, res) => {
 
     // Check if gh CLI is available
     try {
-      await execAsync('which gh');
+      await execAsync('which gh || where gh');
     } catch (error) {
       return res.json({
         hasPR: false,
         prUrl: null,
-        error: 'GitHub CLI not available',
+        available: false,
+        message: 'GitHub CLI (gh) is not installed. PR detection is unavailable.',
+        installUrl: 'https://cli.github.com/',
+        features: ['View open pull requests', 'Create pull requests from the UI'],
       });
     }
 

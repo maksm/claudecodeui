@@ -22,11 +22,32 @@ export const PROVIDERS = {
   CURSOR: 'cursor',
 };
 
-// Session to provider mapping
+// Session to provider mapping with TTL support
 const sessionProviderMap = new Map();
+const sessionTimestamps = new Map();
+
+// Configuration
+const SESSION_TTL = parseInt(process.env.SESSION_TTL) || 60 * 60 * 1000; // 1 hour default
+const MAX_SESSION_MAP_SIZE = parseInt(process.env.MAX_SESSION_MAP_SIZE) || 1000;
 
 // Default provider (can be configured via environment variable)
 let defaultProvider = process.env.DEFAULT_PROVIDER || PROVIDERS.CLAUDE;
+
+// Cleanup interval for stale sessions
+const cleanupInterval = setInterval(() => {
+  cleanupStaleSessions();
+}, 10 * 60 * 1000); // Run every 10 minutes
+
+// Ensure cleanup runs on process exit
+process.on('SIGINT', () => {
+  clearInterval(cleanupInterval);
+  process.exit();
+});
+
+process.on('SIGTERM', () => {
+  clearInterval(cleanupInterval);
+  process.exit();
+});
 
 /**
  * Sets the default provider
@@ -62,13 +83,30 @@ export function getAvailableProviders() {
 }
 
 /**
- * Maps a session to a provider
+ * Maps a session to a provider with TTL and size limit enforcement
  * @param {string} sessionId - Session identifier
  * @param {string} provider - Provider name
  */
 function mapSessionToProvider(sessionId, provider) {
   if (!sessionId) return;
+
+  // Enforce maximum size limit with LRU eviction
+  if (sessionProviderMap.size >= MAX_SESSION_MAP_SIZE) {
+    // Find and remove oldest session
+    const oldestSession = Array.from(sessionTimestamps.entries()).sort((a, b) => a[1] - b[1])[0]?.[
+      0
+    ];
+
+    if (oldestSession) {
+      console.warn(
+        `⚠️  [Provider Router] Session map at capacity (${MAX_SESSION_MAP_SIZE}), evicting oldest: ${oldestSession}`
+      );
+      unmapSession(oldestSession);
+    }
+  }
+
   sessionProviderMap.set(sessionId, provider);
+  sessionTimestamps.set(sessionId, Date.now());
   console.log(`📍 Mapped session ${sessionId} to provider: ${provider}`);
 }
 
@@ -91,7 +129,31 @@ function getProviderForSession(sessionId) {
 function unmapSession(sessionId) {
   if (!sessionId) return;
   sessionProviderMap.delete(sessionId);
+  sessionTimestamps.delete(sessionId);
   console.log(`🗑️ Unmapped session ${sessionId}`);
+}
+
+/**
+ * Cleans up stale sessions that have exceeded TTL
+ */
+function cleanupStaleSessions() {
+  const now = Date.now();
+  let cleanedCount = 0;
+
+  for (const [sessionId, timestamp] of sessionTimestamps.entries()) {
+    if (now - timestamp > SESSION_TTL) {
+      console.log(`🧹 [Provider Router] Cleaning up stale session: ${sessionId}`);
+      unmapSession(sessionId);
+      cleanedCount++;
+    }
+  }
+
+  if (cleanedCount > 0) {
+    console.log(
+      `🧹 [Provider Router] Cleaned up ${cleanedCount} stale sessions. ` +
+        `Active sessions: ${sessionProviderMap.size}`
+    );
+  }
 }
 
 /**
