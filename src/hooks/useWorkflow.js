@@ -534,6 +534,7 @@ export function useWorkflow(projectName, projectPath) {
     currentStep,
     completedSteps,
     setCurrentStep,
+    setCompletedSteps,
     resetWorkflow,
   };
 }

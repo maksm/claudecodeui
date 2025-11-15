@@ -85,18 +85,69 @@ function StepIndicator({ currentStep, completedSteps, isMobile }) {
 
 // Branch Creation Step
 function BranchStep({ workflow, branchName, setBranchName }) {
+  // Check if current branch is a main branch
+  const mainBranches = ['main', 'master', 'develop'];
+  const isOnMainBranch = workflow.currentBranch && mainBranches.includes(workflow.currentBranch);
+  const isOnFeatureBranch = workflow.currentBranch && !isOnMainBranch;
+
+  // Handler to proceed on current branch
+  const handleContinueOnCurrentBranch = () => {
+    workflow.setCurrentStep('test');
+    workflow.setCompletedSteps(prev => [...new Set([...prev, 'branch'])]);
+  };
+
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-foreground">Create Feature Branch</h2>
+      <h2 className="text-lg font-semibold text-foreground">
+        {isOnFeatureBranch ? 'Branch Selection' : 'Create Feature Branch'}
+      </h2>
 
       {workflow.currentBranch && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg p-3">
-          <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300 text-sm">
+        <div
+          className={`border rounded-lg p-3 ${
+            isOnFeatureBranch
+              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-700'
+              : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700'
+          }`}
+        >
+          <div
+            className={`flex items-center gap-2 text-sm ${
+              isOnFeatureBranch
+                ? 'text-green-700 dark:text-green-300'
+                : 'text-blue-700 dark:text-blue-300'
+            }`}
+          >
             <GitBranch className="w-4 h-4" />
             <span>
               Current branch:{' '}
               <span className="font-mono font-semibold">{workflow.currentBranch}</span>
             </span>
+          </div>
+        </div>
+      )}
+
+      {isOnFeatureBranch && (
+        <div className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            You are currently on a feature branch. You can continue on this branch or create a new
+            one.
+          </p>
+
+          <button
+            onClick={handleContinueOnCurrentBranch}
+            className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors font-medium"
+          >
+            <Play className="w-4 h-4" />
+            Continue on {workflow.currentBranch}
+          </button>
+
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-border"></div>
+            </div>
+            <div className="relative flex justify-center text-xs">
+              <span className="bg-card px-2 text-muted-foreground">or create a new branch</span>
+            </div>
           </div>
         </div>
       )}
@@ -149,7 +200,7 @@ function BranchStep({ workflow, branchName, setBranchName }) {
           ) : (
             <>
               <GitBranch className="w-4 h-4" />
-              Create Branch
+              {isOnFeatureBranch ? 'Create New Branch' : 'Create Branch'}
             </>
           )}
         </button>
