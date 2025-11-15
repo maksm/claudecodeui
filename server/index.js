@@ -97,6 +97,7 @@ import projectsRoutes from './routes/projects.js';
 import ciRoutes from './routes/ci.js';
 import { initializeDatabase } from './database/db.js';
 import { validateApiKey, authenticateToken, authenticateWebSocket } from './middleware/auth.js';
+import { validateEnvironment } from './utils/validateEnv.js';
 
 // File system watcher for projects folder
 let projectsWatcher = null;
@@ -1777,6 +1778,14 @@ async function checkOptionalDependencies() {
 // Initialize database and start server
 async function startServer() {
   try {
+    // Validate environment configuration before starting
+    const validation = await validateEnvironment();
+    if (!validation.valid) {
+      console.error('\n[ERROR] Server cannot start due to environment validation errors.');
+      console.error('[ERROR] Please fix the issues above and try again.\n');
+      process.exit(1);
+    }
+
     // Initialize authentication database
     await initializeDatabase();
 
