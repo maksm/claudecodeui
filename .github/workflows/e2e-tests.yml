@@ -49,7 +49,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        browser: [chromium]  # Only chromium for now, add firefox/webkit after installing browsers
+        browser: [chromium] # Only chromium for now, add firefox/webkit after installing browsers
       fail-fast: false
 
     steps:
@@ -109,7 +109,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        device: [Pixel 5]  # Only Pixel 5 for now, iPhone 12 requires webkit
+        device: [Pixel 5] # Only Pixel 5 for now, iPhone 12 requires webkit
       fail-fast: false
 
     steps:
