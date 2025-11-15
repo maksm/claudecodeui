@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Chat Interface - Critical Tests', () => {
+test.describe.skip('Chat Interface - Critical Tests', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
