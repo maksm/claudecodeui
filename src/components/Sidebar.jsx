@@ -592,6 +592,7 @@ function Sidebar({
                 <Button
                   variant="default"
                   size="sm"
+                  data-testid="new-project"
                   className="flex-1 h-8 text-xs bg-primary hover:bg-primary/90 transition-all duration-200"
                   onClick={() => setShowNewProject(true)}
                   title="Create new project (Ctrl+N)"
@@ -625,7 +626,7 @@ function Sidebar({
 
         {/* Projects List */}
         <ScrollArea className="flex-1 md:px-2 md:py-3 overflow-y-auto overscroll-contain">
-          <div className="md:space-y-1 pb-safe-area-inset-bottom">
+          <div className="md:space-y-1 pb-safe-area-inset-bottom" data-testid="projects-list">
             {isLoading ? (
               <div className="text-center py-12 md:py-8 px-4">
                 <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center mx-auto mb-4 md:mb-3">
@@ -673,6 +674,7 @@ function Sidebar({
                       {/* Mobile Project Item */}
                       <div className="md:hidden">
                         <div
+                          data-testid="project-card"
                           className={cn(
                             'p-3 mx-3 my-1 rounded-lg bg-card border border-border/50 active:scale-[0.98] transition-all duration-150',
                             isSelected && 'bg-primary/5 border-primary/20',
@@ -852,6 +854,7 @@ function Sidebar({
                       {/* Desktop Project Item */}
                       <Button
                         variant="ghost"
+                        data-testid="project-card"
                         className={cn(
                           'hidden md:flex w-full justify-between p-2 h-auto font-normal hover:bg-accent/50',
                           isSelected && 'bg-accent text-accent-foreground',
