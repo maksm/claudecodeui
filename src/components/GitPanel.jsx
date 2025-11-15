@@ -57,6 +57,8 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
   const [hasPR, setHasPR] = useState(false);
   const [prUrl, setPrUrl] = useState(null);
   const [isCheckingPR, setIsCheckingPR] = useState(false);
+  const [remoteChangesStatus, setRemoteChangesStatus] = useState(null);
+  const [isCheckingRemoteChanges, setIsCheckingRemoteChanges] = useState(false);
   const textareaRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -81,6 +83,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
       fetchGitStatus();
       fetchBranches();
       fetchRemoteStatus();
+      checkRemoteChanges(); // Check for remote changes without fetching
       if (activeView === 'history') {
         fetchRecentCommits();
       }
@@ -232,8 +235,18 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
         setShowNewBranchModal(false);
         setShowBranchDropdown(false);
         setNewBranchName('');
+
+        // Show success feedback
+        const message = data.changesRetained
+          ? `Created branch "${data.branch}" from main with changes retained`
+          : `Created branch "${data.branch}" from main`;
+
+        // You could add a toast notification here if you have one
+        console.log(message);
+
         fetchBranches(); // Refresh branch list
         fetchGitStatus(); // Refresh status
+        fetchRemoteStatus(); // Refresh remote status
       } else {
         console.error('Failed to create branch:', data.error);
       }
@@ -386,6 +399,43 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
       setPrUrl(null);
     } finally {
       setIsCheckingPR(false);
+    }
+  };
+
+  const checkRemoteChanges = async () => {
+    if (!selectedProject) {
+      setRemoteChangesStatus(null);
+      return;
+    }
+
+    setIsCheckingRemoteChanges(true);
+    try {
+      const response = await authenticatedFetch(
+        `/api/git/check-remote-changes?project=${encodeURIComponent(selectedProject.name)}`
+      );
+
+      const data = await response.json();
+      if (data.error) {
+        console.error('Error checking remote changes:', data.error);
+        setRemoteChangesStatus({
+          error: data.error,
+          message: data.message || 'Unable to check remote status',
+          needsFetch: false,
+          remoteChanges: null,
+        });
+      } else {
+        setRemoteChangesStatus(data);
+      }
+    } catch (error) {
+      console.error('Error checking remote changes:', error);
+      setRemoteChangesStatus({
+        error: error.message,
+        message: 'Network error while checking remote status',
+        needsFetch: false,
+        remoteChanges: null,
+      });
+    } finally {
+      setIsCheckingRemoteChanges(false);
     }
   };
 
@@ -959,7 +1009,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
                   className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                 >
                   <Plus className="w-3 h-3" />
-                  <span>Create new branch</span>
+                  <span>Create from Main</span>
                 </button>
               </div>
             </div>
@@ -1027,9 +1077,8 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
                     </button>
                   )}
 
-                  {/* Fetch button - show when ahead only or when diverged (secondary action) */}
-                  {(remoteStatus.ahead > 0 ||
-                    (remoteStatus.behind > 0 && remoteStatus.ahead > 0)) && (
+                  {/* Fetch button - show when branch is not up-to-date (ahead, behind, or diverged) */}
+                  {remoteStatus.ahead > 0 || remoteStatus.behind > 0 ? (
                     <button
                       onClick={handleFetch}
                       disabled={isFetching}
@@ -1039,7 +1088,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
                       <RefreshCw className={`w-3 h-3 ${isFetching ? 'animate-spin' : ''}`} />
                       <span>{isFetching ? 'Fetching...' : 'Fetch'}</span>
                     </button>
-                  )}
+                  ) : null}
                 </>
               )}
 
@@ -1057,11 +1106,25 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
             </>
           )}
 
+          {/* Remote Changes Indicator */}
+          {remoteChangesStatus?.remoteChanges === true && (
+            <button
+              onClick={checkRemoteChanges}
+              disabled={isCheckingRemoteChanges}
+              className="px-2 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1"
+              title="Remote changes detected - Click to check again"
+            >
+              <Info className={`w-3 h-3 ${isCheckingRemoteChanges ? 'animate-pulse' : ''}`} />
+              <span>{isCheckingRemoteChanges ? 'Checking...' : 'Remote Changes'}</span>
+            </button>
+          )}
+
           <button
             onClick={() => {
               fetchGitStatus();
               fetchBranches();
               fetchRemoteStatus();
+              checkRemoteChanges(); // Also check remote changes on refresh
             }}
             disabled={isLoading}
             className={`hover:bg-gray-100 dark:hover:bg-gray-800 rounded ${isMobile ? 'p-1' : 'p-1.5'}`}
@@ -1072,6 +1135,52 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
           </button>
         </div>
       </div>
+
+      {/* Remote Changes Status Message */}
+      {remoteChangesStatus && !gitStatus?.error && (
+        <div className="border-b border-gray-200 dark:border-gray-700 px-4 py-2 bg-gray-50 dark:bg-gray-800">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {remoteChangesStatus.remoteChanges === true ? (
+                <>
+                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-pulse"></div>
+                  <span className="text-sm text-purple-700 dark:text-purple-300 font-medium">
+                    Remote changes detected on branch &quot;{remoteChangesStatus.branch}&quot;
+                  </span>
+                  {remoteChangesStatus.remoteHead && remoteChangesStatus.localHead && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      (Local: {remoteChangesStatus.localHead.substring(0, 7)} &ne; Remote:{' '}
+                      {remoteChangesStatus.remoteHead.substring(0, 7)})
+                    </span>
+                  )}
+                </>
+              ) : remoteChangesStatus.remoteChanges === false ? (
+                <>
+                  <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                  <span className="text-sm text-green-700 dark:text-green-300">
+                    Branch &quot;{remoteChangesStatus.branch}&quot; is up to date with remote
+                  </span>
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 bg-yellow-600 rounded-full"></div>
+                  <span className="text-sm text-yellow-700 dark:text-yellow-300">
+                    {remoteChangesStatus.message || 'Unable to determine remote status'}
+                  </span>
+                </>
+              )}
+            </div>
+            {isCheckingRemoteChanges && (
+              <RefreshCw className="w-4 h-4 animate-spin text-gray-400" />
+            )}
+          </div>
+          {remoteChangesStatus.error && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              {remoteChangesStatus.error}
+            </p>
+          )}
+        </div>
+      )}
 
       {/* Git Repository Not Found Message */}
       {gitStatus?.error ? (
@@ -1387,7 +1496,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
           />
           <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
             <div className="p-6">
-              <h3 className="text-lg font-semibold mb-4">Create New Branch</h3>
+              <h3 className="text-lg font-semibold mb-4">Create New Branch from Main</h3>
               <div className="mb-4">
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Branch Name
@@ -1406,8 +1515,21 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
                   autoFocus
                 />
               </div>
-              <div className="text-xs text-gray-500 dark:text-gray-400 mb-4">
-                This will create a new branch from the current branch ({currentBranch})
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3 mb-4">
+                <div className="flex items-start space-x-2">
+                  <GitBranch className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-blue-700 dark:text-blue-300">
+                    <p className="font-medium mb-1">Branch creation details:</p>
+                    <ul className="space-y-1">
+                      <li>
+                        • New branch will be created from{' '}
+                        <span className="font-semibold">main</span>
+                      </li>
+                      <li>• Current changes will be retained on the new branch</li>
+                      <li>• You will be automatically switched to the new branch</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
               <div className="flex justify-end space-x-3">
                 <button
@@ -1432,7 +1554,7 @@ function GitPanel({ selectedProject, isMobile, onFileOpen }) {
                   ) : (
                     <>
                       <Plus className="w-3 h-3" />
-                      <span>Create Branch</span>
+                      <span>Create from Main</span>
                     </>
                   )}
                 </button>

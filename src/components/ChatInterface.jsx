@@ -2208,6 +2208,8 @@ function ChatInterface({
   const [isLoading, setIsLoading] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState(selectedSession?.id || null);
   const [isInputFocused, setIsInputFocused] = useState(false);
+  const inputBlurTimeoutRef = useRef(null);
+  const chatInputContainerRef = useRef(null);
   const [sessionMessages, setSessionMessages] = useState([]);
   const [isLoadingSessionMessages, setIsLoadingSessionMessages] = useState(false);
   const [isLoadingMoreMessages, setIsLoadingMoreMessages] = useState(false);
@@ -3519,6 +3521,58 @@ function ChatInterface({
       onInputFocusChange(isInputFocused);
     }
   }, [isInputFocused, onInputFocusChange]);
+
+  // Cleanup blur timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (inputBlurTimeoutRef.current) {
+        clearTimeout(inputBlurTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Click outside handler to ensure navbar is shown when tapping outside input
+  useEffect(() => {
+    const handleClickOutside = event => {
+      if (
+        isInputFocused &&
+        chatInputContainerRef.current &&
+        !chatInputContainerRef.current.contains(event.target)
+      ) {
+        // Clear any pending blur timeout
+        if (inputBlurTimeoutRef.current) {
+          clearTimeout(inputBlurTimeoutRef.current);
+          inputBlurTimeoutRef.current = null;
+        }
+        setIsInputFocused(false);
+      }
+    };
+
+    // Add touch start for better mobile handling
+    const handleTouchStart = event => {
+      if (
+        isInputFocused &&
+        chatInputContainerRef.current &&
+        !chatInputContainerRef.current.contains(event.target)
+      ) {
+        // Clear any pending blur timeout
+        if (inputBlurTimeoutRef.current) {
+          clearTimeout(inputBlurTimeoutRef.current);
+          inputBlurTimeoutRef.current = null;
+        }
+        // Small delay to handle touch events properly
+        setTimeout(() => setIsInputFocused(false), 50);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleTouchStart);
+    };
+  }, [isInputFocused]);
 
   // Persist input draft to localStorage
   useEffect(() => {
@@ -5658,6 +5712,7 @@ function ChatInterface({
 
             <div
               {...getRootProps()}
+              ref={chatInputContainerRef}
               className={`relative bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-600 focus-within:ring-2 focus-within:ring-blue-500 dark:focus-within:ring-blue-500 focus-within:border-blue-500 transition-all duration-200 overflow-hidden ${isTextareaExpanded ? 'chat-input-expanded' : ''}`}
             >
               <input {...getInputProps()} />
@@ -5668,8 +5723,21 @@ function ChatInterface({
                 onClick={handleTextareaClick}
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
-                onFocus={() => setIsInputFocused(true)}
-                onBlur={() => setIsInputFocused(false)}
+                onFocus={() => {
+                  setIsInputFocused(true);
+                  // Clear any pending blur timeout
+                  if (inputBlurTimeoutRef.current) {
+                    clearTimeout(inputBlurTimeoutRef.current);
+                    inputBlurTimeoutRef.current = null;
+                  }
+                }}
+                onBlur={() => {
+                  // Use a timeout to handle mobile edge cases where blur/fire order might be tricky
+                  inputBlurTimeoutRef.current = setTimeout(() => {
+                    setIsInputFocused(false);
+                    inputBlurTimeoutRef.current = null;
+                  }, 100);
+                }}
                 onInput={e => {
                   // Immediate resize on input for better UX
                   e.target.style.height = 'auto';
